@@ -992,9 +992,13 @@
         }
         
         function updateFilterState() {
-            selectedEvents = getSelectedEventsFromChips();
-            if (selectedEvents.length === 0) {
+            const selectedFromChips = getSelectedEventsFromChips();
+            
+            // If no events selected, use all events as default
+            if (selectedFromChips.length === 0) {
                 selectedEvents = Object.keys(performanceDataByEvent);
+            } else {
+                selectedEvents = selectedFromChips;
             }
             
             // Update progress chart
@@ -1004,8 +1008,9 @@
             // Update skill breakdown
             updateSkillBreakdown(selectedEvents);
             
-            // Update count display
-            selectedCountEl.textContent = selectedEvents.length + ' event' + (selectedEvents.length !== 1 ? 's' : '') + ' selected';
+            // Update count display - show actual selected count or "all" if none selected
+            const displayCount = selectedFromChips.length === 0 ? Object.keys(performanceDataByEvent).length : selectedFromChips.length;
+            selectedCountEl.textContent = displayCount + ' event' + (displayCount !== 1 ? 's' : '') + ' selected';
             
             // Update selected filters display
             updateSelectedFiltersDisplay();
@@ -1047,19 +1052,9 @@
                 chip.style.background = 'var(--off-white)';
                 chip.style.color = 'var(--dark-gray)';
             });
-            selectedEvents = [];
             
-            // Show all events when cleared
-            progressChart.data = createChartData(Object.keys(performanceDataByEvent));
-            progressChart.update();
-            
-            // Reset skill breakdown to all events average
-            updateSkillBreakdown(Object.keys(performanceDataByEvent));
-            
-            selectedCountEl.textContent = Object.keys(performanceDataByEvent).length + ' events selected';
-            
-            // Hide selected filters row when cleared
-            selectedFiltersRow.style.display = 'none';
+            // Update filter state will handle showing all events
+            updateFilterState();
         });
         
         // Initialize with all events selected
