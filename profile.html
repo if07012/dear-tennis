@@ -205,7 +205,7 @@
             border-radius: 16px;
             padding: 20px 24px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 20px;
             transition: all var(--transition-fast);
             border-left: 4px solid transparent;
@@ -261,6 +261,18 @@
             justify-content: center;
             font-size: 1.5rem;
             background: rgba(44, 95, 75, 0.1);
+            flex-shrink: 0;
+        }
+        .event-history-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .event-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 8px;
         }
         .event-history-info {
             flex: 1;
@@ -284,9 +296,7 @@
             height: 14px;
         }
         .event-history-rank {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-shrink: 0;
         }
         .rank-badge {
             background: linear-gradient(135deg, #6B5B95, #8B7FA8);
@@ -297,37 +307,85 @@
             font-size: 0.875rem;
             box-shadow: var(--shadow-sm);
         }
-        .event-history-details {
-            margin-top: 8px;
-            padding: 12px;
-            background: rgba(107, 91, 149, 0.08);
-            border-radius: 8px;
+        .funmatch-matches-container {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .funmatch-match-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(107, 91, 149, 0.2);
+            transition: all var(--transition-fast);
+        }
+        .funmatch-match-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateX(4px);
+        }
+        .funmatch-match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        .funmatch-match-type {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6B5B95;
+            background: rgba(107, 91, 149, 0.1);
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+        .funmatch-match-rank {
+            background: linear-gradient(135deg, #6B5B95, #8B7FA8);
+            color: var(--white);
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-weight: 700;
             font-size: 0.875rem;
         }
-        .event-history-score {
+        .funmatch-match-score {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            font-size: 1.125rem;
+            font-weight: 700;
             color: var(--hunter-green);
-            font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 12px;
         }
-        .event-history-score svg {
-            width: 16px;
-            height: 16px;
+        .funmatch-match-score svg {
+            width: 20px;
+            height: 20px;
         }
-        .event-history-partners {
+        .funmatch-match-partners {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            font-size: 0.875rem;
             color: var(--dark-gray);
         }
-        .event-history-partners svg {
+        .funmatch-match-partners svg {
             width: 16px;
             height: 16px;
+            color: #6B5B95;
         }
         .partners-list {
-            font-weight: 500;
+            font-weight: 600;
+            color: var(--graphite);
+        }
+        .match-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
         }
         @media (max-width: 768px) {
             .event-history-item {
@@ -340,6 +398,16 @@
             }
             .event-history-day {
                 font-size: 1.25rem;
+            }
+            .event-history-header {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .event-history-rank {
+                align-self: flex-start;
+            }
+            .funmatch-match-card {
+                padding: 12px;
             }
         }
         .back-link {
@@ -1235,13 +1303,46 @@
             { id: 1, title: 'Summer Open 2024', date: '2024-08-15', type: 'open', icon: '☀️', location: 'Jakarta Tennis Center' },
             { id: 2, title: 'Club Championship', date: '2024-07-20', type: 'championship', icon: '🎾', location: 'Senayan Sports Club' },
             { id: 3, title: 'Tournament 2024', date: '2024-06-10', type: 'tournament', icon: '🏆', location: 'Gelora Bung Karno' },
-            { id: 4, title: 'Fun Match Series', date: '2024-05-25', type: 'funmatch', icon: '🤝', location: 'Kemang Tennis Court', rank: 2, score: '6-4, 3-6, 6-3', isDoubles: true, partners: ['Andi Wijaya', 'Budi Santoso'] },
+            { 
+                id: 4, 
+                title: 'Fun Match Series - Multiple Matches', 
+                date: '2024-05-25', 
+                type: 'funmatch', 
+                icon: '🤝', 
+                location: 'Kemang Tennis Court',
+                matches: [
+                    { rank: 2, score: '6-4, 3-6, 6-3', isDoubles: true, partners: ['Andi Wijaya', 'Budi Santoso'], opponent: 'Team A' },
+                    { rank: 1, score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'Carlos Mendez' },
+                    { rank: 3, score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan'], opponent: 'Team B' }
+                ]
+            },
             { id: 5, title: 'Spring Showdown', date: '2024-04-18', type: 'open', icon: '🌸', location: 'PIK Tennis Arena' },
             { id: 6, title: 'Winter Classic', date: '2024-03-05', type: 'tournament', icon: '❄️', location: 'BSD Tennis Center' },
             { id: 7, title: 'Training Session', date: '2024-02-14', type: 'training', icon: '🎯', location: 'Menteng Stadium' },
-            { id: 8, title: 'Fun Match Night', date: '2024-01-20', type: 'funmatch', icon: '⭐', location: 'Ciputra Golf Club', rank: 1, score: '7-5, 6-2', isDoubles: false, partners: [] },
+            { 
+                id: 8, 
+                title: 'Fun Match Night', 
+                date: '2024-01-20', 
+                type: 'funmatch', 
+                icon: '⭐', 
+                location: 'Ciputra Golf Club',
+                matches: [
+                    { rank: 1, score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'David Lee' }
+                ]
+            },
             { id: 9, title: 'Advanced Training', date: '2024-01-10', type: 'training', icon: '💪', location: 'Senayan Sports Club' },
-            { id: 10, title: 'Weekend Fun Match', date: '2023-12-15', type: 'funmatch', icon: '🎉', location: 'Jakarta Tennis Center', rank: 3, score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan', 'David Lim'] }
+            { 
+                id: 10, 
+                title: 'Weekend Fun Match', 
+                date: '2023-12-15', 
+                type: 'funmatch', 
+                icon: '🎉', 
+                location: 'Jakarta Tennis Center',
+                matches: [
+                    { rank: 3, score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan', 'David Lim'], opponent: 'Team X' },
+                    { rank: 2, score: '6-7, 6-4, 6-2', isDoubles: true, partners: ['Eko Prasetyo'], opponent: 'Team Y' }
+                ]
+            }
         ];
 
         let currentHistoryPage = 1;
@@ -1256,55 +1357,51 @@
 
         function createEventHistoryItem(event) {
             const { day, month } = formatDate(event.date);
-            let rankHtml = '';
-            let detailsHtml = '';
+            let matchesHtml = '';
             
-            // Only show rank for funmatch events
-            if (event.type === 'funmatch' && event.rank) {
-                rankHtml = `
-                    <div class="event-history-rank">
-                        <span class="rank-badge">#${event.rank}</span>
+            // Handle funmatch events with multiple matches
+            if (event.type === 'funmatch' && event.matches && event.matches.length > 0) {
+                // Create match cards for each match in the funmatch event
+                const matchCards = event.matches.map((match, index) => {
+                    const matchType = match.isDoubles ? 'Doubles' : 'Singles';
+                    const partnersText = match.partners && match.partners.length > 0 
+                        ? `Partner: ${match.partners.join(', ')}` 
+                        : '';
+                    
+                    return `
+                        <div class="funmatch-match-card">
+                            <div class="funmatch-match-header">
+                                <span class="funmatch-match-type">${matchType}</span>
+                                <span class="funmatch-match-rank">#${match.rank}</span>
+                            </div>
+                            <div class="funmatch-match-score">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M12 6v6l4 2"/>
+                                </svg>
+                                ${match.score}
+                            </div>
+                            ${match.isDoubles && match.partners && match.partners.length > 0 ? `
+                                <div class="funmatch-match-partners">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                    <span class="partners-list">${partnersText}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+                
+                matchesHtml = `
+                    <div class="funmatch-matches-container">
+                        <div class="match-label">Match Details (${event.matches.length} matches)</div>
+                        ${matchCards}
                     </div>
                 `;
-                
-                // Show score and partners for funmatch events
-                let scoreHtml = '';
-                let partnersHtml = '';
-                
-                if (event.score) {
-                    scoreHtml = `
-                        <div class="event-history-score">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <path d="M12 6v6l4 2"/>
-                            </svg>
-                            Score: ${event.score}
-                        </div>
-                    `;
-                }
-                
-                if (event.isDoubles && event.partners && event.partners.length > 0) {
-                    partnersHtml = `
-                        <div class="event-history-partners">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                <circle cx="9" cy="7" r="4"/>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
-                            <span class="partners-list">Partner: ${event.partners.join(', ')}</span>
-                        </div>
-                    `;
-                }
-                
-                if (scoreHtml || partnersHtml) {
-                    detailsHtml = `
-                        <div class="event-history-details">
-                            ${scoreHtml}
-                            ${partnersHtml}
-                        </div>
-                    `;
-                }
             }
             
             return `
@@ -1314,18 +1411,21 @@
                         <span class="event-history-month">${month}</span>
                     </div>
                     <div class="event-history-icon">${event.icon}</div>
-                    <div class="event-history-info">
-                        <div class="event-history-title">${event.title}</div>
-                        <div class="event-history-location">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                                <circle cx="12" cy="10" r="3"/>
-                            </svg>
-                            ${event.location}
+                    <div class="event-history-content">
+                        <div class="event-history-header">
+                            <div class="event-history-info">
+                                <div class="event-history-title">${event.title}</div>
+                                <div class="event-history-location">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                        <circle cx="12" cy="10" r="3"/>
+                                    </svg>
+                                    ${event.location}
+                                </div>
+                            </div>
                         </div>
-                        ${detailsHtml}
+                        ${matchesHtml}
                     </div>
-                    ${rankHtml}
                 </div>
             `;
         }
