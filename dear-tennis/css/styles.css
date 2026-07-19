@@ -625,42 +625,34 @@ p {
     box-shadow: var(--shadow-xl);
 }
 
-.placeholder-image {
-    aspect-ratio: 4/3;
-    background: linear-gradient(135deg, var(--hunter-green-light) 0%, var(--muted-teal) 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--white);
-    gap: 16px;
+.about-image-photo,
+.activity-photo,
+.gallery-photo,
+.avatar-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
-.placeholder-image svg {
-    width: 80px;
-    height: 80px;
-    opacity: 0.8;
-}
-
-.placeholder-image span {
-    font-size: 1.125rem;
-    font-weight: 500;
-}
-
-.about-placeholder {
+.about-image-photo {
     aspect-ratio: 4/3;
 }
 
-.activity-placeholder {
+.activity-photo {
     aspect-ratio: 16/10;
 }
 
-.gallery-placeholder {
-    aspect-ratio: 1;
+.gallery-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.avatar-placeholder {
-    aspect-ratio: 1;
+.avatar-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     border-radius: 50%;
 }
 
@@ -737,14 +729,12 @@ p {
     transform: scaleY(0);
 }
 
-.reveal-image img,
-.reveal-image .placeholder-image {
+.reveal-image img {
     transform: scale(1.1);
     transition: transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.reveal-image.active img,
-.reveal-image.active .placeholder-image {
+.reveal-image.active img {
     transform: scale(1);
 }
 
@@ -1077,14 +1067,15 @@ p {
     grid-column: span 2;
 }
 
-.gallery-item:hover .placeholder-image {
-    transform: scale(1.05);
-}
-
-.gallery-item .placeholder-image {
+.gallery-item img {
     width: 100%;
     height: 100%;
+    object-fit: cover;
     transition: transform var(--transition-slow);
+}
+
+.gallery-item:hover img {
+    transform: scale(1.05);
 }
 
 /* ===================================
@@ -1145,9 +1136,10 @@ p {
     overflow: hidden;
 }
 
-.author-avatar .placeholder-image {
+.author-avatar img {
     width: 100%;
     height: 100%;
+    object-fit: cover;
 }
 
 .author-info h4 {
