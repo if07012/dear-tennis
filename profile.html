@@ -221,11 +221,14 @@
         .event-history-item.championship {
             border-left-color: var(--muted-teal);
         }
-        .event-history-item.friendly {
+        .event-history-item.funmatch {
             border-left-color: #6B5B95;
         }
         .event-history-item.open {
             border-left-color: #FF6B6B;
+        }
+        .event-history-item.training {
+            border-left-color: #4ECDC4;
         }
         .event-history-date {
             min-width: 100px;
@@ -278,6 +281,20 @@
         .event-history-location svg {
             width: 14px;
             height: 14px;
+        }
+        .event-history-rank {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .rank-badge {
+            background: linear-gradient(135deg, #6B5B95, #8B7FA8);
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            box-shadow: var(--shadow-sm);
         }
         @media (max-width: 768px) {
             .event-history-item {
@@ -1185,11 +1202,13 @@
             { id: 1, title: 'Summer Open 2024', date: '2024-08-15', type: 'open', icon: '☀️', location: 'Jakarta Tennis Center' },
             { id: 2, title: 'Club Championship', date: '2024-07-20', type: 'championship', icon: '🎾', location: 'Senayan Sports Club' },
             { id: 3, title: 'Tournament 2024', date: '2024-06-10', type: 'tournament', icon: '🏆', location: 'Gelora Bung Karno' },
-            { id: 4, title: 'Friendly Match Series', date: '2024-05-25', type: 'friendly', icon: '🤝', location: 'Kemang Tennis Court' },
+            { id: 4, title: 'Fun Match Series', date: '2024-05-25', type: 'funmatch', icon: '🤝', location: 'Kemang Tennis Court', rank: 2 },
             { id: 5, title: 'Spring Showdown', date: '2024-04-18', type: 'open', icon: '🌸', location: 'PIK Tennis Arena' },
             { id: 6, title: 'Winter Classic', date: '2024-03-05', type: 'tournament', icon: '❄️', location: 'BSD Tennis Center' },
-            { id: 7, title: 'Night Lights Tournament', date: '2024-02-14', type: 'friendly', icon: '🌙', location: 'Menteng Stadium' },
-            { id: 8, title: 'Rookie Cup', date: '2024-01-20', type: 'championship', icon: '⭐', location: 'Ciputra Golf Club' }
+            { id: 7, title: 'Training Session', date: '2024-02-14', type: 'training', icon: '🎯', location: 'Menteng Stadium' },
+            { id: 8, title: 'Fun Match Night', date: '2024-01-20', type: 'funmatch', icon: '⭐', location: 'Ciputra Golf Club', rank: 1 },
+            { id: 9, title: 'Advanced Training', date: '2024-01-10', type: 'training', icon: '💪', location: 'Senayan Sports Club' },
+            { id: 10, title: 'Weekend Fun Match', date: '2023-12-15', type: 'funmatch', icon: '🎉', location: 'Jakarta Tennis Center', rank: 3 }
         ];
 
         let currentHistoryPage = 1;
@@ -1204,6 +1223,17 @@
 
         function createEventHistoryItem(event) {
             const { day, month } = formatDate(event.date);
+            let rankHtml = '';
+            
+            // Only show rank for funmatch events
+            if (event.type === 'funmatch' && event.rank) {
+                rankHtml = `
+                    <div class="event-history-rank">
+                        <span class="rank-badge">#${event.rank}</span>
+                    </div>
+                `;
+            }
+            
             return `
                 <div class="event-history-item ${event.type}">
                     <div class="event-history-date">
@@ -1221,6 +1251,7 @@
                             ${event.location}
                         </div>
                     </div>
+                    ${rankHtml}
                 </div>
             `;
         }
