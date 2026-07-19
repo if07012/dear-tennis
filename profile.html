@@ -208,33 +208,6 @@
             color: var(--spicy-paprika);
             transform: translateX(-4px);
         }
-        .category-selector {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-        .category-btn {
-            padding: 8px 16px;
-            border: 2px solid var(--light-gray);
-            background: var(--white);
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--graphite);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            font-family: 'Inter', sans-serif;
-        }
-        .category-btn:hover {
-            border-color: var(--hunter-green);
-            color: var(--hunter-green);
-        }
-        .category-btn.active {
-            background: var(--hunter-green);
-            border-color: var(--hunter-green);
-            color: var(--white);
-        }
         @media (max-width: 968px) {
             .profile-header {
                 grid-template-columns: 1fr;
@@ -337,16 +310,24 @@
                             <polyline points="17 6 23 6 23 12"/>
                         </svg>
                     </div>
-                    <h2>Progress Trend</h2>
+                    <h2>Performance Overview</h2>
                     
-                    <!-- Category Selector -->
-                    <div class="category-selector">
-                        <button class="category-btn active" data-category="all">All</button>
-                        <button class="category-btn" data-category="forehand">Forehand</button>
-                        <button class="category-btn" data-category="backhand">Backhand</button>
-                        <button class="category-btn" data-category="serve">Serve</button>
-                        <button class="category-btn" data-category="volley">Volley</button>
-                        <button class="category-btn" data-category="footwork">Footwork</button>
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
+                        <label for="eventFilter" style="font-weight: 500; color: var(--graphite); font-size: 0.875rem;">Filter by Event:</label>
+                        <select id="eventFilter" multiple style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--light-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--hunter-green); background: var(--white); cursor: pointer; min-width: 200px; min-height: 80px;">
+                            <option value="tournament-2024">Tournament 2024 (Jan 2024)</option>
+                            <option value="club-championship">Club Championship (Mar 2024)</option>
+                            <option value="friendly-match">Friendly Match (May 2024)</option>
+                            <option value="summer-open">Summer Open (Jul 2024)</option>
+                        </select>
+                        <button id="clearFilterBtn" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--spicy-paprika); background: var(--white); color: var(--spicy-paprika); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 500; transition: all var(--transition-fast);">Clear Filter</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 16px; padding: 12px 16px; background: linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(232, 93, 4, 0.1)); border-radius: 12px; border-left: 4px solid var(--spicy-paprika);">
+                        <p style="margin: 0; font-size: 0.875rem; color: var(--graphite); line-height: 1.5;">
+                            <strong style="color: var(--hunter-green);">Baseline:</strong> Garis putus-putus menunjukkan rata-rata Target vs Kesalahan.<br>
+                            <strong style="color: #9D4EDD;">Pergerakan (garis ungu):</strong> Menunjukkan trend performa antara target dan kesalahan di setiap kategori. Naik = performa membaik, turun = perlu perbaikan.
+                        </p>
                     </div>
                     
                     <div class="chart-container small">
@@ -488,70 +469,154 @@
             }
         });
 
-        // Progress Trend Chart dengan Category Selector
+        // Performance Chart - Menampilkan kesalahan vs target per kategori dengan baseline
         const progressCtx = document.getElementById('progressChart').getContext('2d');
         
-        // Data per kategori
-        const trendData = {
-            all: {
-                label: 'Overall Progress',
-                data: [65, 68, 72, 71, 75, 78, 76, 82],
-                borderColor: '#2C5F4B',
-                backgroundColor: 'rgba(44, 95, 75, 0.1)'
+        // Data performance berdasarkan event
+        const performanceDataByEvent = {
+            'tournament-2024': {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                target: [88, 82, 78, 83, 92],
+                kesalahan: [15, 20, 25, 16, 10]
             },
-            forehand: {
-                label: 'Forehand',
-                data: [70, 72, 75, 78, 80, 82, 84, 85],
-                borderColor: '#FF6B35',
-                backgroundColor: 'rgba(255, 107, 53, 0.1)'
+            'club-championship': {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                target: [90, 85, 80, 85, 95],
+                kesalahan: [10, 16, 20, 12, 7]
             },
-            backhand: {
-                label: 'Backhand',
-                data: [60, 62, 65, 68, 70, 71, 72, 72],
-                borderColor: '#F7C548',
-                backgroundColor: 'rgba(247, 197, 72, 0.1)'
+            'friendly-match': {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                target: [92, 88, 82, 87, 96],
+                kesalahan: [8, 14, 18, 10, 5]
             },
-            serve: {
-                label: 'Serve',
-                data: [55, 58, 60, 62, 65, 66, 67, 68],
-                borderColor: '#4ECDC4',
-                backgroundColor: 'rgba(78, 205, 196, 0.1)'
-            },
-            volley: {
-                label: 'Volley',
-                data: [68, 70, 72, 74, 76, 77, 78, 79],
-                borderColor: '#A8DADC',
-                backgroundColor: 'rgba(168, 218, 220, 0.1)'
-            },
-            footwork: {
-                label: 'Footwork',
-                data: [80, 82, 84, 86, 88, 89, 90, 91],
-                borderColor: '#457B9D',
-                backgroundColor: 'rgba(69, 123, 157, 0.1)'
+            'summer-open': {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                target: [93, 89, 84, 88, 97],
+                kesalahan: [7, 12, 16, 9, 4]
             }
         };
         
-        let currentCategory = 'all';
+        // Fungsi untuk menghitung rata-rata dari multiple events
+        function calculateAverage(selectedEvents) {
+            if (selectedEvents.length === 0) {
+                return {
+                    labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                    target: [0, 0, 0, 0, 0],
+                    kesalahan: [0, 0, 0, 0, 0]
+                };
+            }
+            
+            const avgTarget = [0, 0, 0, 0, 0];
+            const avgKesalahan = [0, 0, 0, 0, 0];
+            
+            selectedEvents.forEach(event => {
+                const data = performanceDataByEvent[event];
+                for (let i = 0; i < 5; i++) {
+                    avgTarget[i] += data.target[i];
+                    avgKesalahan[i] += data.kesalahan[i];
+                }
+            });
+            
+            for (let i = 0; i < 5; i++) {
+                avgTarget[i] = Math.round(avgTarget[i] / selectedEvents.length);
+                avgKesalahan[i] = Math.round(avgKesalahan[i] / selectedEvents.length);
+            }
+            
+            return {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                target: avgTarget,
+                kesalahan: avgKesalahan
+            };
+        }
         
-        const progressChart = new Chart(progressCtx, {
-            type: 'line',
-            data: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
-                datasets: [{
-                    label: trendData[currentCategory].label,
-                    data: trendData[currentCategory].data,
-                    borderColor: trendData[currentCategory].borderColor,
-                    backgroundColor: trendData[currentCategory].backgroundColor,
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    pointBackgroundColor: trendData[currentCategory].borderColor,
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2
-                }]
-            },
+        // Fungsi untuk membuat chart data dengan baseline dan trend line
+        function createChartData(selectedEvents) {
+            const avgData = calculateAverage(selectedEvents);
+            
+            // Hitung baseline (rata-rata overall)
+            const baselineTarget = Math.round(avgData.target.reduce((a, b) => a + b, 0) / 5);
+            const baselineKesalahan = Math.round(avgData.kesalahan.reduce((a, b) => a + b, 0) / 5);
+            
+            // Hitung movement/gap antara target dan kesalahan
+            const movementData = avgData.target.map((target, i) => {
+                return ((target - avgData.kesalahan[i]) + target) / 2;
+            });
+            
+            return {
+                labels: avgData.labels,
+                datasets: [
+                    {
+                        label: 'Target',
+                        data: avgData.target,
+                        backgroundColor: '#2C5F4B',
+                        borderColor: '#2C5F4B',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        barThickness: 20,
+                        order: 3
+                    },
+                    {
+                        label: 'Kesalahan',
+                        data: avgData.kesalahan,
+                        backgroundColor: '#E85D04',
+                        borderColor: '#E85D04',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        barThickness: 20,
+                        order: 3
+                    },
+                    {
+                        label: 'Pergerakan',
+                        data: movementData,
+                        type: 'line',
+                        borderColor: '#9D4EDD',
+                        borderWidth: 3,
+                        borderDash: [],
+                        fill: false,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#9D4EDD',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        tension: 0.4,
+                        order: 1
+                    },
+                    {
+                        label: 'Baseline Target',
+                        data: Array(5).fill(baselineTarget),
+                        type: 'line',
+                        borderColor: '#2C5F4B',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0,
+                        order: 2
+                    },
+                    {
+                        label: 'Baseline Kesalahan',
+                        data: Array(5).fill(baselineKesalahan),
+                        type: 'line',
+                        borderColor: '#E85D04',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0,
+                        order: 2
+                    }
+                ]
+            };
+        }
+        
+        // Get selected events from multi-select
+        function getSelectedEvents() {
+            const select = document.getElementById('eventFilter');
+            return Array.from(select.selectedOptions).map(option => option.value);
+        }
+        
+        // Initialize chart with all events selected
+        let selectedEvents = Object.keys(performanceDataByEvent);
+        let progressChart = new Chart(progressCtx, {
+            type: 'bar',
+            data: createChartData(selectedEvents),
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -561,7 +626,9 @@
                         position: 'top',
                         labels: {
                             font: { size: 13, weight: '600', family: "'Inter', sans-serif" },
-                            color: '#3A3A3A'
+                            color: '#3A3A3A',
+                            usePointStyle: true,
+                            pointStyle: 'circle'
                         }
                     },
                     tooltip: {
@@ -570,14 +637,17 @@
                         bodyFont: { size: 13 },
                         padding: 12,
                         cornerRadius: 8,
-                        displayColors: true
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y;
+                            }
+                        }
                     }
                 },
                 scales: {
                     y: {
-                        beginAtZero: false,
-                        min: 50,
-                        max: 100,
+                        beginAtZero: true,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' },
                         ticks: { font: { family: "'Inter', sans-serif" }, color: '#3A3A3A' }
                     },
@@ -589,25 +659,32 @@
             }
         });
         
-        // Category selector functionality
-        document.querySelectorAll('.category-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Remove active class from all buttons
-                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                // Add active class to clicked button
-                this.classList.add('active');
-                
-                // Update chart
-                const category = this.dataset.category;
-                const dataset = trendData[category];
-                
-                progressChart.data.datasets[0].label = dataset.label;
-                progressChart.data.datasets[0].data = dataset.data;
-                progressChart.data.datasets[0].borderColor = dataset.borderColor;
-                progressChart.data.datasets[0].backgroundColor = dataset.backgroundColor;
-                progressChart.data.datasets[0].pointBackgroundColor = dataset.borderColor;
-                progressChart.update();
+        // Event filter listener for multi-select
+        const eventFilter = document.getElementById('eventFilter');
+        eventFilter.addEventListener('change', function() {
+            selectedEvents = getSelectedEvents();
+            if (selectedEvents.length === 0) {
+                // If no selection, show all events
+                selectedEvents = Object.keys(performanceDataByEvent);
+            }
+            progressChart.data = createChartData(selectedEvents);
+            progressChart.update();
+        });
+        
+        // Clear filter button
+        const clearFilterBtn = document.getElementById('clearFilterBtn');
+        clearFilterBtn.addEventListener('click', function() {
+            Array.from(eventFilter.options).forEach(option => {
+                option.selected = true;
             });
+            selectedEvents = Object.keys(performanceDataByEvent);
+            progressChart.data = createChartData(selectedEvents);
+            progressChart.update();
+        });
+        
+        // Select all by default
+        Array.from(eventFilter.options).forEach(option => {
+            option.selected = true;
         });
     </script>
 </body>
