@@ -325,22 +325,63 @@
                             </div>
                         </div>
                         
-                        <div class="filter-chips" id="filterChips" style="display: flex; flex-wrap: wrap; gap: 10px;">
-                            <button class="filter-chip active" data-event="tournament-2024" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--hunter-green); background: linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(44, 95, 75, 0.05)); color: var(--hunter-green); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
-                                <span>🏆</span>
-                                <span>Tournament 2024</span>
-                            </button>
-                            <button class="filter-chip active" data-event="club-championship" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--muted-teal); background: linear-gradient(135deg, rgba(69, 139, 116, 0.1), rgba(69, 139, 116, 0.05)); color: var(--muted-teal); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
-                                <span>🎾</span>
-                                <span>Club Championship</span>
-                            </button>
-                            <button class="filter-chip active" data-event="friendly-match" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--spicy-paprika); background: linear-gradient(135deg, rgba(232, 93, 4, 0.1), rgba(232, 93, 4, 0.05)); color: var(--spicy-paprika); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
-                                <span>🤝</span>
-                                <span>Friendly Match</span>
-                            </button>
-                            <button class="filter-chip active" data-event="summer-open" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--reddish-brown); background: linear-gradient(135deg, rgba(150, 62, 4, 0.1), rgba(150, 62, 4, 0.05)); color: var(--reddish-brown); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
-                                <span>☀️</span>
-                                <span>Summer Open</span>
+                        <div class="filter-chips-wrapper" style="position: relative;">
+                            <div class="filter-chips" id="filterChips" style="display: flex; flex-wrap: wrap; gap: 10px; max-height: 220px; overflow-y: auto; padding-right: 8px; transition: all var(--transition-normal);">
+                                <button class="filter-chip active" data-event="tournament-2024" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--hunter-green); background: linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(44, 95, 75, 0.05)); color: var(--hunter-green); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>🏆</span>
+                                    <span>Tournament 2024</span>
+                                </button>
+                                <button class="filter-chip active" data-event="club-championship" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--muted-teal); background: linear-gradient(135deg, rgba(69, 139, 116, 0.1), rgba(69, 139, 116, 0.05)); color: var(--muted-teal); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>🎾</span>
+                                    <span>Club Championship</span>
+                                </button>
+                                <button class="filter-chip active" data-event="friendly-match" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--spicy-paprika); background: linear-gradient(135deg, rgba(232, 93, 4, 0.1), rgba(232, 93, 4, 0.05)); color: var(--spicy-paprika); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>🤝</span>
+                                    <span>Friendly Match</span>
+                                </button>
+                                <button class="filter-chip active" data-event="summer-open" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--reddish-brown); background: linear-gradient(135deg, rgba(150, 62, 4, 0.1), rgba(150, 62, 4, 0.05)); color: var(--reddish-brown); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>☀️</span>
+                                    <span>Summer Open</span>
+                                </button>
+                                <!-- Additional events for demonstration (10+ events) -->
+                                <button class="filter-chip active" data-event="winter-classic" style="padding: 10px 18px; border-radius: 25px; border: 2px solid #6B5B95; background: linear-gradient(135deg, rgba(107, 91, 149, 0.1), rgba(107, 91, 149, 0.05)); color: #6B5B95; font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>❄️</span>
+                                    <span>Winter Classic</span>
+                                </button>
+                                <button class="filter-chip active" data-event="spring-showdown" style="padding: 10px 18px; border-radius: 25px; border: 2px solid #FF6B6B; background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 107, 0.05)); color: #FF6B6B; font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>🌸</span>
+                                    <span>Spring Showdown</span>
+                                </button>
+                                <button class="filter-chip active" data-event="autumn-academy" style="padding: 10px 18px; border-radius: 25px; border: 2px solid #FFA500; background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 165, 0, 0.05)); color: #FFA500; font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>🍂</span>
+                                    <span>Autumn Academy</span>
+                                </button>
+                                <button class="filter-chip active" data-event="night-lights" style="padding: 10px 18px; border-radius: 25px; border: 2px solid #4ECDC4; background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(78, 205, 196, 0.05)); color: #4ECDC4; font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>🌙</span>
+                                    <span>Night Lights</span>
+                                </button>
+                                <button class="filter-chip active" data-event="rookie-cup" style="padding: 10px 18px; border-radius: 25px; border: 2px solid #FFD93D; background: linear-gradient(135deg, rgba(255, 217, 61, 0.1), rgba(255, 217, 61, 0.05)); color: #B8860B; font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>🆕</span>
+                                    <span>Rookie Cup</span>
+                                </button>
+                                <button class="filter-chip active" data-event="masters-series" style="padding: 10px 18px; border-radius: 25px; border: 2px solid #C44569; background: linear-gradient(135deg, rgba(196, 69, 105, 0.1), rgba(196, 69, 105, 0.05)); color: #C44569; font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>👑</span>
+                                    <span>Masters Series</span>
+                                </button>
+                                <button class="filter-chip active" data-event="doubles-delight" style="padding: 10px 18px; border-radius: 25px; border: 2px solid #575FCF; background: linear-gradient(135deg, rgba(87, 95, 207, 0.1), rgba(87, 95, 207, 0.05)); color: #575FCF; font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>👥</span>
+                                    <span>Doubles Delight</span>
+                                </button>
+                                <button class="filter-chip active" data-event="charity-challenge" style="padding: 10px 18px; border-radius: 25px; border: 2px solid #00D2D3; background: linear-gradient(135deg, rgba(0, 210, 211, 0.1), rgba(0, 210, 211, 0.05)); color: #00D2D3; font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                    <span>❤️</span>
+                                    <span>Charity Challenge</span>
+                                </button>
+                            </div>
+                            <button id="showMoreBtn" style="width: 100%; padding: 10px; margin-top: 12px; border-radius: 8px; border: 1px dashed var(--hunter-green); background: transparent; color: var(--hunter-green); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.background='rgba(44, 95, 75, 0.05)'" onmouseout="this.style.background='transparent'">
+                                <span>Show More Events</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="transition: transform 0.3s ease;" id="showMoreIcon">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
                             </button>
                         </div>
                         
@@ -757,6 +798,25 @@
         // Filter chips functionality
         const filterChips = document.querySelectorAll('.filter-chip');
         const selectedCountEl = document.getElementById('selectedCount');
+        const showMoreBtn = document.getElementById('showMoreBtn');
+        const filterChipsContainer = document.getElementById('filterChips');
+        let isExpanded = false;
+        
+        // Show More/Less button functionality
+        showMoreBtn.addEventListener('click', function() {
+            isExpanded = !isExpanded;
+            const icon = document.getElementById('showMoreIcon');
+            
+            if (isExpanded) {
+                filterChipsContainer.style.maxHeight = 'none';
+                filterChipsContainer.style.overflowY = 'visible';
+                this.innerHTML = '<span>Show Less</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="transition: transform 0.3s ease; transform: rotate(180deg);" id="showMoreIcon"><polyline points="6 9 12 15 18 9"/></svg>';
+            } else {
+                filterChipsContainer.style.maxHeight = '220px';
+                filterChipsContainer.style.overflowY = 'auto';
+                this.innerHTML = '<span>Show More Events</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="transition: transform 0.3s ease;" id="showMoreIcon"><polyline points="6 9 12 15 18 9"/></svg>';
+            }
+        });
         
         filterChips.forEach(chip => {
             chip.addEventListener('click', function() {
@@ -769,7 +829,15 @@
                         'tournament-2024': { border: 'var(--hunter-green)', bg: 'linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(44, 95, 75, 0.05))', text: 'var(--hunter-green)' },
                         'club-championship': { border: 'var(--muted-teal)', bg: 'linear-gradient(135deg, rgba(69, 139, 116, 0.1), rgba(69, 139, 116, 0.05))', text: 'var(--muted-teal)' },
                         'friendly-match': { border: 'var(--spicy-paprika)', bg: 'linear-gradient(135deg, rgba(232, 93, 4, 0.1), rgba(232, 93, 4, 0.05))', text: 'var(--spicy-paprika)' },
-                        'summer-open': { border: 'var(--reddish-brown)', bg: 'linear-gradient(135deg, rgba(150, 62, 4, 0.1), rgba(150, 62, 4, 0.05))', text: 'var(--reddish-brown)' }
+                        'summer-open': { border: 'var(--reddish-brown)', bg: 'linear-gradient(135deg, rgba(150, 62, 4, 0.1), rgba(150, 62, 4, 0.05))', text: 'var(--reddish-brown)' },
+                        'winter-classic': { border: '#6B5B95', bg: 'linear-gradient(135deg, rgba(107, 91, 149, 0.1), rgba(107, 91, 149, 0.05))', text: '#6B5B95' },
+                        'spring-showdown': { border: '#FF6B6B', bg: 'linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 107, 0.05))', text: '#FF6B6B' },
+                        'autumn-academy': { border: '#FFA500', bg: 'linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 165, 0, 0.05))', text: '#FFA500' },
+                        'night-lights': { border: '#4ECDC4', bg: 'linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(78, 205, 196, 0.05))', text: '#4ECDC4' },
+                        'rookie-cup': { border: '#FFD93D', bg: 'linear-gradient(135deg, rgba(255, 217, 61, 0.1), rgba(255, 217, 61, 0.05))', text: '#B8860B' },
+                        'masters-series': { border: '#C44569', bg: 'linear-gradient(135deg, rgba(196, 69, 105, 0.1), rgba(196, 69, 105, 0.05))', text: '#C44569' },
+                        'doubles-delight': { border: '#575FCF', bg: 'linear-gradient(135deg, rgba(87, 95, 207, 0.1), rgba(87, 95, 207, 0.05))', text: '#575FCF' },
+                        'charity-challenge': { border: '#00D2D3', bg: 'linear-gradient(135deg, rgba(0, 210, 211, 0.1), rgba(0, 210, 211, 0.05))', text: '#00D2D3' }
                     };
                     const color = colors[event];
                     this.style.borderColor = color.border;
@@ -818,7 +886,15 @@
                     'tournament-2024': { border: 'var(--hunter-green)', bg: 'linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(44, 95, 75, 0.05))', text: 'var(--hunter-green)' },
                     'club-championship': { border: 'var(--muted-teal)', bg: 'linear-gradient(135deg, rgba(69, 139, 116, 0.1), rgba(69, 139, 116, 0.05))', text: 'var(--muted-teal)' },
                     'friendly-match': { border: 'var(--spicy-paprika)', bg: 'linear-gradient(135deg, rgba(232, 93, 4, 0.1), rgba(232, 93, 4, 0.05))', text: 'var(--spicy-paprika)' },
-                    'summer-open': { border: 'var(--reddish-brown)', bg: 'linear-gradient(135deg, rgba(150, 62, 4, 0.1), rgba(150, 62, 4, 0.05))', text: 'var(--reddish-brown)' }
+                    'summer-open': { border: 'var(--reddish-brown)', bg: 'linear-gradient(135deg, rgba(150, 62, 4, 0.1), rgba(150, 62, 4, 0.05))', text: 'var(--reddish-brown)' },
+                    'winter-classic': { border: '#6B5B95', bg: 'linear-gradient(135deg, rgba(107, 91, 149, 0.1), rgba(107, 91, 149, 0.05))', text: '#6B5B95' },
+                    'spring-showdown': { border: '#FF6B6B', bg: 'linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 107, 0.05))', text: '#FF6B6B' },
+                    'autumn-academy': { border: '#FFA500', bg: 'linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 165, 0, 0.05))', text: '#FFA500' },
+                    'night-lights': { border: '#4ECDC4', bg: 'linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(78, 205, 196, 0.05))', text: '#4ECDC4' },
+                    'rookie-cup': { border: '#FFD93D', bg: 'linear-gradient(135deg, rgba(255, 217, 61, 0.1), rgba(255, 217, 61, 0.05))', text: '#B8860B' },
+                    'masters-series': { border: '#C44569', bg: 'linear-gradient(135deg, rgba(196, 69, 105, 0.1), rgba(196, 69, 105, 0.05))', text: '#C44569' },
+                    'doubles-delight': { border: '#575FCF', bg: 'linear-gradient(135deg, rgba(87, 95, 207, 0.1), rgba(87, 95, 207, 0.05))', text: '#575FCF' },
+                    'charity-challenge': { border: '#00D2D3', bg: 'linear-gradient(135deg, rgba(0, 210, 211, 0.1), rgba(0, 210, 211, 0.05))', text: '#00D2D3' }
                 };
                 const color = colors[event];
                 chip.style.borderColor = color.border;
