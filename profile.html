@@ -10,6 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        body {
+            background-color: var(--hunter-green);
+        }
         .profile-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -23,13 +26,14 @@
             margin-bottom: 60px;
         }
         .profile-card {
-            background: var(--white);
+            background: linear-gradient(135deg, var(--hunter-green-dark), var(--hunter-green));
             border-radius: 24px;
             padding: 40px 30px;
             text-align: center;
             box-shadow: var(--shadow-lg);
             position: sticky;
             top: 120px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .profile-image-wrapper {
             width: 200px;
@@ -56,7 +60,7 @@
         }
         .profile-name {
             font-size: 1.75rem;
-            color: var(--hunter-green);
+            color: var(--white);
             margin-bottom: 8px;
         }
         .profile-rank {
@@ -75,7 +79,7 @@
             gap: 16px;
             margin-top: 24px;
             padding-top: 24px;
-            border-top: 1px solid var(--light-gray);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
         }
         .profile-stat {
             text-align: center;
@@ -84,11 +88,11 @@
             display: block;
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--hunter-green);
+            color: var(--muted-teal-light);
         }
         .profile-stat-label {
             font-size: 0.75rem;
-            color: var(--dark-gray);
+            color: var(--light-gray);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -98,10 +102,11 @@
             gap: 40px;
         }
         .profile-section {
-            background: var(--white);
+            background: linear-gradient(135deg, var(--hunter-green-dark), var(--hunter-green));
             border-radius: 24px;
             padding: 40px;
             box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .section-icon {
             width: 48px;
@@ -121,7 +126,7 @@
         .profile-section h2 {
             font-size: 1.5rem;
             margin-bottom: 24px;
-            color: var(--hunter-green);
+            color: var(--white);
         }
         .chart-container {
             position: relative;
@@ -148,15 +153,15 @@
         }
         .skill-bar-label {
             font-weight: 500;
-            color: var(--graphite);
+            color: var(--light-gray);
         }
         .skill-bar-value {
             font-weight: 700;
-            color: var(--hunter-green);
+            color: var(--muted-teal-light);
         }
         .skill-bar-track {
             height: 12px;
-            background: var(--light-gray);
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 6px;
             overflow: hidden;
         }
@@ -171,15 +176,17 @@
             gap: 16px;
         }
         .achievement-badge {
-            background: var(--off-white);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 16px;
             padding: 20px;
             text-align: center;
             transition: all var(--transition-normal);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .achievement-badge:hover {
             background: linear-gradient(135deg, var(--hunter-green), var(--muted-teal));
             transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.3);
         }
         .achievement-badge:hover .achievement-icon,
         .achievement-badge:hover .achievement-label {
@@ -192,20 +199,20 @@
         .achievement-label {
             font-size: 0.75rem;
             font-weight: 600;
-            color: var(--graphite);
+            color: var(--light-gray);
             text-transform: uppercase;
         }
         .back-link {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            color: var(--hunter-green);
+            color: var(--white);
             font-weight: 600;
             margin-bottom: 24px;
             transition: all var(--transition-fast);
         }
         .back-link:hover {
-            color: var(--hunter-green-dark);
+            color: var(--muted-teal-light);
             transform: translateX(-4px);
         }
         @media (max-width: 968px) {
@@ -320,8 +327,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <label style="font-weight: 600; color: var(--hunter-green); font-size: 1rem; display: block;">Filter by Event</label>
-                                <p style="font-size: 0.75rem; color: var(--dark-gray); margin: 0;">Select one or more events to analyze performance</p>
+                                <label style="font-weight: 600; color: var(--white); font-size: 1rem; display: block;">Filter by Event</label>
+                                <p style="font-size: 0.75rem; color: var(--light-gray); margin: 0;">Select one or more events to analyze performance</p>
                             </div>
                         </div>
                         
@@ -389,9 +396,9 @@
                                 </button>
                             </div>
                             <!-- Selected Filters Collapse Row -->
-                            <div id="selectedFiltersRow" style="display: none; margin-top: 12px; padding: 12px; background: var(--off-white); border-radius: 12px; border: 1px solid var(--light-gray);">
+                            <div id="selectedFiltersRow" style="display: none; margin-top: 12px; padding: 12px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2);">
                                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                                    <span style="font-size: 0.75rem; font-weight: 600; color: var(--dark-gray); text-transform: uppercase; letter-spacing: 0.5px;">Selected Filters</span>
+                                    <span style="font-size: 0.75rem; font-weight: 600; color: var(--light-gray); text-transform: uppercase; letter-spacing: 0.5px;">Selected Filters</span>
                                     <button id="collapseSelectedBtn" style="background: none; border: none; padding: 4px; cursor: pointer; color: var(--hunter-green); display: flex; align-items: center; gap: 4px;" title="Collapse selected filters">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" id="collapseIcon">
                                             <polyline points="18 15 12 9 6 15"/>
@@ -400,7 +407,7 @@
                                 </div>
                                 <div id="selectedChipsContainer" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
                             </div>
-                            <button id="showMoreBtn" style="width: 100%; padding: 10px; margin-top: 12px; border-radius: 8px; border: 1px dashed var(--hunter-green); background: transparent; color: var(--hunter-green); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.background='rgba(44, 95, 75, 0.05)'" onmouseout="this.style.background='transparent'">
+                            <button id="showMoreBtn" style="width: 100%; padding: 10px; margin-top: 12px; border-radius: 8px; border: 1px dashed var(--muted-teal); background: transparent; color: var(--white); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.background='rgba(95, 158, 160, 0.1)'" onmouseout="this.style.background='transparent'">
                                 <span>Show More Events</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="transition: transform 0.3s ease;" id="showMoreIcon">
                                     <polyline points="6 9 12 15 18 9"/>
@@ -409,19 +416,19 @@
                         </div>
                         
                         <div class="filter-actions" style="display: flex; gap: 10px; margin-top: 16px; align-items: center;">
-                            <button id="selectAllBtn" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--hunter-green); background: var(--white); color: var(--hunter-green); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 500; transition: all var(--transition-fast);" onmouseover="this.style.background='var(--hunter-green)';this.style.color='var(--white)'" onmouseout="this.style.background='var(--white)';this.style.color='var(--hunter-green)'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
+                            <button id="selectAllBtn" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--muted-teal); background: transparent; color: var(--white); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 500; transition: all var(--transition-fast);" onmouseover="this.style.background='var(--muted-teal)';this.style.color='var(--white)'" onmouseout="this.style.background='transparent';this.style.color='var(--white)'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
                                 Select All
                             </button>
-                            <button id="clearFilterBtn" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--hunter-green); background: var(--white); color: var(--hunter-green); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 500; transition: all var(--transition-fast);" onmouseover="this.style.background='var(--hunter-green)';this.style.color='var(--white)'" onmouseout="this.style.background='var(--white)';this.style.color='var(--hunter-green)'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
+                            <button id="clearFilterBtn" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--muted-teal); background: transparent; color: var(--white); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 500; transition: all var(--transition-fast);" onmouseover="this.style.background='var(--muted-teal)';this.style.color='var(--white)'" onmouseout="this.style.background='transparent';this.style.color='var(--white)'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
                                 Clear Filter
                             </button>
-                            <span id="selectedCount" style="margin-left: auto; font-size: 0.875rem; color: var(--dark-gray); font-weight: 500;">4 events selected</span>
+                            <span id="selectedCount" style="margin-left: auto; font-size: 0.875rem; color: var(--light-gray); font-weight: 500;">4 events selected</span>
                         </div>
                     </div>
                     
-                    <div style="margin-bottom: 16px; padding: 16px 20px; background: linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(95, 158, 160, 0.1)); border-radius: 16px; border-left: 4px solid var(--hunter-green);">
-                        <p style="margin: 0; font-size: 0.875rem; color: var(--graphite); line-height: 1.6;">
-                            <strong style="color: var(--hunter-green);">Baseline:</strong> Garis putus-putus menunjukkan rata-rata Target vs Kesalahan.<br>
+                    <div style="margin-bottom: 16px; padding: 16px 20px; background: linear-gradient(135deg, rgba(44, 95, 75, 0.2), rgba(95, 158, 160, 0.15)); border-radius: 16px; border-left: 4px solid var(--muted-teal);">
+                        <p style="margin: 0; font-size: 0.875rem; color: var(--light-gray); line-height: 1.6;">
+                            <strong style="color: var(--muted-teal-light);">Baseline:</strong> Garis putus-putus menunjukkan rata-rata Target vs Kesalahan.<br>
                             <strong style="color: #9D4EDD;">Pergerakan (garis ungu):</strong> Menunjukkan trend performa antara target dan kesalahan di setiap kategori. Naik = performa membaik, turun = perlu perbaikan.
                         </p>
                     </div>
