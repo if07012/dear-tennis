@@ -121,6 +121,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (entry.isIntersecting && !countersAnimated) {
                 countersAnimated = true;
                 animateCounters();
+                // Stop observing after animation triggers
+                counterObserver.unobserve(entry.target);
             }
         });
     }, counterObserverOptions);
