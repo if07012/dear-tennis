@@ -25,15 +25,33 @@ document.addEventListener('DOMContentLoaded', function() {
     handleNavbarScroll(); // Check on load
     
     // Mobile menu toggle
+    const navMenuOverlay = document.getElementById('navMenuOverlay');
+    
     mobileMenuBtn.addEventListener('click', function() {
-        navMenu.classList.toggle('active');
-        this.classList.toggle('active');
+        const isActive = navMenu.classList.contains('active');
+        if (isActive) {
+            navMenu.classList.remove('active');
+            navMenuOverlay.classList.remove('active');
+            this.classList.remove('active');
+        } else {
+            navMenu.classList.add('active');
+            navMenuOverlay.classList.add('active');
+            this.classList.add('active');
+        }
+    });
+    
+    // Close mobile menu when clicking on overlay
+    navMenuOverlay.addEventListener('click', function() {
+        navMenu.classList.remove('active');
+        navMenuOverlay.classList.remove('active');
+        mobileMenuBtn.classList.remove('active');
     });
     
     // Close mobile menu on link click
     navLinks.forEach(link => {
         link.addEventListener('click', function() {
             navMenu.classList.remove('active');
+            navMenuOverlay.classList.remove('active');
             mobileMenuBtn.classList.remove('active');
         });
     });
