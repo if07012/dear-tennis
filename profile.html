@@ -789,6 +789,30 @@
                         Riwayat event yang pernah diikuti, diurutkan berdasarkan tanggal.
                     </p>
                     
+                    <!-- Event Filters -->
+                    <div class="event-filters" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; align-items: center;">
+                        <!-- Date Filter -->
+                        <div style="position: relative;">
+                            <input type="month" id="eventDateFilter" style="padding: 10px 16px; border-radius: 12px; border: 2px solid var(--light-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; outline: none; transition: all var(--transition-fast);" onfocus="this.style.borderColor='var(--hunter-green)'; this.style.boxShadow='0 0 0 3px rgba(44, 95, 75, 0.1)'" onblur="this.style.borderColor='var(--light-gray)'; this.style.boxShadow='none'">
+                            <label for="eventDateFilter" style="position: absolute; top: -8px; left: 12px; background: var(--white); padding: 0 4px; font-size: 0.7rem; color: var(--dark-gray); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Date</label>
+                        </div>
+                        
+                        <!-- Type Filter Buttons -->
+                        <button class="event-type-filter active" data-type="all" style="padding: 10px 20px; border-radius: 12px; border: 2px solid var(--hunter-green); background: var(--hunter-green); color: var(--white); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast);" onclick="filterEventType('all')">All Events</button>
+                        <button class="event-type-filter" data-type="training" style="padding: 10px 20px; border-radius: 12px; border: 2px solid var(--light-gray); background: var(--off-white); color: var(--dark-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast);" onclick="filterEventType('training')">Training</button>
+                        <button class="event-type-filter" data-type="match" style="padding: 10px 20px; border-radius: 12px; border: 2px solid var(--light-gray); background: var(--off-white); color: var(--dark-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast);" onclick="filterEventType('match')">Match</button>
+                        
+                        <!-- Clear Filters Button -->
+                        <button id="clearEventFiltersBtn" style="padding: 10px 16px; border-radius: 12px; border: 2px solid var(--light-gray); background: var(--white); color: var(--dark-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 6px;" onclick="clearEventFilters()" title="Clear all filters">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="15" y1="9" x2="9" y2="15"/>
+                                <line x1="9" y1="9" x2="15" y2="15"/>
+                            </svg>
+                            Clear
+                        </button>
+                    </div>
+                    
                     <div class="event-history-container" id="eventHistoryContainer">
                         <!-- Event items will be loaded here -->
                     </div>
@@ -1383,6 +1407,91 @@
 
         let currentHistoryPage = 1;
         const historyItemsPerPage = 4;
+        
+        // Filter state
+        let currentTypeFilter = 'all';
+        let currentDateFilter = '';
+
+        function filterEventType(type) {
+            currentTypeFilter = type;
+            
+            // Update button styles
+            document.querySelectorAll('.event-type-filter').forEach(btn => {
+                if (btn.dataset.type === type) {
+                    btn.style.background = 'var(--hunter-green)';
+                    btn.style.color = 'var(--white)';
+                    btn.style.borderColor = 'var(--hunter-green)';
+                    btn.classList.add('active');
+                } else {
+                    btn.style.background = 'var(--off-white)';
+                    btn.style.color = 'var(--dark-gray)';
+                    btn.style.borderColor = 'var(--light-gray)';
+                    btn.classList.remove('active');
+                }
+            });
+            
+            applyFilters();
+        }
+        
+        function clearEventFilters() {
+            currentTypeFilter = 'all';
+            currentDateFilter = '';
+            
+            // Reset date filter input
+            document.getElementById('eventDateFilter').value = '';
+            
+            // Reset button styles
+            document.querySelectorAll('.event-type-filter').forEach(btn => {
+                if (btn.dataset.type === 'all') {
+                    btn.style.background = 'var(--hunter-green)';
+                    btn.style.color = 'var(--white)';
+                    btn.style.borderColor = 'var(--hunter-green)';
+                    btn.classList.add('active');
+                } else {
+                    btn.style.background = 'var(--off-white)';
+                    btn.style.color = 'var(--dark-gray)';
+                    btn.style.borderColor = 'var(--light-gray)';
+                    btn.classList.remove('active');
+                }
+            });
+            
+            applyFilters();
+        }
+        
+        function isMatchType(type) {
+            // Match types: tournament, championship, open, funmatch
+            return ['tournament', 'championship', 'open', 'funmatch'].includes(type);
+        }
+        
+        function getFilteredEvents() {
+            let filtered = [...eventHistoryData];
+            
+            // Apply type filter
+            if (currentTypeFilter === 'training') {
+                filtered = filtered.filter(event => event.type === 'training');
+            } else if (currentTypeFilter === 'match') {
+                filtered = filtered.filter(event => isMatchType(event.type));
+            }
+            // 'all' shows everything
+            
+            // Apply date filter
+            if (currentDateFilter) {
+                const [year, month] = currentDateFilter.split('-');
+                filtered = filtered.filter(event => {
+                    const eventDate = new Date(event.date);
+                    const eventYear = eventDate.getFullYear().toString();
+                    const eventMonth = (eventDate.getMonth() + 1).toString().padStart(2, '0');
+                    return eventYear === year && eventMonth === month;
+                });
+            }
+            
+            return filtered;
+        }
+        
+        function applyFilters() {
+            currentHistoryPage = 1;
+            loadEventHistory(currentHistoryPage, false);
+        }
 
         function formatDate(dateString) {
             const date = new Date(dateString);
@@ -1491,9 +1600,10 @@
 
         function loadEventHistory(page = 1, append = false) {
             const container = document.getElementById('eventHistoryContainer');
+            const filteredEvents = getFilteredEvents();
             const startIndex = 0;
             const endIndex = page * historyItemsPerPage;
-            const eventsToShow = eventHistoryData.slice(startIndex, endIndex);
+            const eventsToShow = filteredEvents.slice(startIndex, endIndex);
 
             if (!append) {
                 container.innerHTML = '';
@@ -1505,10 +1615,16 @@
 
             // Hide load more button if all items are shown
             const loadMoreBtn = document.getElementById('loadMoreEventsBtn');
-            if (endIndex >= eventHistoryData.length) {
+            if (endIndex >= filteredEvents.length) {
                 loadMoreBtn.style.display = 'none';
             } else {
                 loadMoreBtn.style.display = 'flex';
+            }
+            
+            // Show message if no events found
+            if (filteredEvents.length === 0 && !append) {
+                container.innerHTML = '<p style="text-align: center; color: var(--dark-gray); padding: 40px 20px; font-size: 0.875rem;">No events found matching the selected filters.</p>';
+                loadMoreBtn.style.display = 'none';
             }
         }
 
@@ -1517,6 +1633,13 @@
         loadMoreEventsBtn.addEventListener('click', function() {
             currentHistoryPage++;
             loadEventHistory(currentHistoryPage, true);
+        });
+        
+        // Date filter change handler
+        const eventDateFilter = document.getElementById('eventDateFilter');
+        eventDateFilter.addEventListener('change', function() {
+            currentDateFilter = this.value;
+            applyFilters();
         });
 
         // Initialize event history
