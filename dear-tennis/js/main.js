@@ -108,9 +108,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // COUNTER ANIMATION FOR STATISTICS (Vero Studio Style)
     // ===================================
     const statNumbers = document.querySelectorAll('.stat-number, .stat-number-lg');
-    let countersAnimated = false;
     
-    // Use Intersection Observer for counter animation
+    // Use Intersection Observer for counter animation - observe each counter individually
     const counterObserverOptions = {
         threshold: 0.5,
         rootMargin: '0px 0px -100px 0px'
@@ -118,44 +117,42 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const counterObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-            if (entry.isIntersecting && !countersAnimated) {
-                countersAnimated = true;
-                animateCounters();
-                // Stop observing after animation triggers
-                counterObserver.unobserve(entry.target);
+            if (entry.isIntersecting) {
+                const counter = entry.target;
+                animateSingleCounter(counter);
+                // Stop observing this counter after animation triggers
+                counterObserver.unobserve(counter);
             }
         });
     }, counterObserverOptions);
     
-    const statsSection = document.querySelector('.statistics, .stats-preview');
-    if (statsSection) {
-        counterObserver.observe(statsSection);
-    }
+    // Observe each counter individually
+    statNumbers.forEach(counter => {
+        counterObserver.observe(counter);
+    });
     
-    function animateCounters() {
-        statNumbers.forEach((counter, index) => {
-            const target = parseInt(counter.getAttribute('data-target'));
-            const duration = 2000 + (index * 200); // Staggered timing
-            const startTime = performance.now();
+    function animateSingleCounter(counter) {
+        const target = parseInt(counter.getAttribute('data-target'));
+        const duration = 2000;
+        const startTime = performance.now();
+        
+        const updateCounter = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
             
-            const updateCounter = (currentTime) => {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                // Easing function for smooth animation
-                const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-                const current = Math.floor(easeOutQuart * target);
-                
-                if (progress < 1) {
-                    counter.textContent = current;
-                    requestAnimationFrame(updateCounter);
-                } else {
-                    counter.textContent = target;
-                }
-            };
+            // Easing function for smooth animation
+            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+            const current = Math.floor(easeOutQuart * target);
             
-            requestAnimationFrame(updateCounter);
-        });
+            if (progress < 1) {
+                counter.textContent = current;
+                requestAnimationFrame(updateCounter);
+            } else {
+                counter.textContent = target;
+            }
+        };
+        
+        requestAnimationFrame(updateCounter);
     }
     
     // ===================================
