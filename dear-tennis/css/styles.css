@@ -467,6 +467,12 @@ p {
     animation: bounce 2s infinite;
 }
 
+@media (max-width: 768px) {
+    .scroll-indicator {
+        display: none;
+    }
+}
+
 /* Slider Controls */
 .slider-btn {
     position: absolute;
@@ -510,6 +516,12 @@ p {
     height: 24px;
 }
 
+@media (max-width: 768px) {
+    .slider-btn {
+        display: none;
+    }
+}
+
 .slider-dots {
     position: absolute;
     bottom: 100px;
@@ -518,6 +530,12 @@ p {
     display: flex;
     gap: 12px;
     z-index: 10;
+}
+
+@media (max-width: 768px) {
+    .slider-dots {
+        display: none;
+    }
 }
 
 .slider-dot {
