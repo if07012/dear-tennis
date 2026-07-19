@@ -36,7 +36,16 @@
 
     <!-- Hero Section -->
     <section class="hero" id="home">
-        <div class="hero-bg"></div>
+        <div class="hero-slider">
+            <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?q=80&w=3840&auto=format&fit=crop');"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1622163642998-1ea14b097897?q=80&w=3840&auto=format&fit=crop');"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1530915516946-92f7400e5d1e?q=80&w=3840&auto=format&fit=crop');"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1626245347466-3d894ae9e7c8?q=80&w=3840&auto=format&fit=crop');"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1554068865-24cecd4e34b8?q=80&w=3840&auto=format&fit=crop');"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1628779238951-be2c9f2a07f4?q=80&w=3840&auto=format&fit=crop');"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1599474924187-334a4ae513ab?q=80&w=3840&auto=format&fit=crop');"></div>
+            <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1620615639506-6fd0a5a30484?q=80&w=3840&auto=format&fit=crop');"></div>
+        </div>
         <div class="hero-overlay"></div>
         <div class="container hero-content">
             <h1 class="hero-title fade-in">
@@ -53,6 +62,17 @@
                 <div class="scroll-arrow"></div>
             </div>
         </div>
+        <button class="slider-btn prev" id="sliderPrev" aria-label="Previous slide">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+        </button>
+        <button class="slider-btn next" id="sliderNext" aria-label="Next slide">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+            </svg>
+        </button>
+        <div class="slider-dots" id="sliderDots"></div>
     </section>
 
     <!-- About Section -->
