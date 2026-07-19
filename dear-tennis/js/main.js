@@ -193,7 +193,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const dot = document.createElement('span');
             dot.classList.add('slider-dot');
             if (index === 0) dot.classList.add('active');
-            dot.addEventListener('click', () => goToSlide(index));
+            dot.addEventListener('click', () => {
+                stopAutoSlide();
+                goToSlide(index);
+                startAutoSlide();
+            });
             sliderDots.appendChild(dot);
         });
     }
@@ -206,20 +210,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function goToSlide(index) {
+        const direction = index > currentSlide ? 'next' : 'prev';
+        
         slides[currentSlide].classList.remove('active');
+        
+        if (direction === 'next') {
+            slides[currentSlide].classList.add('prev');
+        } else {
+            slides[index].classList.add('prev');
+        }
+        
         currentSlide = index;
         if (currentSlide >= slides.length) currentSlide = 0;
         if (currentSlide < 0) currentSlide = slides.length - 1;
+        
         slides[currentSlide].classList.add('active');
+        
+        setTimeout(() => {
+            slides.forEach(slide => {
+                if (!slide.classList.contains('active')) {
+                    slide.classList.remove('prev');
+                }
+            });
+        }, 600);
+        
         updateDots();
     }
     
     function nextSlide() {
-        goToSlide(currentSlide + 1);
+        const nextIndex = (currentSlide + 1) % slides.length;
+        goToSlide(nextIndex);
     }
     
     function prevSlide() {
-        goToSlide(currentSlide - 1);
+        const prevIndex = (currentSlide - 1 + slides.length) % slides.length;
+        goToSlide(prevIndex);
     }
     
     function startAutoSlide() {
