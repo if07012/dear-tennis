@@ -3,257 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tennis Training Progress Dashboard - PRD</title>
+    <title>Profile - Dear Tennis</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Profile/PRD Specific Styles */
-        .prd-container {
-            max-width: 900px;
+        .profile-container {
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 120px 20px 60px;
         }
-
-        .prd-header {
-            text-align: center;
+        .profile-header {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 60px;
+            align-items: start;
             margin-bottom: 60px;
-            padding: 40px 0;
-            background: linear-gradient(135deg, var(--hunter-green) 0%, var(--muted-teal) 100%);
-            border-radius: 16px;
-            color: var(--white);
         }
-
-        .prd-header h1 {
-            color: var(--white);
-            font-size: clamp(2rem, 4vw, 3rem);
-            margin-bottom: 16px;
+        .profile-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 120px;
         }
-
-        .prd-meta {
-            display: flex;
-            justify-content: center;
-            gap: 24px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
-
-        .prd-meta-item {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 12px 24px;
-            border-radius: 8px;
-            backdrop-filter: blur(10px);
-        }
-
-        .prd-meta-label {
-            font-size: 0.875rem;
-            opacity: 0.9;
-            display: block;
-        }
-
-        .prd-meta-value {
-            font-weight: 700;
-            font-size: 1.125rem;
-        }
-
-        .prd-section {
-            margin-bottom: 48px;
-            scroll-margin-top: 80px;
-        }
-
-        .prd-section-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 3px solid var(--spicy-paprika);
-        }
-
-        .prd-section-number {
-            background: var(--spicy-paprika);
-            color: var(--white);
-            width: 40px;
-            height: 40px;
+        .profile-image-wrapper {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 24px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
-        .prd-section h2 {
-            color: var(--hunter-green);
-            margin: 0;
-        }
-
-        .prd-content {
-            background: var(--off-white);
-            padding: 32px;
-            border-radius: 12px;
-            border-left: 4px solid var(--hunter-green);
-        }
-
-        .prd-content h3 {
-            color: var(--hunter-green);
-            margin-top: 24px;
-            margin-bottom: 12px;
-            font-size: 1.5rem;
-        }
-
-        .prd-content h3:first-child {
-            margin-top: 0;
-        }
-
-        .prd-content ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .prd-content ul li {
-            position: relative;
-            padding-left: 28px;
-            margin-bottom: 12px;
-            color: var(--graphite);
-        }
-
-        .prd-content ul li::before {
-            content: "→";
-            position: absolute;
-            left: 0;
-            color: var(--spicy-paprika);
-            font-weight: 700;
-        }
-
-        .prd-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: var(--white);
-            border-radius: 8px;
             overflow: hidden;
-            box-shadow: var(--shadow-sm);
+            border: 4px solid var(--spicy-paprika);
+            box-shadow: var(--shadow-md);
+            position: relative;
         }
-
-        .prd-table th {
-            background: var(--hunter-green);
-            color: var(--white);
-            padding: 16px;
-            text-align: left;
-            font-weight: 600;
+        .profile-image-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--spicy-paprika), var(--hunter-green));
+            z-index: -1;
         }
-
-        .prd-table td {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--light-gray);
-            color: var(--graphite);
+        .profile-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-
-        .prd-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .prd-table tr:hover {
-            background: var(--off-white);
-        }
-
-        .prd-table td:last-child {
-            text-align: right;
-        }
-
-        .example-box {
-            background: var(--white);
-            border: 2px dashed var(--muted-teal);
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            color: var(--graphite);
-        }
-
-        .example-box strong {
+        .profile-name {
+            font-size: 1.75rem;
             color: var(--hunter-green);
-            display: block;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
-
-        .rank-badge {
+        .profile-rank {
             display: inline-block;
-            padding: 6px 16px;
+            padding: 6px 20px;
+            background: linear-gradient(135deg, var(--spicy-paprika), var(--reddish-brown));
+            color: var(--white);
             border-radius: 20px;
             font-weight: 600;
             font-size: 0.875rem;
-            color: var(--white);
+            margin-bottom: 20px;
         }
-
-        .rank-rookie { background: #dc3545; }
-        .rank-beginner { background: #fd7e14; }
-        .rank-challenger { background: #ffc107; color: var(--graphite); }
-        .rank-competitor { background: #90ee90; color: var(--graphite); }
-        .rank-advanced { background: var(--hunter-green); }
-        .rank-elite { background: var(--hunter-green-dark); }
-
-        .toc {
+        .profile-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--light-gray);
+        }
+        .profile-stat {
+            text-align: center;
+        }
+        .profile-stat-value {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--spicy-paprika);
+        }
+        .profile-stat-label {
+            font-size: 0.75rem;
+            color: var(--dark-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .profile-main {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+        .profile-section {
             background: var(--white);
-            border-radius: 12px;
-            padding: 32px;
-            margin-bottom: 48px;
+            border-radius: 24px;
+            padding: 40px;
             box-shadow: var(--shadow-md);
         }
-
-        .toc h3 {
-            color: var(--hunter-green);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .toc h3::before {
-            content: "📑";
-        }
-
-        .toc-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 12px;
-        }
-
-        .toc-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            background: var(--off-white);
-            border-radius: 8px;
-            transition: all var(--transition-fast);
-            color: var(--graphite);
-            font-weight: 500;
-        }
-
-        .toc-item:hover {
-            background: var(--hunter-green);
-            color: var(--white);
-            transform: translateX(4px);
-        }
-
-        .toc-item-number {
-            background: var(--spicy-paprika);
-            color: var(--white);
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
+        .section-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--hunter-green), var(--muted-teal));
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 700;
-            flex-shrink: 0;
+            margin-bottom: 20px;
         }
-
+        .section-icon svg {
+            width: 24px;
+            height: 24px;
+            color: var(--white);
+        }
+        .profile-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 24px;
+            color: var(--hunter-green);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        .chart-container.small {
+            height: 250px;
+        }
+        .skill-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .skill-bar-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .skill-bar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .skill-bar-label {
+            font-weight: 500;
+            color: var(--graphite);
+        }
+        .skill-bar-value {
+            font-weight: 700;
+            color: var(--spicy-paprika);
+        }
+        .skill-bar-track {
+            height: 12px;
+            background: var(--light-gray);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .skill-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s ease;
+        }
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        .achievement-badge {
+            background: var(--off-white);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all var(--transition-normal);
+        }
+        .achievement-badge:hover {
+            background: linear-gradient(135deg, var(--spicy-paprika), var(--reddish-brown));
+            transform: scale(1.05);
+        }
+        .achievement-badge:hover .achievement-icon,
+        .achievement-badge:hover .achievement-label {
+            color: var(--white);
+        }
+        .achievement-icon {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+        .achievement-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--graphite);
+            text-transform: uppercase;
+        }
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -263,65 +204,35 @@
             margin-bottom: 24px;
             transition: all var(--transition-fast);
         }
-
         .back-link:hover {
             color: var(--spicy-paprika);
             transform: translateX(-4px);
         }
-
-        .highlight-box {
-            background: linear-gradient(135deg, var(--spicy-paprika) 0%, var(--reddish-brown) 100%);
-            color: var(--white);
-            padding: 24px;
-            border-radius: 12px;
-            margin: 24px 0;
-        }
-
-        .highlight-box p {
-            color: var(--white);
-            margin: 0;
-        }
-
-        .question-card {
-            background: var(--white);
-            border-radius: 12px;
-            padding: 24px;
-            margin: 16px 0;
-            box-shadow: var(--shadow-sm);
-            border-left: 4px solid var(--spicy-paprika);
-        }
-
-        .question-card h4 {
-            color: var(--hunter-green);
-            margin-bottom: 12px;
-        }
-
-        @media (max-width: 768px) {
-            .prd-container {
-                padding: 20px 16px;
-            }
-
-            .prd-content {
-                padding: 20px;
-            }
-
-            .prd-table {
-                font-size: 0.875rem;
-            }
-
-            .prd-table th,
-            .prd-table td {
-                padding: 10px 12px;
-            }
-
-            .toc-grid {
+        @media (max-width: 968px) {
+            .profile-header {
                 grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            .profile-card {
+                position: static;
+                max-width: 400px;
+                margin: 0 auto;
+            }
+        }
+        @media (max-width: 768px) {
+            .profile-container {
+                padding: 100px 16px 40px;
+            }
+            .profile-section {
+                padding: 24px;
+            }
+            .chart-container {
+                height: 250px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="navbar" id="navbar">
         <div class="container nav-container">
             <a href="index.html" class="logo">
@@ -344,8 +255,7 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="prd-container">
+    <main class="profile-container">
         <a href="index.html" class="back-link">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                 <polyline points="15 18 9 12 15 6"/>
@@ -353,857 +263,232 @@
             Back to Home
         </a>
 
-        <!-- PRD Header -->
-        <header class="prd-header">
-            <h1>Tennis Training Progress Dashboard</h1>
-            <p style="color: rgba(255,255,255,0.9); font-size: 1.25rem;">Product Requirement Document</p>
-            <div class="prd-meta">
-                <div class="prd-meta-item">
-                    <span class="prd-meta-label">Version</span>
-                    <span class="prd-meta-value">1.0</span>
+        <div class="profile-header">
+            <aside class="profile-card">
+                <div class="profile-image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=400&h=400&fit=crop" alt="Profile" class="profile-image">
                 </div>
-                <div class="prd-meta-item">
-                    <span class="prd-meta-label">Status</span>
-                    <span class="prd-meta-value">Draft</span>
+                <h1 class="profile-name">Alex Johnson</h1>
+                <span class="profile-rank">Advanced Player</span>
+                <div class="profile-stats-grid">
+                    <div class="profile-stat">
+                        <span class="profile-stat-value">48</span>
+                        <span class="profile-stat-label">Sessions</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="profile-stat-value">7.8</span>
+                        <span class="profile-stat-label">Avg Score</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="profile-stat-value">156</span>
+                        <span class="profile-stat-label">Hours</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="profile-stat-value">12</span>
+                        <span class="profile-stat-label">Badges</span>
+                    </div>
                 </div>
-                <div class="prd-meta-item">
-                    <span class="prd-meta-label">Type</span>
-                    <span class="prd-meta-value">Feature Spec</span>
-                </div>
-            </div>
-        </header>
+            </aside>
 
-        <!-- Table of Contents -->
-        <div class="toc">
-            <h3>Table of Contents</h3>
-            <div class="toc-grid">
-                <a href="#objective" class="toc-item">
-                    <span class="toc-item-number">1</span>
-                    Objective
-                </a>
-                <a href="#goals" class="toc-item">
-                    <span class="toc-item-number">2</span>
-                    Goals
-                </a>
-                <a href="#user-persona" class="toc-item">
-                    <span class="toc-item-number">3</span>
-                    User Persona
-                </a>
-                <a href="#dashboard-overview" class="toc-item">
-                    <span class="toc-item-number">4</span>
-                    Dashboard Overview
-                </a>
-                <a href="#overall-score" class="toc-item">
-                    <span class="toc-item-number">5</span>
-                    Overall Score
-                </a>
-                <a href="#skill-summary" class="toc-item">
-                    <span class="toc-item-number">6</span>
-                    Skill Summary
-                </a>
-                <a href="#progress-chart" class="toc-item">
-                    <span class="toc-item-number">7</span>
-                    Progress Chart
-                </a>
-                <a href="#radar-chart" class="toc-item">
-                    <span class="toc-item-number">8</span>
-                    Radar Chart
-                </a>
-                <a href="#skill-detail" class="toc-item">
-                    <span class="toc-item-number">9</span>
-                    Skill Detail
-                </a>
-                <a href="#statistics" class="toc-item">
-                    <span class="toc-item-number">10</span>
-                    Training Statistics
-                </a>
-                <a href="#fault-analysis" class="toc-item">
-                    <span class="toc-item-number">11</span>
-                    Fault Analysis
-                </a>
-                <a href="#improvement-trend" class="toc-item">
-                    <span class="toc-item-number">12</span>
-                    Improvement Trend
-                </a>
-                <a href="#weakest-skills" class="toc-item">
-                    <span class="toc-item-number">13</span>
-                    Weakest Skills
-                </a>
-                <a href="#achievement" class="toc-item">
-                    <span class="toc-item-number">14</span>
-                    Achievement
-                </a>
-                <a href="#calendar" class="toc-item">
-                    <span class="toc-item-number">15</span>
-                    Training Calendar
-                </a>
-                <a href="#goal-tracking" class="toc-item">
-                    <span class="toc-item-number">16</span>
-                    Goal Tracking
-                </a>
-                <a href="#coach-notes" class="toc-item">
-                    <span class="toc-item-number">17</span>
-                    Coach Notes
-                </a>
-                <a href="#export" class="toc-item">
-                    <span class="toc-item-number">18</span>
-                    Export
-                </a>
-                <a href="#responsive" class="toc-item">
-                    <span class="toc-item-number">19</span>
-                    Responsive Layout
-                </a>
-                <a href="#classification" class="toc-item">
-                    <span class="toc-item-number">20</span>
-                    Score Classification
-                </a>
-                <a href="#components" class="toc-item">
-                    <span class="toc-item-number">21</span>
-                    Components
-                </a>
-                <a href="#future" class="toc-item">
-                    <span class="toc-item-number">22</span>
-                    Future Enhancements
-                </a>
-                <a href="#ai-coach" class="toc-item">
-                    <span class="toc-item-number">23</span>
-                    AI Coach Summary
-                </a>
-                <a href="#questions" class="toc-item">
-                    <span class="toc-item-number">24</span>
-                    Open Questions
-                </a>
+            <div class="profile-main">
+                <section class="profile-section">
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 20V10M12 20V4M6 20v-6"/>
+                        </svg>
+                    </div>
+                    <h2>Skill Overview</h2>
+                    <div class="chart-container">
+                        <canvas id="skillsChart"></canvas>
+                    </div>
+                </section>
+
+                <section class="profile-section">
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                            <polyline points="17 6 23 6 23 12"/>
+                        </svg>
+                    </div>
+                    <h2>Progress Trend</h2>
+                    <div class="chart-container small">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                </section>
+
+                <section class="profile-section">
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </div>
+                    <h2>Skill Breakdown</h2>
+                    <div class="skill-bars">
+                        <div class="skill-bar-item">
+                            <div class="skill-bar-header">
+                                <span class="skill-bar-label">Forehand</span>
+                                <span class="skill-bar-value">85%</span>
+                            </div>
+                            <div class="skill-bar-track">
+                                <div class="skill-bar-fill" style="width: 85%; background: linear-gradient(90deg, var(--spicy-paprika), var(--reddish-brown));"></div>
+                            </div>
+                        </div>
+                        <div class="skill-bar-item">
+                            <div class="skill-bar-header">
+                                <span class="skill-bar-label">Backhand</span>
+                                <span class="skill-bar-value">72%</span>
+                            </div>
+                            <div class="skill-bar-track">
+                                <div class="skill-bar-fill" style="width: 72%; background: linear-gradient(90deg, var(--hunter-green), var(--muted-teal));"></div>
+                            </div>
+                        </div>
+                        <div class="skill-bar-item">
+                            <div class="skill-bar-header">
+                                <span class="skill-bar-label">Serve</span>
+                                <span class="skill-bar-value">68%</span>
+                            </div>
+                            <div class="skill-bar-track">
+                                <div class="skill-bar-fill" style="width: 68%; background: linear-gradient(90deg, var(--muted-teal), var(--hunter-green));"></div>
+                            </div>
+                        </div>
+                        <div class="skill-bar-item">
+                            <div class="skill-bar-header">
+                                <span class="skill-bar-label">Volley</span>
+                                <span class="skill-bar-value">79%</span>
+                            </div>
+                            <div class="skill-bar-track">
+                                <div class="skill-bar-fill" style="width: 79%; background: linear-gradient(90deg, var(--reddish-brown), var(--spicy-paprika));"></div>
+                            </div>
+                        </div>
+                        <div class="skill-bar-item">
+                            <div class="skill-bar-header">
+                                <span class="skill-bar-label">Footwork</span>
+                                <span class="skill-bar-value">91%</span>
+                            </div>
+                            <div class="skill-bar-track">
+                                <div class="skill-bar-fill" style="width: 91%; background: linear-gradient(90deg, var(--spicy-paprika), var(--hunter-green));"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="profile-section">
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="8" r="7"/>
+                            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+                        </svg>
+                    </div>
+                    <h2>Achievements</h2>
+                    <div class="achievement-grid">
+                        <div class="achievement-badge">
+                            <div class="achievement-icon">🏆</div>
+                            <div class="achievement-label">Champion</div>
+                        </div>
+                        <div class="achievement-badge">
+                            <div class="achievement-icon">⚡</div>
+                            <div class="achievement-label">Speedster</div>
+                        </div>
+                        <div class="achievement-badge">
+                            <div class="achievement-icon">🎯</div>
+                            <div class="achievement-label">Accuracy</div>
+                        </div>
+                        <div class="achievement-badge">
+                            <div class="achievement-icon">🔥</div>
+                            <div class="achievement-label">Hot Streak</div>
+                        </div>
+                        <div class="achievement-badge">
+                            <div class="achievement-icon">💪</div>
+                            <div class="achievement-label">Power</div>
+                        </div>
+                        <div class="achievement-badge">
+                            <div class="achievement-icon">🌟</div>
+                            <div class="achievement-label">All-Star</div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
-
-        <!-- Section 1: Objective -->
-        <section id="objective" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">1</span>
-                <h2>Objective</h2>
-            </div>
-            <div class="prd-content">
-                <p>Menyediakan dashboard yang menampilkan perkembangan kemampuan tenis berdasarkan hasil latihan, sehingga pemain dan pelatih dapat:</p>
-                <ul>
-                    <li>Melihat perkembangan dari waktu ke waktu.</li>
-                    <li>Mengetahui kekuatan dan kelemahan.</li>
-                    <li>Melihat statistik latihan secara keseluruhan.</li>
-                    <li>Menentukan fokus latihan berikutnya.</li>
-                    <li>Mengukur pencapaian target latihan.</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 2: Goals -->
-        <section id="goals" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">2</span>
-                <h2>Goals</h2>
-            </div>
-            <div class="prd-content">
-                <h3>Business Goals</h3>
-                <ul>
-                    <li>Meningkatkan engagement pengguna.</li>
-                    <li>Memberikan insight yang mudah dipahami.</li>
-                    <li>Membantu coach mengevaluasi pemain.</li>
-                    <li>Menjadi "rapor digital" perkembangan pemain.</li>
-                </ul>
-
-                <h3>User Goals</h3>
-                <ul>
-                    <li>Mengetahui progress latihan.</li>
-                    <li>Mengetahui skill terbaik.</li>
-                    <li>Mengetahui skill yang perlu diperbaiki.</li>
-                    <li>Melihat histori latihan.</li>
-                    <li>Mendapat rekomendasi latihan.</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 3: User Persona -->
-        <section id="user-persona" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">3</span>
-                <h2>User Persona</h2>
-            </div>
-            <div class="prd-content">
-                <h3>Player</h3>
-                <ul>
-                    <li>Ingin mengetahui perkembangan latihan.</li>
-                    <li>Ingin mengetahui peningkatan kemampuan.</li>
-                    <li>Ingin melihat histori latihan.</li>
-                </ul>
-
-                <h3>Coach</h3>
-                <ul>
-                    <li>Memantau perkembangan pemain.</li>
-                    <li>Memberikan evaluasi.</li>
-                    <li>Memberikan target latihan.</li>
-                </ul>
-
-                <h3>Parent (Opsional)</h3>
-                <ul>
-                    <li>Memantau perkembangan anak.</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 4: Dashboard Overview -->
-        <section id="dashboard-overview" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">4</span>
-                <h2>Dashboard Overview</h2>
-            </div>
-            <div class="prd-content">
-                <p>Saat halaman dibuka, pengguna langsung melihat ringkasan perkembangan.</p>
-
-                <h3>Hero Card</h3>
-                <ul>
-                    <li>Overall Tennis Score</li>
-                    <li>Player Rank</li>
-                    <li>Perubahan dibanding periode sebelumnya</li>
-                </ul>
-
-                <div class="example-box">
-                    <strong>Contoh:</strong>
-                    Overall Tennis Score<br><br>
-                    74 / 100<br><br>
-                    Advanced Player<br><br>
-                    ↑ +6 dari bulan lalu
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 5: Overall Score -->
-        <section id="overall-score" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">5</span>
-                <h2>Overall Score</h2>
-            </div>
-            <div class="prd-content">
-                <h3>Deskripsi</h3>
-                <p>Merupakan nilai keseluruhan dari seluruh kemampuan pemain.</p>
-
-                <h3>Informasi</h3>
-                <ul>
-                    <li>Current Score</li>
-                    <li>Previous Score</li>
-                    <li>Improvement</li>
-                    <li>Rank</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 6: Skill Summary -->
-        <section id="skill-summary" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">6</span>
-                <h2>Skill Summary</h2>
-            </div>
-            <div class="prd-content">
-                <p>Menampilkan nilai setiap skill.</p>
-                
-                <table class="prd-table">
-                    <thead>
-                        <tr>
-                            <th>Skill</th>
-                            <th>Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Forehand</td><td>82</td></tr>
-                        <tr><td>Backhand</td><td>68</td></tr>
-                        <tr><td>Serve</td><td>77</td></tr>
-                        <tr><td>Volley</td><td>71</td></tr>
-                        <tr><td>Footwork</td><td>73</td></tr>
-                        <tr><td>Consistency</td><td>69</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Section 7: Overall Progress Chart -->
-        <section id="progress-chart" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">7</span>
-                <h2>Overall Progress Chart</h2>
-            </div>
-            <div class="prd-content">
-                <h3>Tujuan</h3>
-                <p>Melihat perkembangan overall score dari waktu ke waktu.</p>
-
-                <h3>Visualisasi</h3>
-                <ul>
-                    <li>Line Chart</li>
-                </ul>
-
-                <h3>Filter</h3>
-                <ul>
-                    <li>Mingguan</li>
-                    <li>Bulanan</li>
-                    <li>Tahunan</li>
-                </ul>
-
-                <h3>Data</h3>
-                <ul>
-                    <li>Score</li>
-                    <li>Average Score</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 8: Skill Radar Chart -->
-        <section id="radar-chart" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">8</span>
-                <h2>Skill Radar Chart</h2>
-            </div>
-            <div class="prd-content">
-                <h3>Tujuan</h3>
-                <p>Menampilkan keseimbangan kemampuan pemain.</p>
-
-                <h3>Skill yang Ditampilkan</h3>
-                <ul>
-                    <li>Forehand</li>
-                    <li>Backhand</li>
-                    <li>Serve</li>
-                    <li>Volley</li>
-                    <li>Footwork</li>
-                    <li>Consistency</li>
-                </ul>
-
-                <h3>Rentang Nilai</h3>
-                <p>0 - 100</p>
-            </div>
-        </section>
-
-        <!-- Section 9: Skill Detail -->
-        <section id="skill-detail" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">9</span>
-                <h2>Skill Detail</h2>
-            </div>
-            <div class="prd-content">
-                <p>Setiap skill memiliki halaman detail.</p>
-
-                <h3>Contoh Informasi</h3>
-                <ul>
-                    <li>Current Score</li>
-                    <li>Best Score</li>
-                    <li>Average Score</li>
-                    <li>Trend</li>
-                    <li>Last Practice</li>
-                    <li>Improvement</li>
-                </ul>
-
-                <h3>Chart</h3>
-                <ul>
-                    <li>Line Chart perkembangan skill.</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 10: Training Statistics -->
-        <section id="statistics" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">10</span>
-                <h2>Training Statistics</h2>
-            </div>
-            <div class="prd-content">
-                <h3>Informasi</h3>
-                <ul>
-                    <li>Total Training Session</li>
-                    <li>Total Hours</li>
-                    <li>Total Ball Hit</li>
-                    <li>Total Serve</li>
-                    <li>Total Rally</li>
-                    <li>Average Rally</li>
-                    <li>Longest Rally</li>
-                </ul>
-
-                <table class="prd-table">
-                    <thead>
-                        <tr>
-                            <th>Statistik</th>
-                            <th>Nilai</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Training Session</td><td>58</td></tr>
-                        <tr><td>Total Hours</td><td>94 Jam</td></tr>
-                        <tr><td>Ball Hit</td><td>18.420</td></tr>
-                        <tr><td>Serve</td><td>4.280</td></tr>
-                        <tr><td>Rally</td><td>2.340</td></tr>
-                        <tr><td>Average Rally</td><td>17</td></tr>
-                        <tr><td>Longest Rally</td><td>96</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Section 11: Fault Analysis -->
-        <section id="fault-analysis" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">11</span>
-                <h2>Fault Analysis</h2>
-            </div>
-            <div class="prd-content">
-                <h3>Tujuan</h3>
-                <p>Menampilkan distribusi kesalahan pemain.</p>
-
-                <h3>Kategori</h3>
-                <ul>
-                    <li>Serve Fault</li>
-                    <li>Double Fault</li>
-                    <li>Forehand Net</li>
-                    <li>Forehand Out</li>
-                    <li>Backhand Net</li>
-                    <li>Backhand Out</li>
-                    <li>Volley Net</li>
-                    <li>Volley Out</li>
-                </ul>
-
-                <h3>Visualisasi</h3>
-                <ul>
-                    <li>Pie Chart</li>
-                    <li>Bar Chart</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 12: Improvement Trend -->
-        <section id="improvement-trend" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">12</span>
-                <h2>Improvement Trend</h2>
-            </div>
-            <div class="prd-content">
-                <p>Menampilkan peningkatan setiap skill.</p>
-
-                <table class="prd-table">
-                    <thead>
-                        <tr>
-                            <th>Skill</th>
-                            <th>Improvement</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Forehand</td><td>+12%</td></tr>
-                        <tr><td>Serve</td><td>+7%</td></tr>
-                        <tr><td>Volley</td><td>+2%</td></tr>
-                        <tr><td>Footwork</td><td>+5%</td></tr>
-                        <tr><td>Backhand</td><td>-3%</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>Visualisasi</h3>
-                <ul>
-                    <li>Horizontal Bar Chart</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 13: Weakest Skills -->
-        <section id="weakest-skills" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">13</span>
-                <h2>Weakest Skills</h2>
-            </div>
-            <div class="prd-content">
-                <p>Menampilkan skill dengan nilai terendah.</p>
-
-                <table class="prd-table">
-                    <thead>
-                        <tr>
-                            <th>Skill</th>
-                            <th>Score</th>
-                            <th>Recommendation</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Backhand</td><td>61</td><td>Cross Court Drill</td></tr>
-                        <tr><td>Footwork</td><td>65</td><td>Ladder Drill</td></tr>
-                        <tr><td>Volley</td><td>67</td><td>Reflex Volley</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Section 14: Achievement -->
-        <section id="achievement" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">14</span>
-                <h2>Achievement</h2>
-            </div>
-            <div class="prd-content">
-                <p>Gamification untuk meningkatkan motivasi pemain.</p>
-
-                <h3>Contoh Achievement</h3>
-                <ul>
-                    <li>First 100 Serve</li>
-                    <li>Rally Master</li>
-                    <li>30 Days Training</li>
-                    <li>No Double Fault</li>
-                    <li>1000 Forehand</li>
-                    <li>Iron Footwork</li>
-                </ul>
-
-                <h3>Informasi</h3>
-                <ul>
-                    <li>Nama Achievement</li>
-                    <li>Tanggal diperoleh</li>
-                    <li>Progress Achievement</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 15: Training Calendar -->
-        <section id="calendar" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">15</span>
-                <h2>Training Calendar</h2>
-            </div>
-            <div class="prd-content">
-                <p>Menampilkan histori latihan dalam bentuk kalender.</p>
-
-                <h3>Status</h3>
-                <ul>
-                    <li>Training</li>
-                    <li>Rest Day</li>
-                    <li>Match</li>
-                    <li>Cancelled</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 16: Goal Tracking -->
-        <section id="goal-tracking" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">16</span>
-                <h2>Goal Tracking</h2>
-            </div>
-            <div class="prd-content">
-                <p>Pengguna dapat membuat target latihan.</p>
-
-                <div class="example-box">
-                    <strong>Target:</strong>
-                    Serve = 80<br><br>
-                    <strong>Current:</strong>
-                    77<br><br>
-                    <strong>Progress:</strong>
-                    96%
-                </div>
-
-                <h3>Informasi</h3>
-                <ul>
-                    <li>Target Score</li>
-                    <li>Current Score</li>
-                    <li>Remaining Score</li>
-                    <li>Deadline</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 17: Coach Notes -->
-        <section id="coach-notes" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">17</span>
-                <h2>Coach Notes</h2>
-            </div>
-            <div class="prd-content">
-                <p>Coach dapat memberikan evaluasi.</p>
-
-                <div class="example-box">
-                    <strong>Contoh:</strong>
-                    Backhand sudah jauh lebih baik.<br><br>
-                    Masih terlambat melakukan split step.<br><br>
-                    Fokus latihan minggu depan:<br>
-                    - Footwork<br>
-                    - Cross Court Backhand
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 18: Export -->
-        <section id="export" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">18</span>
-                <h2>Export</h2>
-            </div>
-            <div class="prd-content">
-                <p>Mendukung export ke:</p>
-                <ul>
-                    <li>PDF</li>
-                    <li>PNG</li>
-                    <li>JPG</li>
-                    <li>Share Link</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 19: Responsive Layout -->
-        <section id="responsive" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">19</span>
-                <h2>Responsive Layout</h2>
-            </div>
-            <div class="prd-content">
-                <h3>Desktop</h3>
-                <div class="example-box">
-                    Overall Score<br><br>
-                    Radar Chart<br><br>
-                    Progress Chart<br><br>
-                    Skill Summary<br><br>
-                    Training Statistics<br><br>
-                    Fault Analysis<br><br>
-                    Achievements<br><br>
-                    Coach Notes
-                </div>
-
-                <h3>Mobile</h3>
-                <div class="example-box">
-                    Overall Score<br><br>
-                    Progress Chart<br><br>
-                    Radar Chart<br><br>
-                    Skill Summary<br><br>
-                    Statistics<br><br>
-                    Fault Analysis<br><br>
-                    Achievements<br><br>
-                    Coach Notes
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 20: Score Classification -->
-        <section id="classification" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">20</span>
-                <h2>Score Classification</h2>
-            </div>
-            <div class="prd-content">
-                <h3>Berdasarkan Nilai</h3>
-                
-                <table class="prd-table">
-                    <thead>
-                        <tr>
-                            <th>Score</th>
-                            <th>Rank</th>
-                            <th>Warna</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>0 - 20</td><td><span class="rank-badge rank-rookie">Rookie</span></td><td>Merah</td></tr>
-                        <tr><td>21 - 40</td><td><span class="rank-badge rank-beginner">Beginner</span></td><td>Oranye</td></tr>
-                        <tr><td>41 - 60</td><td><span class="rank-badge rank-challenger">Challenger</span></td><td>Kuning</td></tr>
-                        <tr><td>61 - 75</td><td><span class="rank-badge rank-competitor">Competitor</span></td><td>Hijau Muda</td></tr>
-                        <tr><td>76 - 90</td><td><span class="rank-badge rank-advanced">Advanced</span></td><td>Hijau</td></tr>
-                        <tr><td>91 - 100</td><td><span class="rank-badge rank-elite">Elite</span></td><td>Hijau Tua</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Section 21: Dashboard Components -->
-        <section id="components" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">21</span>
-                <h2>Dashboard Components</h2>
-            </div>
-            <div class="prd-content">
-                <h3>Cards</h3>
-                <ul>
-                    <li>Overall Score</li>
-                    <li>Player Rank</li>
-                    <li>Total Training</li>
-                    <li>Total Hours</li>
-                    <li>Current Streak</li>
-                </ul>
-
-                <h3>Charts</h3>
-                <ul>
-                    <li>Overall Progress</li>
-                    <li>Radar Skill</li>
-                    <li>Skill Progress</li>
-                    <li>Fault Distribution</li>
-                    <li>Improvement Trend</li>
-                </ul>
-
-                <h3>Tables</h3>
-                <ul>
-                    <li>Skill Summary</li>
-                    <li>Weakest Skill</li>
-                    <li>Achievement</li>
-                    <li>Training History</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 22: Future Enhancements -->
-        <section id="future" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">22</span>
-                <h2>Future Enhancements</h2>
-            </div>
-            <div class="prd-content">
-                <ul>
-                    <li>AI Coach Recommendation</li>
-                    <li>Video Analysis</li>
-                    <li>Swing Analysis</li>
-                    <li>Serve Speed Analysis</li>
-                    <li>Match Performance Dashboard</li>
-                    <li>Heatmap Posisi Pemain</li>
-                    <li>Shot Placement Analysis</li>
-                    <li>AI Prediction Score</li>
-                    <li>Personal Training Plan</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Section 23: AI Coach Summary -->
-        <section id="ai-coach" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">23</span>
-                <h2>AI Coach Summary (Future Feature)</h2>
-            </div>
-            <div class="prd-content">
-                <h3>Tujuan</h3>
-                <p>Memberikan analisis otomatis berdasarkan histori latihan pemain.</p>
-
-                <div class="highlight-box">
-                    <p>
-                        <strong>Contoh Insight:</strong><br><br>
-                        → Forehand Anda meningkat 6 poin dalam dua minggu terakhir.<br><br>
-                        → Backhand masih menjadi area dengan tingkat error tertinggi.<br><br>
-                        → Serve menunjukkan peningkatan konsistensi sebesar 12%.<br><br>
-                        → Disarankan fokus pada latihan Cross Court Backhand dan Footwork selama 2–3 sesi berikutnya.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 24: Open Questions -->
-        <section id="questions" class="prd-section">
-            <div class="prd-section-title">
-                <span class="prd-section-number">24</span>
-                <h2>Open Questions</h2>
-            </div>
-            <div class="prd-content">
-                <p>Beberapa hal yang masih perlu diputuskan sebelum implementasi:</p>
-
-                <div class="question-card">
-                    <h4>1. Struktur Penilaian</h4>
-                    <ul>
-                        <li>Apakah setiap skill menggunakan rentang nilai <strong>0–100</strong>?</li>
-                        <li>Atau menggunakan skala lain (misalnya 1–10)?</li>
-                    </ul>
-                </div>
-
-                <div class="question-card">
-                    <h4>2. Daftar Skill</h4>
-                    <p>Skill apa saja yang akan dinilai?</p>
-                    <ul>
-                        <li>Forehand, Backhand, Serve, Volley, Smash, Lob</li>
-                        <li>Footwork, Consistency, Accuracy, Reaction</li>
-                        <li>Stamina, Mental, Positioning</li>
-                    </ul>
-                </div>
-
-                <div class="question-card">
-                    <h4>3. Sumber Data</h4>
-                    <p>Bagaimana nilai diperoleh?</p>
-                    <ul>
-                        <li>Input manual oleh coach.</li>
-                        <li>Self assessment oleh pemain.</li>
-                        <li>Perhitungan otomatis dari drill.</li>
-                        <li>Integrasi dengan alat tracking.</li>
-                    </ul>
-                </div>
-
-                <div class="question-card">
-                    <h4>4. Jenis Latihan</h4>
-                    <p>Apakah latihan dibedakan menjadi:</p>
-                    <ul>
-                        <li>Serve Drill, Forehand Drill, Backhand Drill</li>
-                        <li>Volley Drill, Rally, Match Play</li>
-                        <li>Footwork, Physical Training</li>
-                    </ul>
-                </div>
-
-                <div class="question-card">
-                    <h4>5. Histori Data</h4>
-                    <p>Apakah setiap sesi latihan disimpan sehingga dapat dilihat:</p>
-                    <ul>
-                        <li>Harian, Mingguan, Bulanan, Tahunan</li>
-                    </ul>
-                </div>
-
-                <div class="question-card">
-                    <h4>6. Sistem Ranking</h4>
-                    <p>Pilih salah satu:</p>
-                    <ul>
-                        <li>Beginner → Elite</li>
-                        <li>Level + XP</li>
-                        <li>Bronze → Silver → Gold → Platinum</li>
-                        <li>NTRP Style</li>
-                    </ul>
-                </div>
-
-                <div class="question-card">
-                    <h4>7. Goal Management</h4>
-                    <p>Apakah target dibuat oleh:</p>
-                    <ul>
-                        <li>Player</li>
-                        <li>Coach</li>
-                        <li>Sistem secara otomatis</li>
-                    </ul>
-                </div>
-
-                <div class="question-card">
-                    <h4>8. AI Insight</h4>
-                    <p>Apakah dashboard memberikan insight otomatis seperti:</p>
-                    <ul>
-                        <li>Skill yang meningkat.</li>
-                        <li>Skill yang menurun.</li>
-                        <li>Penyebab fault terbanyak.</li>
-                        <li>Fokus latihan minggu depan.</li>
-                    </ul>
-                </div>
-
-                <div class="question-card">
-                    <h4>9. Multi User</h4>
-                    <p>Apakah aplikasi mendukung:</p>
-                    <ul>
-                        <li>Satu pemain.</li>
-                        <li>Banyak pemain.</li>
-                        <li>Banyak coach.</li>
-                        <li>Komunitas tenis.</li>
-                    </ul>
-                </div>
-
-                <div class="question-card">
-                    <h4>10. Raw Performance Metrics</h4>
-                    <p>Apakah data mentah berikut juga akan disimpan?</p>
-                    <ul>
-                        <li>First Serve In (%), Second Serve In (%)</li>
-                        <li>Double Fault, Unforced Error, Winner</li>
-                        <li>Forced Error, Rally Count, Longest Rally</li>
-                        <li>Ball Speed, Serve Speed, Accuracy (%)</li>
-                        <li>Target Hit (%)</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
     </main>
 
-    <!-- Footer -->
-    <footer style="background: var(--hunter-green); color: var(--white); padding: 40px 0; margin-top: 80px;">
-        <div class="container" style="text-align: center;">
-            <p style="color: rgba(255,255,255,0.8); margin-bottom: 16px;">© 2024 Dear Tennis. All rights reserved.</p>
-            <p style="color: rgba(255,255,255,0.6); font-size: 0.875rem;">Tennis Training Progress Dashboard - PRD v1.0</p>
-        </div>
-    </footer>
+    <script>
+        const skillsCtx = document.getElementById('skillsChart').getContext('2d');
+        new Chart(skillsCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork', 'Strategy'],
+                datasets: [{
+                    label: 'Current Level',
+                    data: [85, 72, 68, 79, 91, 75],
+                    backgroundColor: 'rgba(232, 93, 4, 0.2)',
+                    borderColor: '#E85D04',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#2C5F4B',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#E85D04'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                        pointLabels: {
+                            font: { size: 12, family: "'Inter', sans-serif", weight: '600' },
+                            color: '#3A3A3A'
+                        },
+                        ticks: { display: false, backdropColor: 'transparent' },
+                        suggestedMin: 0,
+                        suggestedMax: 100
+                    }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
 
-    <script src="js/main.js"></script>
+        const progressCtx = document.getElementById('progressChart').getContext('2d');
+        new Chart(progressCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
+                datasets: [{
+                    label: 'Overall Score',
+                    data: [65, 68, 72, 71, 75, 78, 76, 82],
+                    borderColor: '#2C5F4B',
+                    backgroundColor: 'rgba(44, 95, 75, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#E85D04',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 50,
+                        max: 100,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: { font: { family: "'Inter', sans-serif" }, color: '#3A3A3A' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: "'Inter', sans-serif" }, color: '#3A3A3A' }
+                    }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
 </body>
 </html>
