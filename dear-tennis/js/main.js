@@ -210,29 +210,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function goToSlide(index) {
-        const direction = index > currentSlide ? 'next' : 'prev';
+        // Remove active class from all slides first
+        slides.forEach(slide => {
+            slide.classList.remove('active');
+        });
         
-        slides[currentSlide].classList.remove('active');
-        
-        if (direction === 'next') {
-            slides[currentSlide].classList.add('prev');
-        } else {
-            slides[index].classList.add('prev');
-        }
-        
+        // Set the new active slide
         currentSlide = index;
         if (currentSlide >= slides.length) currentSlide = 0;
         if (currentSlide < 0) currentSlide = slides.length - 1;
         
+        // Add active class to trigger fade-in
         slides[currentSlide].classList.add('active');
-        
-        setTimeout(() => {
-            slides.forEach(slide => {
-                if (!slide.classList.contains('active')) {
-                    slide.classList.remove('prev');
-                }
-            });
-        }, 600);
         
         updateDots();
     }
