@@ -279,21 +279,6 @@
             width: 14px;
             height: 14px;
         }
-        .event-history-result {
-            text-align: right;
-            min-width: 120px;
-        }
-        .event-history-rank {
-            display: block;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--hunter-green);
-            margin-bottom: 4px;
-        }
-        .event-history-participants {
-            font-size: 0.75rem;
-            color: var(--dark-gray);
-        }
         @media (max-width: 768px) {
             .event-history-item {
                 flex-wrap: wrap;
@@ -305,14 +290,6 @@
             }
             .event-history-day {
                 font-size: 1.25rem;
-            }
-            .event-history-result {
-                text-align: left;
-                min-width: auto;
-                width: 100%;
-                padding-top: 12px;
-                border-top: 1px solid var(--light-gray);
-                margin-top: 8px;
             }
         }
         .back-link {
@@ -1205,14 +1182,14 @@
 
         // Event History Data - sorted by date (newest first)
         const eventHistoryData = [
-            { id: 1, title: 'Summer Open 2024', date: '2024-08-15', type: 'open', icon: '☀️', location: 'Jakarta Tennis Center', rank: '🥇 1st', participants: '64 players' },
-            { id: 2, title: 'Club Championship', date: '2024-07-20', type: 'championship', icon: '🎾', location: 'Senayan Sports Club', rank: '🥈 2nd', participants: '32 players' },
-            { id: 3, title: 'Tournament 2024', date: '2024-06-10', type: 'tournament', icon: '🏆', location: 'Gelora Bung Karno', rank: '🥉 3rd', participants: '48 players' },
-            { id: 4, title: 'Friendly Match Series', date: '2024-05-25', type: 'friendly', icon: '🤝', location: 'Kemang Tennis Court', rank: '🏅 Top 4', participants: '16 players' },
-            { id: 5, title: 'Spring Showdown', date: '2024-04-18', type: 'open', icon: '🌸', location: 'PIK Tennis Arena', rank: '🥇 1st', participants: '40 players' },
-            { id: 6, title: 'Winter Classic', date: '2024-03-05', type: 'tournament', icon: '❄️', location: 'BSD Tennis Center', rank: '🥈 2nd', participants: '56 players' },
-            { id: 7, title: 'Night Lights Tournament', date: '2024-02-14', type: 'friendly', icon: '🌙', location: 'Menteng Stadium', rank: '🥉 3rd', participants: '24 players' },
-            { id: 8, title: 'Rookie Cup', date: '2024-01-20', type: 'championship', icon: '⭐', location: 'Ciputra Golf Club', rank: '🏅 Top 8', participants: '28 players' }
+            { id: 1, title: 'Summer Open 2024', date: '2024-08-15', type: 'open', icon: '☀️', location: 'Jakarta Tennis Center' },
+            { id: 2, title: 'Club Championship', date: '2024-07-20', type: 'championship', icon: '🎾', location: 'Senayan Sports Club' },
+            { id: 3, title: 'Tournament 2024', date: '2024-06-10', type: 'tournament', icon: '🏆', location: 'Gelora Bung Karno' },
+            { id: 4, title: 'Friendly Match Series', date: '2024-05-25', type: 'friendly', icon: '🤝', location: 'Kemang Tennis Court' },
+            { id: 5, title: 'Spring Showdown', date: '2024-04-18', type: 'open', icon: '🌸', location: 'PIK Tennis Arena' },
+            { id: 6, title: 'Winter Classic', date: '2024-03-05', type: 'tournament', icon: '❄️', location: 'BSD Tennis Center' },
+            { id: 7, title: 'Night Lights Tournament', date: '2024-02-14', type: 'friendly', icon: '🌙', location: 'Menteng Stadium' },
+            { id: 8, title: 'Rookie Cup', date: '2024-01-20', type: 'championship', icon: '⭐', location: 'Ciputra Golf Club' }
         ];
 
         let currentHistoryPage = 1;
@@ -1243,10 +1220,6 @@
                             </svg>
                             ${event.location}
                         </div>
-                    </div>
-                    <div class="event-history-result">
-                        <span class="event-history-rank">${event.rank}</span>
-                        <span class="event-history-participants">${event.participants}</span>
                     </div>
                 </div>
             `;
