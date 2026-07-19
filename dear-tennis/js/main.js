@@ -178,6 +178,76 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ===================================
+    // HERO SLIDER
+    // ===================================
+    const slides = document.querySelectorAll('.slide');
+    const sliderPrev = document.getElementById('sliderPrev');
+    const sliderNext = document.getElementById('sliderNext');
+    const sliderDots = document.getElementById('sliderDots');
+    let currentSlide = 0;
+    let slideInterval;
+    
+    // Create dots for each slide
+    if (slides.length > 0 && sliderDots) {
+        slides.forEach((_, index) => {
+            const dot = document.createElement('span');
+            dot.classList.add('slider-dot');
+            if (index === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => goToSlide(index));
+            sliderDots.appendChild(dot);
+        });
+    }
+    
+    function updateDots() {
+        const dots = document.querySelectorAll('.slider-dot');
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentSlide);
+        });
+    }
+    
+    function goToSlide(index) {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = index;
+        if (currentSlide >= slides.length) currentSlide = 0;
+        if (currentSlide < 0) currentSlide = slides.length - 1;
+        slides[currentSlide].classList.add('active');
+        updateDots();
+    }
+    
+    function nextSlide() {
+        goToSlide(currentSlide + 1);
+    }
+    
+    function prevSlide() {
+        goToSlide(currentSlide - 1);
+    }
+    
+    function startAutoSlide() {
+        slideInterval = setInterval(nextSlide, 5000);
+    }
+    
+    function stopAutoSlide() {
+        clearInterval(slideInterval);
+    }
+    
+    if (sliderPrev && sliderNext && slides.length > 0) {
+        sliderPrev.addEventListener('click', function() {
+            stopAutoSlide();
+            prevSlide();
+            startAutoSlide();
+        });
+        
+        sliderNext.addEventListener('click', function() {
+            stopAutoSlide();
+            nextSlide();
+            startAutoSlide();
+        });
+        
+        // Start auto-advance
+        startAutoSlide();
+    }
+    
+    // ===================================
     // TESTIMONIAL SLIDER
     // ===================================
     const testimonialCards = document.querySelectorAll('.testimonial-card');
