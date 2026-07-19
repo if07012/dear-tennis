@@ -59,10 +59,36 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ===================================
-    // REVEAL ANIMATIONS ON SCROLL
+    // REVEAL ANIMATIONS ON SCROLL (Vero Studio Style)
     // ===================================
     const revealElements = document.querySelectorAll('.reveal-left, .reveal-right, .reveal-up, .reveal-scale');
+    const revealImages = document.querySelectorAll('.reveal-image');
     
+    // Use Intersection Observer for better performance
+    const revealObserverOptions = {
+        threshold: 0.15,
+        rootMargin: '0px 0px -80px 0px'
+    };
+    
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                // Optionally unobserve after animation triggers
+                // revealObserver.unobserve(entry.target);
+            }
+        });
+    }, revealObserverOptions);
+    
+    revealElements.forEach(element => {
+        revealObserver.observe(element);
+    });
+    
+    revealImages.forEach(image => {
+        revealObserver.observe(image);
+    });
+    
+    // Fallback scroll check for older browsers
     function checkReveal() {
         const triggerBottom = window.innerHeight * 0.85;
         
@@ -79,46 +105,56 @@ document.addEventListener('DOMContentLoaded', function() {
     checkReveal(); // Check on load
     
     // ===================================
-    // COUNTER ANIMATION FOR STATISTICS
+    // COUNTER ANIMATION FOR STATISTICS (Vero Studio Style)
     // ===================================
     const statNumbers = document.querySelectorAll('.stat-number, .stat-number-lg');
     let countersAnimated = false;
     
-    function animateCounters() {
-        if (countersAnimated) return;
-        
-        const statsSection = document.querySelector('.statistics');
-        if (!statsSection) return;
-        
-        const sectionTop = statsSection.getBoundingClientRect().top;
-        const triggerPoint = window.innerHeight * 0.85;
-        
-        if (sectionTop < triggerPoint) {
-            countersAnimated = true;
-            
-            statNumbers.forEach(counter => {
-                const target = parseInt(counter.getAttribute('data-target'));
-                const duration = 2000; // 2 seconds
-                const increment = target / (duration / 16); // 60fps
-                let current = 0;
-                
-                const updateCounter = () => {
-                    current += increment;
-                    if (current < target) {
-                        counter.textContent = Math.ceil(current);
-                        requestAnimationFrame(updateCounter);
-                    } else {
-                        counter.textContent = target;
-                    }
-                };
-                
-                updateCounter();
-            });
-        }
+    // Use Intersection Observer for counter animation
+    const counterObserverOptions = {
+        threshold: 0.5,
+        rootMargin: '0px 0px -100px 0px'
+    };
+    
+    const counterObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !countersAnimated) {
+                countersAnimated = true;
+                animateCounters();
+            }
+        });
+    }, counterObserverOptions);
+    
+    const statsSection = document.querySelector('.statistics, .stats-preview');
+    if (statsSection) {
+        counterObserver.observe(statsSection);
     }
     
-    window.addEventListener('scroll', animateCounters);
-    animateCounters(); // Check on load
+    function animateCounters() {
+        statNumbers.forEach((counter, index) => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            const duration = 2000 + (index * 200); // Staggered timing
+            const startTime = performance.now();
+            
+            const updateCounter = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function for smooth animation
+                const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+                const current = Math.floor(easeOutQuart * target);
+                
+                if (progress < 1) {
+                    counter.textContent = current;
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    counter.textContent = target;
+                }
+            };
+            
+            requestAnimationFrame(updateCounter);
+        });
+    }
     
     // ===================================
     // FAQ ACCORDION
@@ -178,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ===================================
-    // HERO SLIDER
+    // HERO SLIDER (Vero Studio Style)
     // ===================================
     const slides = document.querySelectorAll('.slide');
     const sliderPrev = document.getElementById('sliderPrev');
@@ -237,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function startAutoSlide() {
-        slideInterval = setInterval(nextSlide, 5000);
+        slideInterval = setInterval(nextSlide, 6000); // Slower transition for elegance
     }
     
     function stopAutoSlide() {
@@ -259,6 +295,26 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Start auto-advance
         startAutoSlide();
+    }
+    
+    // Parallax effect on mouse move for hero
+    const hero = document.querySelector('.hero');
+    if (hero) {
+        hero.addEventListener('mousemove', (e) => {
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 100;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 100;
+            
+            slides.forEach((slide, index) => {
+                const speed = (index + 1) * 0.5;
+                slide.style.transform = `translate(${xAxis * speed}px, ${yAxis * speed}px)`;
+            });
+        });
+        
+        hero.addEventListener('mouseleave', () => {
+            slides.forEach(slide => {
+                slide.style.transform = 'translate(0, 0)';
+            });
+        });
     }
     
     // ===================================
