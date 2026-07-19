@@ -62,7 +62,7 @@ html {
 
 body {
     font-family: var(--font-primary);
-    color: var(--graphite);
+    color: var(--light-gray);
     line-height: 1.6;
     overflow-x: hidden;
     background-color: var(--white);
@@ -123,12 +123,12 @@ h4 { font-size: clamp(1.25rem, 2vw, 1.5rem); }
 
 p {
     margin-bottom: 1rem;
-    color: var(--dark-gray);
+    color: var(--light-gray);
 }
 
 .lead {
     font-size: 1.25rem;
-    color: var(--graphite);
+    color: var(--light-gray);
     margin-bottom: 1.5rem;
 }
 
@@ -157,7 +157,7 @@ p {
 
 .section-subtitle {
     font-size: 1.125rem;
-    color: var(--dark-gray);
+    color: var(--light-gray);
     max-width: 600px;
 }
 
@@ -289,7 +289,7 @@ p {
 }
 
 .navbar.scrolled .nav-link {
-    color: var(--graphite);
+    color: var(--hunter-green);
 }
 
 .nav-link::after {
@@ -631,7 +631,7 @@ p {
 
 .stat-label {
     font-size: 0.875rem;
-    color: var(--dark-gray);
+    color: var(--light-gray);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -841,7 +841,7 @@ p {
 }
 
 .benefit-card p {
-    color: var(--dark-gray);
+    color: var(--light-gray);
     margin-bottom: 0;
 }
 
@@ -868,7 +868,7 @@ p {
     padding: 12px 28px;
     font-size: 0.95rem;
     font-weight: 600;
-    color: var(--graphite);
+    color: var(--hunter-green);
     background-color: var(--white);
     border-radius: 50px;
     transition: all var(--transition-normal);
@@ -961,7 +961,7 @@ p {
     align-items: center;
     gap: 6px;
     font-size: 0.875rem;
-    color: var(--dark-gray);
+    color: var(--light-gray);
 }
 
 .activity-meta svg {
@@ -1048,7 +1048,7 @@ p {
     align-items: center;
     gap: 8px;
     font-size: 0.875rem;
-    color: var(--dark-gray);
+    color: var(--light-gray);
 }
 
 .event-meta svg {
@@ -1135,7 +1135,7 @@ p {
 .testimonial-content p {
     font-size: 1.05rem;
     font-style: italic;
-    color: var(--graphite);
+    color: var(--light-gray);
     margin-bottom: 24px;
     position: relative;
     z-index: 1;
@@ -1167,7 +1167,7 @@ p {
 
 .author-info span {
     font-size: 0.875rem;
-    color: var(--dark-gray);
+    color: var(--light-gray);
 }
 
 .testimonials-nav {
@@ -1313,7 +1313,7 @@ p {
 
 .faq-answer p {
     padding: 0 30px 24px;
-    color: var(--dark-gray);
+    color: var(--light-gray);
     line-height: 1.8;
 }
 
