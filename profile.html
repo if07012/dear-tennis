@@ -312,15 +312,22 @@
                     </div>
                     <h2>Performance Overview</h2>
                     
-                    <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
                         <label for="eventFilter" style="font-weight: 500; color: var(--graphite); font-size: 0.875rem;">Filter by Event:</label>
-                        <select id="eventFilter" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--light-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--hunter-green); background: var(--white); cursor: pointer; min-width: 200px;">
-                            <option value="all">All Events</option>
+                        <select id="eventFilter" multiple style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--light-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--hunter-green); background: var(--white); cursor: pointer; min-width: 200px; min-height: 80px;">
                             <option value="tournament-2024">Tournament 2024 (Jan 2024)</option>
                             <option value="club-championship">Club Championship (Mar 2024)</option>
                             <option value="friendly-match">Friendly Match (May 2024)</option>
                             <option value="summer-open">Summer Open (Jul 2024)</option>
                         </select>
+                        <button id="clearFilterBtn" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--spicy-paprika); background: var(--white); color: var(--spicy-paprika); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 500; transition: all var(--transition-fast);">Clear Filter</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 16px; padding: 12px 16px; background: linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(232, 93, 4, 0.1)); border-radius: 12px; border-left: 4px solid var(--spicy-paprika);">
+                        <p style="margin: 0; font-size: 0.875rem; color: var(--graphite); line-height: 1.5;">
+                            <strong style="color: var(--hunter-green);">Baseline:</strong> Garis putus-putus menunjukkan rata-rata Target vs Kesalahan.<br>
+                            <strong style="color: #9D4EDD;">Pergerakan (garis ungu):</strong> Menunjukkan trend performa antara target dan kesalahan di setiap kategori. Naik = performa membaik, turun = perlu perbaikan.
+                        </p>
                     </div>
                     
                     <div class="chart-container small">
@@ -462,113 +469,154 @@
             }
         });
 
-        // Performance Chart - Menampilkan kesalahan vs target per kategori
+        // Performance Chart - Menampilkan kesalahan vs target per kategori dengan baseline
         const progressCtx = document.getElementById('progressChart').getContext('2d');
         
         // Data performance berdasarkan event
         const performanceDataByEvent = {
-            'all': {
-                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
-                datasets: [
-                    {
-                        label: 'Target',
-                        data: [90, 85, 80, 85, 95],
-                        backgroundColor: '#2C5F4B',
-                        borderRadius: 4,
-                        barThickness: 20
-                    },
-                    {
-                        label: 'Kesalahan',
-                        data: [12, 18, 22, 14, 8],
-                        backgroundColor: '#E85D04',
-                        borderRadius: 4,
-                        barThickness: 20
-                    }
-                ]
-            },
             'tournament-2024': {
                 labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
-                datasets: [
-                    {
-                        label: 'Target',
-                        data: [88, 82, 78, 83, 92],
-                        backgroundColor: '#2C5F4B',
-                        borderRadius: 4,
-                        barThickness: 20
-                    },
-                    {
-                        label: 'Kesalahan',
-                        data: [15, 20, 25, 16, 10],
-                        backgroundColor: '#E85D04',
-                        borderRadius: 4,
-                        barThickness: 20
-                    }
-                ]
+                target: [88, 82, 78, 83, 92],
+                kesalahan: [15, 20, 25, 16, 10]
             },
             'club-championship': {
                 labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
-                datasets: [
-                    {
-                        label: 'Target',
-                        data: [90, 85, 80, 85, 95],
-                        backgroundColor: '#2C5F4B',
-                        borderRadius: 4,
-                        barThickness: 20
-                    },
-                    {
-                        label: 'Kesalahan',
-                        data: [10, 16, 20, 12, 7],
-                        backgroundColor: '#E85D04',
-                        borderRadius: 4,
-                        barThickness: 20
-                    }
-                ]
+                target: [90, 85, 80, 85, 95],
+                kesalahan: [10, 16, 20, 12, 7]
             },
             'friendly-match': {
                 labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
-                datasets: [
-                    {
-                        label: 'Target',
-                        data: [92, 88, 82, 87, 96],
-                        backgroundColor: '#2C5F4B',
-                        borderRadius: 4,
-                        barThickness: 20
-                    },
-                    {
-                        label: 'Kesalahan',
-                        data: [8, 14, 18, 10, 5],
-                        backgroundColor: '#E85D04',
-                        borderRadius: 4,
-                        barThickness: 20
-                    }
-                ]
+                target: [92, 88, 82, 87, 96],
+                kesalahan: [8, 14, 18, 10, 5]
             },
             'summer-open': {
                 labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
-                datasets: [
-                    {
-                        label: 'Target',
-                        data: [93, 89, 84, 88, 97],
-                        backgroundColor: '#2C5F4B',
-                        borderRadius: 4,
-                        barThickness: 20
-                    },
-                    {
-                        label: 'Kesalahan',
-                        data: [7, 12, 16, 9, 4],
-                        backgroundColor: '#E85D04',
-                        borderRadius: 4,
-                        barThickness: 20
-                    }
-                ]
+                target: [93, 89, 84, 88, 97],
+                kesalahan: [7, 12, 16, 9, 4]
             }
         };
         
-        let currentPerformanceData = performanceDataByEvent['all'];
+        // Fungsi untuk menghitung rata-rata dari multiple events
+        function calculateAverage(selectedEvents) {
+            if (selectedEvents.length === 0) {
+                return {
+                    labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                    target: [0, 0, 0, 0, 0],
+                    kesalahan: [0, 0, 0, 0, 0]
+                };
+            }
+            
+            const avgTarget = [0, 0, 0, 0, 0];
+            const avgKesalahan = [0, 0, 0, 0, 0];
+            
+            selectedEvents.forEach(event => {
+                const data = performanceDataByEvent[event];
+                for (let i = 0; i < 5; i++) {
+                    avgTarget[i] += data.target[i];
+                    avgKesalahan[i] += data.kesalahan[i];
+                }
+            });
+            
+            for (let i = 0; i < 5; i++) {
+                avgTarget[i] = Math.round(avgTarget[i] / selectedEvents.length);
+                avgKesalahan[i] = Math.round(avgKesalahan[i] / selectedEvents.length);
+            }
+            
+            return {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                target: avgTarget,
+                kesalahan: avgKesalahan
+            };
+        }
         
-        const progressChart = new Chart(progressCtx, {
+        // Fungsi untuk membuat chart data dengan baseline dan trend line
+        function createChartData(selectedEvents) {
+            const avgData = calculateAverage(selectedEvents);
+            
+            // Hitung baseline (rata-rata overall)
+            const baselineTarget = Math.round(avgData.target.reduce((a, b) => a + b, 0) / 5);
+            const baselineKesalahan = Math.round(avgData.kesalahan.reduce((a, b) => a + b, 0) / 5);
+            
+            // Hitung movement/gap antara target dan kesalahan
+            const movementData = avgData.target.map((target, i) => {
+                return ((target - avgData.kesalahan[i]) + target) / 2;
+            });
+            
+            return {
+                labels: avgData.labels,
+                datasets: [
+                    {
+                        label: 'Target',
+                        data: avgData.target,
+                        backgroundColor: '#2C5F4B',
+                        borderColor: '#2C5F4B',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        barThickness: 20,
+                        order: 3
+                    },
+                    {
+                        label: 'Kesalahan',
+                        data: avgData.kesalahan,
+                        backgroundColor: '#E85D04',
+                        borderColor: '#E85D04',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        barThickness: 20,
+                        order: 3
+                    },
+                    {
+                        label: 'Pergerakan',
+                        data: movementData,
+                        type: 'line',
+                        borderColor: '#9D4EDD',
+                        borderWidth: 3,
+                        borderDash: [],
+                        fill: false,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#9D4EDD',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        tension: 0.4,
+                        order: 1
+                    },
+                    {
+                        label: 'Baseline Target',
+                        data: Array(5).fill(baselineTarget),
+                        type: 'line',
+                        borderColor: '#2C5F4B',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0,
+                        order: 2
+                    },
+                    {
+                        label: 'Baseline Kesalahan',
+                        data: Array(5).fill(baselineKesalahan),
+                        type: 'line',
+                        borderColor: '#E85D04',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0,
+                        order: 2
+                    }
+                ]
+            };
+        }
+        
+        // Get selected events from multi-select
+        function getSelectedEvents() {
+            const select = document.getElementById('eventFilter');
+            return Array.from(select.selectedOptions).map(option => option.value);
+        }
+        
+        // Initialize chart with all events selected
+        let selectedEvents = Object.keys(performanceDataByEvent);
+        let progressChart = new Chart(progressCtx, {
             type: 'bar',
-            data: currentPerformanceData,
+            data: createChartData(selectedEvents),
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -589,7 +637,12 @@
                         bodyFont: { size: 13 },
                         padding: 12,
                         cornerRadius: 8,
-                        displayColors: true
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y;
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -606,13 +659,32 @@
             }
         });
         
-        // Event filter listener
+        // Event filter listener for multi-select
         const eventFilter = document.getElementById('eventFilter');
         eventFilter.addEventListener('change', function() {
-            const selectedEvent = this.value;
-            currentPerformanceData = performanceDataByEvent[selectedEvent];
-            progressChart.data = currentPerformanceData;
+            selectedEvents = getSelectedEvents();
+            if (selectedEvents.length === 0) {
+                // If no selection, show all events
+                selectedEvents = Object.keys(performanceDataByEvent);
+            }
+            progressChart.data = createChartData(selectedEvents);
             progressChart.update();
+        });
+        
+        // Clear filter button
+        const clearFilterBtn = document.getElementById('clearFilterBtn');
+        clearFilterBtn.addEventListener('click', function() {
+            Array.from(eventFilter.options).forEach(option => {
+                option.selected = true;
+            });
+            selectedEvents = Object.keys(performanceDataByEvent);
+            progressChart.data = createChartData(selectedEvents);
+            progressChart.update();
+        });
+        
+        // Select all by default
+        Array.from(eventFilter.options).forEach(option => {
+            option.selected = true;
         });
     </script>
 </body>
