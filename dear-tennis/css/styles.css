@@ -371,8 +371,30 @@ p {
 }
 
 @keyframes kenburns {
-    from { transform: scale(1); }
-    to { transform: scale(1.1); }
+    from { transform: scale(1) translateZ(0); }
+    to { transform: scale(1.08) translateZ(0); }
+}
+
+/* Smooth Parallax for Hero */
+.hero-slider .slide {
+    will-change: transform, opacity;
+}
+
+/* Page Transition Effect */
+.page-transition {
+    opacity: 0;
+    animation: pageFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pageFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .hero-overlay {
@@ -642,11 +664,18 @@ p {
     border-radius: 50%;
 }
 
-/* Reveal Animations */
-.reveal-left {
+/* Reveal Animations - Vero Studio Style */
+.reveal-left,
+.reveal-right,
+.reveal-up,
+.reveal-scale {
     opacity: 0;
-    transform: translateX(-50px);
-    transition: all 0.8s ease;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-left {
+    transform: translateX(-60px);
+    transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .reveal-left.active {
@@ -655,9 +684,8 @@ p {
 }
 
 .reveal-right {
-    opacity: 0;
-    transform: translateX(50px);
-    transition: all 0.8s ease;
+    transform: translateX(60px);
+    transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .reveal-right.active {
@@ -666,9 +694,8 @@ p {
 }
 
 .reveal-up {
-    opacity: 0;
-    transform: translateY(50px);
-    transition: all 0.8s ease;
+    transform: translateY(60px);
+    transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .reveal-up.active {
@@ -677,9 +704,8 @@ p {
 }
 
 .reveal-scale {
-    opacity: 0;
-    transform: scale(0.9);
-    transition: all 0.8s ease;
+    transform: scale(0.95);
+    transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .reveal-scale.active {
@@ -687,11 +713,73 @@ p {
     transform: scale(1);
 }
 
+/* Image Reveal Effect */
+.reveal-image {
+    position: relative;
+    overflow: hidden;
+}
+
+.reveal-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--hunter-green);
+    transform: scaleY(1);
+    transform-origin: bottom;
+    transition: transform 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 10;
+}
+
+.reveal-image.active::before {
+    transform: scaleY(0);
+}
+
+.reveal-image img,
+.reveal-image .placeholder-image {
+    transform: scale(1.1);
+    transition: transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-image.active img,
+.reveal-image.active .placeholder-image {
+    transform: scale(1);
+}
+
+/* Text Reveal Animation */
+.text-reveal {
+    display: inline-block;
+    overflow: hidden;
+}
+
+.text-reveal-line {
+    display: block;
+    overflow: hidden;
+}
+
+.text-reveal-word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.text-reveal.active .text-reveal-word {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Staggered delays for grid items */
 .delay-1 { transition-delay: 0.1s; }
-.delay-2 { transition-delay: 0.2s; }
-.delay-3 { transition-delay: 0.3s; }
-.delay-4 { transition-delay: 0.4s; }
-.delay-5 { transition-delay: 0.5s; }
+.delay-2 { transition-delay: 0.15s; }
+.delay-3 { transition-delay: 0.2s; }
+.delay-4 { transition-delay: 0.25s; }
+.delay-5 { transition-delay: 0.3s; }
+.delay-6 { transition-delay: 0.35s; }
+.delay-7 { transition-delay: 0.4s; }
+.delay-8 { transition-delay: 0.45s; }
 
 /* ===================================
    WHY JOIN SECTION
