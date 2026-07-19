@@ -297,8 +297,46 @@
                 <h2 class="section-title reveal-up delay-1">Upcoming Events</h2>
                 <p class="section-subtitle reveal-up delay-2">Mark your calendar and join us</p>
             </div>
-            <div class="events-grid">
-                <div class="event-card reveal-up">
+            
+            <!-- Event Filters -->
+            <div class="event-filters-container reveal-up">
+                <button class="filter-toggle-btn" id="filterToggleBtn" aria-label="Toggle filters">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                    </svg>
+                    <span>Filters</span>
+                    <span class="filter-count" id="filterCount">0</span>
+                </button>
+                
+                <div class="event-filters" id="eventFilters">
+                    <div class="filter-group">
+                        <label for="eventSearch">Search by Name</label>
+                        <div class="search-input-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="m21 21-4.35-4.35"/>
+                            </svg>
+                            <input type="text" id="eventSearch" placeholder="Search events..." autocomplete="off">
+                            <button class="clear-search" id="clearSearch" aria-label="Clear search">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"/>
+                                    <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Active Filters</label>
+                        <div class="active-filters" id="activeFilters">
+                            <span class="no-filters">No active filters</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="events-grid" id="eventsGrid">
+                <div class="event-card reveal-up" data-event-name="New Year Kickoff Tournament" data-location="Central Park Courts">
                     <div class="event-date">
                         <span class="day">15</span>
                         <span class="month">JAN</span>
@@ -313,7 +351,7 @@
                         <a href="#cta" class="btn btn-secondary btn-small">Register Now</a>
                     </div>
                 </div>
-                <div class="event-card reveal-up delay-1">
+                <div class="event-card reveal-up delay-1" data-event-name="Beginner's Workshop Series" data-location="Riverside Academy">
                     <div class="event-date">
                         <span class="day">22</span>
                         <span class="month">JAN</span>
@@ -328,7 +366,7 @@
                         <a href="#cta" class="btn btn-secondary btn-small">Reserve Spot</a>
                     </div>
                 </div>
-                <div class="event-card reveal-up delay-2">
+                <div class="event-card reveal-up delay-2" data-event-name="Social Mixer Night" data-location="Downtown Club">
                     <div class="event-date">
                         <span class="day">28</span>
                         <span class="month">JAN</span>
@@ -343,7 +381,7 @@
                         <a href="#cta" class="btn btn-secondary btn-small">RSVP</a>
                     </div>
                 </div>
-                <div class="event-card reveal-up delay-3">
+                <div class="event-card reveal-up delay-3" data-event-name="Advanced Strategy Clinic" data-location="Pro Tennis Center">
                     <div class="event-date">
                         <span class="day">04</span>
                         <span class="month">FEB</span>

@@ -291,6 +291,168 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ===================================
+    // EVENT FILTERS
+    // ===================================
+    const filterToggleBtn = document.getElementById('filterToggleBtn');
+    const eventFilters = document.getElementById('eventFilters');
+    const eventSearch = document.getElementById('eventSearch');
+    const clearSearch = document.getElementById('clearSearch');
+    const activeFiltersContainer = document.getElementById('activeFilters');
+    const filterCount = document.getElementById('filterCount');
+    const eventsGrid = document.getElementById('eventsGrid');
+    const eventCards = document.querySelectorAll('.event-card');
+    
+    let activeSearchQuery = '';
+    let isFiltersOpen = false;
+    
+    // Toggle filters collapse
+    if (filterToggleBtn && eventFilters) {
+        filterToggleBtn.addEventListener('click', function() {
+            isFiltersOpen = !isFiltersOpen;
+            eventFilters.classList.toggle('active', isFiltersOpen);
+            filterToggleBtn.classList.toggle('active', isFiltersOpen);
+        });
+    }
+    
+    // Search functionality
+    if (eventSearch) {
+        eventSearch.addEventListener('input', function(e) {
+            const query = e.target.value.trim().toLowerCase();
+            activeSearchQuery = query;
+            
+            // Show/hide clear button
+            if (clearSearch) {
+                clearSearch.classList.toggle('visible', query.length > 0);
+            }
+            
+            applyEventFilters();
+        });
+    }
+    
+    // Clear search
+    if (clearSearch && eventSearch) {
+        clearSearch.addEventListener('click', function() {
+            eventSearch.value = '';
+            activeSearchQuery = '';
+            clearSearch.classList.remove('visible');
+            eventSearch.focus();
+            applyEventFilters();
+        });
+    }
+    
+    function applyEventFilters() {
+        let visibleCount = 0;
+        
+        eventCards.forEach(card => {
+            const eventName = card.getAttribute('data-event-name') || '';
+            const matchesSearch = !activeSearchQuery || 
+                                  eventName.toLowerCase().includes(activeSearchQuery);
+            
+            if (matchesSearch) {
+                card.style.display = 'flex';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+            }
+        });
+        
+        // Update active filters display
+        updateActiveFiltersDisplay();
+        
+        // Show/hide no results message
+        updateNoResultsMessage(visibleCount);
+    }
+    
+    function updateActiveFiltersDisplay() {
+        let filterCountNum = 0;
+        const filterTags = [];
+        
+        if (activeSearchQuery) {
+            filterCountNum++;
+            filterTags.push({
+                type: 'search',
+                label: `Search: "${activeSearchQuery}"`
+            });
+        }
+        
+        // Update filter count badge
+        if (filterCount) {
+            filterCount.textContent = filterCountNum;
+            filterCount.classList.toggle('hidden', filterCountNum === 0);
+        }
+        
+        // Update active filters container
+        if (activeFiltersContainer) {
+            if (filterTags.length === 0) {
+                activeFiltersContainer.innerHTML = '<span class="no-filters">No active filters</span>';
+            } else {
+                activeFiltersContainer.innerHTML = filterTags.map(filter => `
+                    <span class="filter-tag" data-filter-type="${filter.type}">
+                        ${filter.label}
+                        <button aria-label="Remove filter">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </span>
+                `).join('');
+                
+                // Add remove event listeners
+                activeFiltersContainer.querySelectorAll('.filter-tag button').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const filterTag = this.closest('.filter-tag');
+                        const filterType = filterTag.getAttribute('data-filter-type');
+                        
+                        if (filterType === 'search') {
+                            if (eventSearch) eventSearch.value = '';
+                            activeSearchQuery = '';
+                            if (clearSearch) clearSearch.classList.remove('visible');
+                        }
+                        
+                        applyEventFilters();
+                    });
+                });
+            }
+        }
+    }
+    
+    function updateNoResultsMessage(visibleCount) {
+        // Remove existing no results message if any
+        const existingMsg = eventsGrid?.querySelector('.no-results-message');
+        if (existingMsg) {
+            existingMsg.remove();
+        }
+        
+        if (eventsGrid) {
+            eventsGrid.classList.toggle('no-results', visibleCount === 0);
+        }
+        
+        if (visibleCount === 0 && eventsGrid) {
+            const noResultsMsg = document.createElement('div');
+            noResultsMsg.className = 'no-results-message';
+            noResultsMsg.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                </svg>
+                <h3>No events found</h3>
+                <p>Try adjusting your search terms or clearing filters</p>
+            `;
+            eventsGrid.appendChild(noResultsMsg);
+        }
+    }
+    
+    // Initialize filter display
+    updateActiveFiltersDisplay();
+    
+    // ===================================
     // HERO SLIDER (Vero Studio Style)
     // ===================================
     const slides = document.querySelectorAll('.slide');
