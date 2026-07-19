@@ -264,6 +264,45 @@
             padding-left: 52px;
             margin-top: 12px;
         }
+        .skill-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, opacity 0.3s ease;
+            opacity: 0;
+        }
+        .skill-details.show {
+            max-height: 500px;
+            opacity: 1;
+        }
+        .skill-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--hunter-green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 12px;
+            margin-left: 52px;
+            transition: all var(--transition-fast);
+            border-radius: 8px;
+        }
+        .skill-toggle-btn:hover {
+            background: rgba(44, 95, 75, 0.1);
+        }
+        .skill-toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.3s ease;
+        }
+        .skill-toggle-btn.active svg {
+            transform: rotate(180deg);
+        }
         .skill-stat-mini {
             text-align: center;
             padding: 8px;
@@ -617,6 +656,9 @@
             .skill-stats {
                 padding-left: 48px;
             }
+            .skill-toggle-btn {
+                margin-left: 48px;
+            }
             .skill-stats {
                 grid-template-columns: repeat(3, 1fr);
                 gap: 8px;
@@ -643,6 +685,9 @@
             .skill-description,
             .skill-stats {
                 padding-left: 0;
+            }
+            .skill-toggle-btn {
+                margin-left: 0;
             }
             .skill-level-badge {
                 font-size: 0.65rem;
@@ -888,19 +933,27 @@
                             <div class="skill-bar-track">
                                 <div class="skill-bar-fill" id="forehandBar" style="width: 85%; background: linear-gradient(90deg, #2ECC71, #27AE60);"></div>
                             </div>
-                            <p class="skill-description">Konsistensi dan akurasi forehand sangat baik dengan kontrol bola yang matang.</p>
-                            <div class="skill-stats">
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">92%</span>
-                                    <span class="skill-stat-mini-label">Accuracy</span>
-                                </div>
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">78%</span>
-                                    <span class="skill-stat-mini-label">Power</span>
-                                </div>
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">85%</span>
-                                    <span class="skill-stat-mini-label">Consistency</span>
+                            <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                <span>Lihat Detail</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="skill-details">
+                                <p class="skill-description">Konsistensi dan akurasi forehand sangat baik dengan kontrol bola yang matang.</p>
+                                <div class="skill-stats">
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">92%</span>
+                                        <span class="skill-stat-mini-label">Accuracy</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">78%</span>
+                                        <span class="skill-stat-mini-label">Power</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">85%</span>
+                                        <span class="skill-stat-mini-label">Consistency</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -931,19 +984,27 @@
                             <div class="skill-bar-track">
                                 <div class="skill-bar-fill" id="backhandBar" style="width: 72%; background: linear-gradient(90deg, #3498DB, #2980B9);"></div>
                             </div>
-                            <p class="skill-description">Backhand cukup solid namun perlu peningkatan dalam hal power dan konsistensi.</p>
-                            <div class="skill-stats">
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">75%</span>
-                                    <span class="skill-stat-mini-label">Accuracy</span>
-                                </div>
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">65%</span>
-                                    <span class="skill-stat-mini-label">Power</span>
-                                </div>
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">76%</span>
-                                    <span class="skill-stat-mini-label">Consistency</span>
+                            <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                <span>Lihat Detail</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="skill-details">
+                                <p class="skill-description">Backhand cukup solid namun perlu peningkatan dalam hal power dan konsistensi.</p>
+                                <div class="skill-stats">
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">75%</span>
+                                        <span class="skill-stat-mini-label">Accuracy</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">65%</span>
+                                        <span class="skill-stat-mini-label">Power</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">76%</span>
+                                        <span class="skill-stat-mini-label">Consistency</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -976,19 +1037,27 @@
                             <div class="skill-bar-track">
                                 <div class="skill-bar-fill" id="serveBar" style="width: 68%; background: linear-gradient(90deg, #F39C12, #E67E22);"></div>
                             </div>
-                            <p class="skill-description">Serve memerlukan perbaikan teknik dan konsistensi untuk meningkatkan efektivitas.</p>
-                            <div class="skill-stats">
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">70%</span>
-                                    <span class="skill-stat-mini-label">Accuracy</span>
-                                </div>
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">62%</span>
-                                    <span class="skill-stat-mini-label">Power</span>
-                                </div>
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">72%</span>
-                                    <span class="skill-stat-mini-label">Consistency</span>
+                            <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                <span>Lihat Detail</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="skill-details">
+                                <p class="skill-description">Serve memerlukan perbaikan teknik dan konsistensi untuk meningkatkan efektivitas.</p>
+                                <div class="skill-stats">
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">70%</span>
+                                        <span class="skill-stat-mini-label">Accuracy</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">62%</span>
+                                        <span class="skill-stat-mini-label">Power</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">72%</span>
+                                        <span class="skill-stat-mini-label">Consistency</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1018,19 +1087,27 @@
                             <div class="skill-bar-track">
                                 <div class="skill-bar-fill" id="volleyBar" style="width: 79%; background: linear-gradient(90deg, #E91E63, #D81B60);"></div>
                             </div>
-                            <p class="skill-description">Volley menunjukkan kemampuan net play yang baik dengan refleks cepat.</p>
-                            <div class="skill-stats">
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">82%</span>
-                                    <span class="skill-stat-mini-label">Accuracy</span>
-                                </div>
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">71%</span>
-                                    <span class="skill-stat-mini-label">Power</span>
-                                </div>
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">84%</span>
-                                    <span class="skill-stat-mini-label">Consistency</span>
+                            <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                <span>Lihat Detail</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="skill-details">
+                                <p class="skill-description">Volley menunjukkan kemampuan net play yang baik dengan refleks cepat.</p>
+                                <div class="skill-stats">
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">82%</span>
+                                        <span class="skill-stat-mini-label">Accuracy</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">71%</span>
+                                        <span class="skill-stat-mini-label">Power</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">84%</span>
+                                        <span class="skill-stat-mini-label">Consistency</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1063,19 +1140,27 @@
                             <div class="skill-bar-track">
                                 <div class="skill-bar-fill" id="footworkBar" style="width: 91%; background: linear-gradient(90deg, #9B59B6, #8E44AD);"></div>
                             </div>
-                            <p class="skill-description">Footwork luar biasa dengan pergerakan cepat dan posisi yang tepat di lapangan.</p>
-                            <div class="skill-stats">
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">95%</span>
-                                    <span class="skill-stat-mini-label">Speed</span>
-                                </div>
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">88%</span>
-                                    <span class="skill-stat-mini-label">Agility</span>
-                                </div>
-                                <div class="skill-stat-mini">
-                                    <span class="skill-stat-mini-value">90%</span>
-                                    <span class="skill-stat-mini-label">Balance</span>
+                            <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                <span>Lihat Detail</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="skill-details">
+                                <p class="skill-description">Footwork luar biasa dengan pergerakan cepat dan posisi yang tepat di lapangan.</p>
+                                <div class="skill-stats">
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">95%</span>
+                                        <span class="skill-stat-mini-label">Speed</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">88%</span>
+                                        <span class="skill-stat-mini-label">Agility</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">90%</span>
+                                        <span class="skill-stat-mini-label">Balance</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2152,6 +2237,22 @@
 
         // Initialize with all events selected
         updateFilterState();
+
+        // Toggle skill details function
+        function toggleSkillDetails(button) {
+            const details = button.nextElementSibling;
+            const textSpan = button.querySelector('span');
+            
+            if (details.classList.contains('show')) {
+                details.classList.remove('show');
+                textSpan.textContent = 'Lihat Detail';
+                button.classList.remove('active');
+            } else {
+                details.classList.add('show');
+                textSpan.textContent = 'Sembunyikan Detail';
+                button.classList.add('active');
+            }
+        }
     </script>
 </body>
 </html>
