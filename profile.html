@@ -325,6 +325,17 @@
                             </div>
                         </div>
                         
+                        <!-- Search Input -->
+                        <div class="filter-search-wrapper" style="margin-bottom: 16px; position: relative;">
+                            <div style="position: relative;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--dark-gray);">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <path d="M21 21l-4.35-4.35"/>
+                                </svg>
+                                <input type="text" id="eventSearchInput" placeholder="Search events by name..." style="width: 100%; padding: 12px 16px 12px 44px; border-radius: 12px; border: 2px solid var(--light-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; transition: all var(--transition-fast); outline: none;" onfocus="this.style.borderColor='var(--hunter-green)'; this.style.boxShadow='0 0 0 3px rgba(44, 95, 75, 0.1)'" onblur="this.style.borderColor='var(--light-gray)'; this.style.boxShadow='none'">
+                            </div>
+                        </div>
+                        
                         <div class="filter-chips-wrapper" style="position: relative;">
                             <div class="filter-chips" id="filterChips" style="display: flex; flex-wrap: wrap; gap: 10px; max-height: 220px; overflow-y: auto; padding-right: 8px; transition: all var(--transition-normal);">
                                 <button class="filter-chip active" data-event="tournament-2024" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--hunter-green); background: linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(44, 95, 75, 0.05)); color: var(--hunter-green); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
@@ -376,6 +387,18 @@
                                     <span>❤️</span>
                                     <span>Charity Challenge</span>
                                 </button>
+                            </div>
+                            <!-- Selected Filters Collapse Row -->
+                            <div id="selectedFiltersRow" style="display: none; margin-top: 12px; padding: 12px; background: var(--off-white); border-radius: 12px; border: 1px solid var(--light-gray);">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-size: 0.75rem; font-weight: 600; color: var(--dark-gray); text-transform: uppercase; letter-spacing: 0.5px;">Selected Filters</span>
+                                    <button id="collapseSelectedBtn" style="background: none; border: none; padding: 4px; cursor: pointer; color: var(--hunter-green); display: flex; align-items: center; gap: 4px;" title="Collapse selected filters">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" id="collapseIcon">
+                                            <polyline points="18 15 12 9 6 15"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div id="selectedChipsContainer" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
                             </div>
                             <button id="showMoreBtn" style="width: 100%; padding: 10px; margin-top: 12px; border-radius: 8px; border: 1px dashed var(--hunter-green); background: transparent; color: var(--hunter-green); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.background='rgba(44, 95, 75, 0.05)'" onmouseout="this.style.background='transparent'">
                                 <span>Show More Events</span>
@@ -800,7 +823,75 @@
         const selectedCountEl = document.getElementById('selectedCount');
         const showMoreBtn = document.getElementById('showMoreBtn');
         const filterChipsContainer = document.getElementById('filterChips');
+        const eventSearchInput = document.getElementById('eventSearchInput');
+        const selectedFiltersRow = document.getElementById('selectedFiltersRow');
+        const selectedChipsContainer = document.getElementById('selectedChipsContainer');
+        const collapseSelectedBtn = document.getElementById('collapseSelectedBtn');
+        const collapseIcon = document.getElementById('collapseIcon');
         let isExpanded = false;
+        let isCollapsedSelected = false;
+        
+        // Search functionality for filtering events by name
+        eventSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            filterChips.forEach(chip => {
+                const eventName = chip.textContent.toLowerCase();
+                if (searchTerm === '' || eventName.includes(searchTerm)) {
+                    chip.style.display = 'flex';
+                } else {
+                    chip.style.display = 'none';
+                }
+            });
+        });
+        
+        // Show/Hide selected filters collapse
+        function updateSelectedFiltersDisplay() {
+            const activeChips = Array.from(filterChips).filter(chip => chip.classList.contains('active'));
+            
+            if (activeChips.length > 0) {
+                selectedFiltersRow.style.display = 'block';
+                
+                // Update selected chips container
+                selectedChipsContainer.innerHTML = '';
+                activeChips.forEach(chip => {
+                    const miniChip = document.createElement('span');
+                    miniChip.style.padding = '6px 12px';
+                    miniChip.style.borderRadius = '20px';
+                    miniChip.style.fontSize = '0.75rem';
+                    miniChip.style.fontWeight = '600';
+                    miniChip.style.background = chip.style.background;
+                    miniChip.style.borderColor = chip.style.borderColor;
+                    miniChip.style.borderWidth = '1px';
+                    miniChip.style.borderStyle = 'solid';
+                    miniChip.style.color = chip.style.color;
+                    miniChip.style.display = 'flex';
+                    miniChip.style.alignItems = 'center';
+                    miniChip.style.gap = '6px';
+                    
+                    const icon = chip.querySelector('span:first-child').textContent;
+                    const name = chip.querySelector('span:last-child').textContent;
+                    miniChip.innerHTML = `<span>${icon}</span><span>${name}</span>`;
+                    
+                    selectedChipsContainer.appendChild(miniChip);
+                });
+            } else {
+                selectedFiltersRow.style.display = 'none';
+            }
+        }
+        
+        // Collapse/Expand selected filters
+        collapseSelectedBtn.addEventListener('click', function() {
+            isCollapsedSelected = !isCollapsedSelected;
+            
+            if (isCollapsedSelected) {
+                selectedChipsContainer.style.display = 'none';
+                collapseIcon.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
+            } else {
+                selectedChipsContainer.style.display = 'flex';
+                collapseIcon.innerHTML = '<polyline points="18 15 12 9 6 15"/>';
+            }
+        });
         
         // Show More/Less button functionality
         showMoreBtn.addEventListener('click', function() {
@@ -874,6 +965,9 @@
             
             // Update count display
             selectedCountEl.textContent = selectedEvents.length + ' event' + (selectedEvents.length !== 1 ? 's' : '') + ' selected';
+            
+            // Update selected filters display
+            updateSelectedFiltersDisplay();
         }
         
         // Select All button
@@ -922,6 +1016,9 @@
             updateSkillBreakdown(Object.keys(performanceDataByEvent));
             
             selectedCountEl.textContent = Object.keys(performanceDataByEvent).length + ' events selected';
+            
+            // Hide selected filters row when cleared
+            selectedFiltersRow.style.display = 'none';
         });
         
         // Initialize with all events selected
