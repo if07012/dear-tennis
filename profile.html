@@ -264,6 +264,7 @@
         }
         .event-history-info {
             flex: 1;
+            min-width: 0;
         }
         .event-history-title {
             font-size: 1rem;
@@ -295,6 +296,38 @@
             font-weight: 700;
             font-size: 0.875rem;
             box-shadow: var(--shadow-sm);
+        }
+        .event-history-details {
+            margin-top: 8px;
+            padding: 12px;
+            background: rgba(107, 91, 149, 0.08);
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+        .event-history-score {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--hunter-green);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .event-history-score svg {
+            width: 16px;
+            height: 16px;
+        }
+        .event-history-partners {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--dark-gray);
+        }
+        .event-history-partners svg {
+            width: 16px;
+            height: 16px;
+        }
+        .partners-list {
+            font-weight: 500;
         }
         @media (max-width: 768px) {
             .event-history-item {
@@ -1202,13 +1235,13 @@
             { id: 1, title: 'Summer Open 2024', date: '2024-08-15', type: 'open', icon: '☀️', location: 'Jakarta Tennis Center' },
             { id: 2, title: 'Club Championship', date: '2024-07-20', type: 'championship', icon: '🎾', location: 'Senayan Sports Club' },
             { id: 3, title: 'Tournament 2024', date: '2024-06-10', type: 'tournament', icon: '🏆', location: 'Gelora Bung Karno' },
-            { id: 4, title: 'Fun Match Series', date: '2024-05-25', type: 'funmatch', icon: '🤝', location: 'Kemang Tennis Court', rank: 2 },
+            { id: 4, title: 'Fun Match Series', date: '2024-05-25', type: 'funmatch', icon: '🤝', location: 'Kemang Tennis Court', rank: 2, score: '6-4, 3-6, 6-3', isDoubles: true, partners: ['Andi Wijaya', 'Budi Santoso'] },
             { id: 5, title: 'Spring Showdown', date: '2024-04-18', type: 'open', icon: '🌸', location: 'PIK Tennis Arena' },
             { id: 6, title: 'Winter Classic', date: '2024-03-05', type: 'tournament', icon: '❄️', location: 'BSD Tennis Center' },
             { id: 7, title: 'Training Session', date: '2024-02-14', type: 'training', icon: '🎯', location: 'Menteng Stadium' },
-            { id: 8, title: 'Fun Match Night', date: '2024-01-20', type: 'funmatch', icon: '⭐', location: 'Ciputra Golf Club', rank: 1 },
+            { id: 8, title: 'Fun Match Night', date: '2024-01-20', type: 'funmatch', icon: '⭐', location: 'Ciputra Golf Club', rank: 1, score: '7-5, 6-2', isDoubles: false, partners: [] },
             { id: 9, title: 'Advanced Training', date: '2024-01-10', type: 'training', icon: '💪', location: 'Senayan Sports Club' },
-            { id: 10, title: 'Weekend Fun Match', date: '2023-12-15', type: 'funmatch', icon: '🎉', location: 'Jakarta Tennis Center', rank: 3 }
+            { id: 10, title: 'Weekend Fun Match', date: '2023-12-15', type: 'funmatch', icon: '🎉', location: 'Jakarta Tennis Center', rank: 3, score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan', 'David Lim'] }
         ];
 
         let currentHistoryPage = 1;
@@ -1224,6 +1257,7 @@
         function createEventHistoryItem(event) {
             const { day, month } = formatDate(event.date);
             let rankHtml = '';
+            let detailsHtml = '';
             
             // Only show rank for funmatch events
             if (event.type === 'funmatch' && event.rank) {
@@ -1232,6 +1266,45 @@
                         <span class="rank-badge">#${event.rank}</span>
                     </div>
                 `;
+                
+                // Show score and partners for funmatch events
+                let scoreHtml = '';
+                let partnersHtml = '';
+                
+                if (event.score) {
+                    scoreHtml = `
+                        <div class="event-history-score">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                            Score: ${event.score}
+                        </div>
+                    `;
+                }
+                
+                if (event.isDoubles && event.partners && event.partners.length > 0) {
+                    partnersHtml = `
+                        <div class="event-history-partners">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            <span class="partners-list">Partner: ${event.partners.join(', ')}</span>
+                        </div>
+                    `;
+                }
+                
+                if (scoreHtml || partnersHtml) {
+                    detailsHtml = `
+                        <div class="event-history-details">
+                            ${scoreHtml}
+                            ${partnersHtml}
+                        </div>
+                    `;
+                }
             }
             
             return `
@@ -1250,6 +1323,7 @@
                             </svg>
                             ${event.location}
                         </div>
+                        ${detailsHtml}
                     </div>
                     ${rankHtml}
                 </div>
