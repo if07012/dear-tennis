@@ -195,6 +195,254 @@
             color: var(--graphite);
             text-transform: uppercase;
         }
+        .event-history-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .event-history-item {
+            background: var(--off-white);
+            border-radius: 16px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            transition: all var(--transition-fast);
+            border-left: 4px solid transparent;
+        }
+        .event-history-item:hover {
+            background: var(--white);
+            box-shadow: var(--shadow-md);
+            transform: translateX(4px);
+        }
+        .event-history-item.tournament {
+            border-left-color: var(--hunter-green);
+        }
+        .event-history-item.championship {
+            border-left-color: var(--muted-teal);
+        }
+        .event-history-item.funmatch {
+            border-left-color: #6B5B95;
+        }
+        .event-history-item.open {
+            border-left-color: #FF6B6B;
+        }
+        .event-history-item.training {
+            border-left-color: #4ECDC4;
+        }
+        .event-history-date {
+            min-width: 100px;
+            text-align: center;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, var(--hunter-green), var(--muted-teal));
+            border-radius: 12px;
+            color: var(--white);
+        }
+        .event-history-day {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .event-history-month {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+        .event-history-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: rgba(44, 95, 75, 0.1);
+            flex-shrink: 0;
+        }
+        .event-history-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .event-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+        .event-history-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .event-history-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--hunter-green);
+            margin-bottom: 4px;
+        }
+        .event-history-location {
+            font-size: 0.875rem;
+            color: var(--dark-gray);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .event-history-location svg {
+            width: 14px;
+            height: 14px;
+        }
+        .event-history-rank {
+            flex-shrink: 0;
+        }
+        .rank-badge {
+            background: linear-gradient(135deg, #6B5B95, #8B7FA8);
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            box-shadow: var(--shadow-sm);
+        }
+        .funmatch-matches-container {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .funmatch-match-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(107, 91, 149, 0.2);
+            transition: all var(--transition-fast);
+            position: relative;
+        }
+        .funmatch-match-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateX(4px);
+        }
+        
+        /* Elegant Win/Loss Indicator */
+        .match-result-indicator {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            backdrop-filter: blur(4px);
+        }
+        
+        .match-result-indicator.win {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            color: #2e7d32;
+            border: 1px solid rgba(46, 125, 50, 0.2);
+        }
+        
+        .match-result-indicator.loss {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            color: #c62828;
+            border: 1px solid rgba(198, 40, 40, 0.2);
+        }
+        
+        .match-result-indicator.draw {
+            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+            color: #616161;
+            border: 1px solid rgba(97, 97, 97, 0.2);
+        }
+        
+        .match-result-icon {
+            font-size: 0.9rem;
+            line-height: 1;
+        }
+        .funmatch-match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        .funmatch-match-type {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6B5B95;
+            background: rgba(107, 91, 149, 0.1);
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+        .funmatch-match-score {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--hunter-green);
+            margin-bottom: 12px;
+        }
+        .funmatch-match-score svg {
+            width: 20px;
+            height: 20px;
+        }
+        .funmatch-match-partners {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            color: var(--dark-gray);
+        }
+        .funmatch-match-partners svg {
+            width: 16px;
+            height: 16px;
+            color: #6B5B95;
+        }
+        .partners-list {
+            font-weight: 600;
+            color: var(--graphite);
+        }
+        .match-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
+        }
+        @media (max-width: 768px) {
+            .event-history-item {
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+            .event-history-date {
+                min-width: 80px;
+                padding: 10px 12px;
+            }
+            .event-history-day {
+                font-size: 1.25rem;
+            }
+            .event-history-header {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .event-history-rank {
+                align-self: flex-start;
+            }
+            .funmatch-match-card {
+                padding: 12px;
+            }
+        }
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -525,6 +773,32 @@
                             <div class="achievement-label">All-Star</div>
                         </div>
                     </div>
+                </section>
+
+                <section class="profile-section">
+                    <div class="section-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <h2>Event History</h2>
+                    <p style="font-size: 0.875rem; color: var(--dark-gray); margin-bottom: 24px; line-height: 1.5;">
+                        Riwayat event yang pernah diikuti, diurutkan berdasarkan tanggal.
+                    </p>
+                    
+                    <div class="event-history-container" id="eventHistoryContainer">
+                        <!-- Event items will be loaded here -->
+                    </div>
+                    
+                    <button id="loadMoreEventsBtn" style="width: 100%; padding: 14px 24px; margin-top: 24px; border-radius: 12px; border: 2px solid var(--hunter-green); background: var(--white); color: var(--hunter-green); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; justify-content: center; gap: 10px;" onmouseover="this.style.background='var(--hunter-green)';this.style.color='var(--white)'" onmouseout="this.style.background='var(--white)';this.style.color='var(--hunter-green)'" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
+                        <span>Load More Events</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                            <polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                    </button>
                 </section>
             </div>
         </div>
@@ -1056,7 +1330,198 @@
             // Update filter state will handle showing all events
             updateFilterState();
         });
-        
+
+        // Event History Data - sorted by date (newest first)
+        const eventHistoryData = [
+            { id: 1, title: 'Summer Open 2024', date: '2024-08-15', type: 'open', icon: '☀️', location: 'Jakarta Tennis Center' },
+            { id: 2, title: 'Club Championship', date: '2024-07-20', type: 'championship', icon: '🎾', location: 'Senayan Sports Club' },
+            { id: 3, title: 'Tournament 2024', date: '2024-06-10', type: 'tournament', icon: '🏆', location: 'Gelora Bung Karno' },
+            { 
+                id: 4, 
+                title: 'Fun Match Series - Multiple Matches', 
+                date: '2024-05-25', 
+                type: 'funmatch', 
+                icon: '🤝', 
+                location: 'Kemang Tennis Court',
+                eventRank: 2,
+                matches: [
+                    { score: '6-4, 3-6, 6-3', isDoubles: true, partners: ['Andi Wijaya', 'Budi Santoso'], opponent: 'Team A', result: 'win' },
+                    { score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'Carlos Mendez', result: 'win' },
+                    { score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan'], opponent: 'Team B', result: 'loss' }
+                ]
+            },
+            { id: 5, title: 'Spring Showdown', date: '2024-04-18', type: 'open', icon: '🌸', location: 'PIK Tennis Arena' },
+            { id: 6, title: 'Winter Classic', date: '2024-03-05', type: 'tournament', icon: '❄️', location: 'BSD Tennis Center' },
+            { id: 7, title: 'Training Session', date: '2024-02-14', type: 'training', icon: '🎯', location: 'Menteng Stadium' },
+            { 
+                id: 8, 
+                title: 'Fun Match Night', 
+                date: '2024-01-20', 
+                type: 'funmatch', 
+                icon: '⭐', 
+                location: 'Ciputra Golf Club',
+                eventRank: 1,
+                matches: [
+                    { score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'David Lee', result: 'win' }
+                ]
+            },
+            { id: 9, title: 'Advanced Training', date: '2024-01-10', type: 'training', icon: '💪', location: 'Senayan Sports Club' },
+            { 
+                id: 10, 
+                title: 'Weekend Fun Match', 
+                date: '2023-12-15', 
+                type: 'funmatch', 
+                icon: '🎉', 
+                location: 'Jakarta Tennis Center',
+                eventRank: 3,
+                matches: [
+                    { score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan', 'David Lim'], opponent: 'Team X', result: 'win' },
+                    { score: '6-7, 6-4, 6-2', isDoubles: true, partners: ['Eko Prasetyo'], opponent: 'Team Y', result: 'loss' }
+                ]
+            }
+        ];
+
+        let currentHistoryPage = 1;
+        const historyItemsPerPage = 4;
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = date.getDate();
+            const month = date.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+            return { day, month };
+        }
+
+        function createEventHistoryItem(event) {
+            const { day, month } = formatDate(event.date);
+            let matchesHtml = '';
+            
+            // Handle funmatch events with multiple matches
+            if (event.type === 'funmatch' && event.matches && event.matches.length > 0) {
+                // Create match cards for each match in the funmatch event
+                const matchCards = event.matches.map((match, index) => {
+                    const matchType = match.isDoubles ? 'Doubles' : 'Singles';
+                    const partnersText = match.partners && match.partners.length > 0 
+                        ? `Partner: ${match.partners.join(', ')}` 
+                        : '';
+                    
+                    // Determine match result
+                    let resultClass = 'draw';
+                    let resultText = 'DRAW';
+                    let resultIcon = '−';
+                    
+                    if (match.result === 'win') {
+                        resultClass = 'win';
+                        resultText = 'WIN';
+                        resultIcon = '✓';
+                    } else if (match.result === 'loss') {
+                        resultClass = 'loss';
+                        resultText = 'LOSS';
+                        resultIcon = '✕';
+                    }
+                    
+                    return `
+                        <div class="funmatch-match-card">
+                            <div class="match-result-indicator ${resultClass}">
+                                <span class="match-result-icon">${resultIcon}</span>
+                                <span>${resultText}</span>
+                            </div>
+                            <div class="funmatch-match-header">
+                                <span class="funmatch-match-type">${matchType}</span>
+                            </div>
+                            <div class="funmatch-match-score">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M12 6v6l4 2"/>
+                                </svg>
+                                ${match.score}
+                            </div>
+                            ${match.isDoubles && match.partners && match.partners.length > 0 ? `
+                                <div class="funmatch-match-partners">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                    <span class="partners-list">${partnersText}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+                
+                matchesHtml = `
+                    <div class="funmatch-matches-container">
+                        <div class="match-label">Match Details (${event.matches.length} matches)</div>
+                        ${matchCards}
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="event-history-item ${event.type}">
+                    <div class="event-history-date">
+                        <span class="event-history-day">${day}</span>
+                        <span class="event-history-month">${month}</span>
+                    </div>
+                    <div class="event-history-icon">${event.icon}</div>
+                    <div class="event-history-content">
+                        <div class="event-history-header">
+                            <div class="event-history-info">
+                                <div class="event-history-title">${event.title}</div>
+                                <div class="event-history-location">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                        <circle cx="12" cy="10" r="3"/>
+                                    </svg>
+                                    ${event.location}
+                                </div>
+                            </div>
+                            ${event.type === 'funmatch' && event.eventRank ? `
+                            <div class="event-history-rank">
+                                <span class="rank-badge">#${event.eventRank}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                        ${matchesHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadEventHistory(page = 1, append = false) {
+            const container = document.getElementById('eventHistoryContainer');
+            const startIndex = 0;
+            const endIndex = page * historyItemsPerPage;
+            const eventsToShow = eventHistoryData.slice(startIndex, endIndex);
+
+            if (!append) {
+                container.innerHTML = '';
+            }
+
+            eventsToShow.forEach(event => {
+                container.insertAdjacentHTML('beforeend', createEventHistoryItem(event));
+            });
+
+            // Hide load more button if all items are shown
+            const loadMoreBtn = document.getElementById('loadMoreEventsBtn');
+            if (endIndex >= eventHistoryData.length) {
+                loadMoreBtn.style.display = 'none';
+            } else {
+                loadMoreBtn.style.display = 'flex';
+            }
+        }
+
+        // Load More Events button
+        const loadMoreEventsBtn = document.getElementById('loadMoreEventsBtn');
+        loadMoreEventsBtn.addEventListener('click', function() {
+            currentHistoryPage++;
+            loadEventHistory(currentHistoryPage, true);
+        });
+
+        // Initialize event history
+        loadEventHistory(currentHistoryPage);
+
         // Initialize with all events selected
         updateFilterState();
     </script>
