@@ -77,6 +77,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ===================================
+    // SCROLL INDICATOR CLICK TO SCROLL TO NEXT SECTION
+    // ===================================
+    const scrollIndicator = document.getElementById('scrollIndicator');
+    const heroSection = document.querySelector('.hero');
+    
+    if (scrollIndicator && heroSection) {
+        scrollIndicator.addEventListener('click', function() {
+            const nextSection = document.querySelector('#about');
+            if (nextSection) {
+                const offsetTop = nextSection.offsetTop - 80;
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
+            }
+        });
+        
+        // Change cursor to pointer to indicate clickability
+        scrollIndicator.style.cursor = 'pointer';
+    }
+    
+    // ===================================
     // REVEAL ANIMATIONS ON SCROLL (Vero Studio Style)
     // ===================================
     const revealElements = document.querySelectorAll('.reveal-left, .reveal-right, .reveal-up, .reveal-scale');
