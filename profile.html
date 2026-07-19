@@ -281,6 +281,7 @@
             padding: 8px 16px;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             font-size: 0.75rem;
             font-weight: 600;
@@ -296,8 +297,8 @@
             background: rgba(44, 95, 75, 0.1);
         }
         .skill-toggle-btn svg {
-            width: 16px;
-            height: 16px;
+            width: 20px;
+            height: 20px;
             transition: transform 0.3s ease;
         }
         .skill-toggle-btn.active svg {
@@ -934,7 +935,6 @@
                                 <div class="skill-bar-fill" id="forehandBar" style="width: 85%; background: linear-gradient(90deg, #2ECC71, #27AE60);"></div>
                             </div>
                             <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
-                                <span>Lihat Detail</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
@@ -985,7 +985,6 @@
                                 <div class="skill-bar-fill" id="backhandBar" style="width: 72%; background: linear-gradient(90deg, #3498DB, #2980B9);"></div>
                             </div>
                             <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
-                                <span>Lihat Detail</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
@@ -1038,7 +1037,6 @@
                                 <div class="skill-bar-fill" id="serveBar" style="width: 68%; background: linear-gradient(90deg, #F39C12, #E67E22);"></div>
                             </div>
                             <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
-                                <span>Lihat Detail</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
@@ -1088,7 +1086,6 @@
                                 <div class="skill-bar-fill" id="volleyBar" style="width: 79%; background: linear-gradient(90deg, #E91E63, #D81B60);"></div>
                             </div>
                             <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
-                                <span>Lihat Detail</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
@@ -1141,7 +1138,6 @@
                                 <div class="skill-bar-fill" id="footworkBar" style="width: 91%; background: linear-gradient(90deg, #9B59B6, #8E44AD);"></div>
                             </div>
                             <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
-                                <span>Lihat Detail</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
@@ -2241,15 +2237,12 @@
         // Toggle skill details function
         function toggleSkillDetails(button) {
             const details = button.nextElementSibling;
-            const textSpan = button.querySelector('span');
             
             if (details.classList.contains('show')) {
                 details.classList.remove('show');
-                textSpan.textContent = 'Lihat Detail';
                 button.classList.remove('active');
             } else {
                 details.classList.add('show');
-                textSpan.textContent = 'Sembunyikan Detail';
                 button.classList.add('active');
             }
         }
