@@ -152,6 +152,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            gap: 16px;
         }
         .skill-bar-label-wrapper {
             display: flex;
@@ -278,7 +279,7 @@
             background: none;
             border: none;
             cursor: pointer;
-            padding: 8px 16px;
+            padding: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -288,10 +289,9 @@
             color: var(--hunter-green);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-top: 12px;
-            margin-left: 52px;
             transition: all var(--transition-fast);
             border-radius: 8px;
+            margin: 0;
         }
         .skill-toggle-btn:hover {
             background: rgba(44, 95, 75, 0.1);
@@ -681,6 +681,12 @@
                 gap: 12px;
             }
             .skill-bar-header > div:last-child {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .skill-bar-header > div:last-child > div:first-child {
                 text-align: left !important;
             }
             .skill-description,
@@ -923,22 +929,24 @@
                                         <div style="font-size: 0.7rem; color: var(--dark-gray); font-weight: 500;">Groundstroke utama dari sisi dominan</div>
                                     </div>
                                 </div>
-                                <div style="text-align: right;">
-                                    <div class="skill-bar-value-wrapper">
-                                        <span class="skill-bar-value" id="forehandValue">85</span>
-                                        <span class="skill-bar-max">/100</span>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="text-align: right;">
+                                        <div class="skill-bar-value-wrapper">
+                                            <span class="skill-bar-value" id="forehandValue">85</span>
+                                            <span class="skill-bar-max">/100</span>
+                                        </div>
+                                        <span class="skill-level-badge expert">Expert</span>
                                     </div>
-                                    <span class="skill-level-badge expert">Expert</span>
+                                    <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                             <div class="skill-bar-track">
                                 <div class="skill-bar-fill" id="forehandBar" style="width: 85%; background: linear-gradient(90deg, #2ECC71, #27AE60);"></div>
                             </div>
-                            <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </button>
                             <div class="skill-details">
                                 <p class="skill-description">Konsistensi dan akurasi forehand sangat baik dengan kontrol bola yang matang.</p>
                                 <div class="skill-stats">
@@ -973,22 +981,24 @@
                                         <div style="font-size: 0.7rem; color: var(--dark-gray); font-weight: 500;">Groundstroke dari sisi non-dominan</div>
                                     </div>
                                 </div>
-                                <div style="text-align: right;">
-                                    <div class="skill-bar-value-wrapper">
-                                        <span class="skill-bar-value" id="backhandValue">72</span>
-                                        <span class="skill-bar-max">/100</span>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="text-align: right;">
+                                        <div class="skill-bar-value-wrapper">
+                                            <span class="skill-bar-value" id="backhandValue">72</span>
+                                            <span class="skill-bar-max">/100</span>
+                                        </div>
+                                        <span class="skill-level-badge intermediate">Intermediate</span>
                                     </div>
-                                    <span class="skill-level-badge intermediate">Intermediate</span>
+                                    <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                             <div class="skill-bar-track">
                                 <div class="skill-bar-fill" id="backhandBar" style="width: 72%; background: linear-gradient(90deg, #3498DB, #2980B9);"></div>
                             </div>
-                            <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </button>
                             <div class="skill-details">
                                 <p class="skill-description">Backhand cukup solid namun perlu peningkatan dalam hal power dan konsistensi.</p>
                                 <div class="skill-stats">
@@ -1025,22 +1035,24 @@
                                         <div style="font-size: 0.7rem; color: var(--dark-gray); font-weight: 500;">Pukulan pembuka poin</div>
                                     </div>
                                 </div>
-                                <div style="text-align: right;">
-                                    <div class="skill-bar-value-wrapper">
-                                        <span class="skill-bar-value" id="serveValue">68</span>
-                                        <span class="skill-bar-max">/100</span>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="text-align: right;">
+                                        <div class="skill-bar-value-wrapper">
+                                            <span class="skill-bar-value" id="serveValue">68</span>
+                                            <span class="skill-bar-max">/100</span>
+                                        </div>
+                                        <span class="skill-level-badge beginner">Beginner</span>
                                     </div>
-                                    <span class="skill-level-badge beginner">Beginner</span>
+                                    <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                             <div class="skill-bar-track">
                                 <div class="skill-bar-fill" id="serveBar" style="width: 68%; background: linear-gradient(90deg, #F39C12, #E67E22);"></div>
                             </div>
-                            <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </button>
                             <div class="skill-details">
                                 <p class="skill-description">Serve memerlukan perbaikan teknik dan konsistensi untuk meningkatkan efektivitas.</p>
                                 <div class="skill-stats">
@@ -1074,22 +1086,24 @@
                                         <div style="font-size: 0.7rem; color: var(--dark-gray); font-weight: 500;">Pukulan di dekat net</div>
                                     </div>
                                 </div>
-                                <div style="text-align: right;">
-                                    <div class="skill-bar-value-wrapper">
-                                        <span class="skill-bar-value" id="volleyValue">79</span>
-                                        <span class="skill-bar-max">/100</span>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="text-align: right;">
+                                        <div class="skill-bar-value-wrapper">
+                                            <span class="skill-bar-value" id="volleyValue">79</span>
+                                            <span class="skill-bar-max">/100</span>
+                                        </div>
+                                        <span class="skill-level-badge advanced">Advanced</span>
                                     </div>
-                                    <span class="skill-level-badge advanced">Advanced</span>
+                                    <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                             <div class="skill-bar-track">
                                 <div class="skill-bar-fill" id="volleyBar" style="width: 79%; background: linear-gradient(90deg, #E91E63, #D81B60);"></div>
                             </div>
-                            <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </button>
                             <div class="skill-details">
                                 <p class="skill-description">Volley menunjukkan kemampuan net play yang baik dengan refleks cepat.</p>
                                 <div class="skill-stats">
@@ -1126,22 +1140,24 @@
                                         <div style="font-size: 0.7rem; color: var(--dark-gray); font-weight: 500;">Pergerakan kaki di lapangan</div>
                                     </div>
                                 </div>
-                                <div style="text-align: right;">
-                                    <div class="skill-bar-value-wrapper">
-                                        <span class="skill-bar-value" id="footworkValue">91</span>
-                                        <span class="skill-bar-max">/100</span>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="text-align: right;">
+                                        <div class="skill-bar-value-wrapper">
+                                            <span class="skill-bar-value" id="footworkValue">91</span>
+                                            <span class="skill-bar-max">/100</span>
+                                        </div>
+                                        <span class="skill-level-badge expert">Expert</span>
                                     </div>
-                                    <span class="skill-level-badge expert">Expert</span>
+                                    <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                             <div class="skill-bar-track">
                                 <div class="skill-bar-fill" id="footworkBar" style="width: 91%; background: linear-gradient(90deg, #9B59B6, #8E44AD);"></div>
                             </div>
-                            <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                            </button>
                             <div class="skill-details">
                                 <p class="skill-description">Footwork luar biasa dengan pergerakan cepat dan posisi yang tepat di lapangan.</p>
                                 <div class="skill-stats">
@@ -2236,7 +2252,7 @@
 
         // Toggle skill details function
         function toggleSkillDetails(button) {
-            const details = button.nextElementSibling;
+            const details = button.parentElement.nextElementSibling;
             
             if (details.classList.contains('show')) {
                 details.classList.remove('show');
