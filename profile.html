@@ -312,6 +312,17 @@
                     </div>
                     <h2>Performance Overview</h2>
                     
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center;">
+                        <label for="eventFilter" style="font-weight: 500; color: var(--graphite); font-size: 0.875rem;">Filter by Event:</label>
+                        <select id="eventFilter" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--light-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--hunter-green); background: var(--white); cursor: pointer; min-width: 200px;">
+                            <option value="all">All Events</option>
+                            <option value="tournament-2024">Tournament 2024 (Jan 2024)</option>
+                            <option value="club-championship">Club Championship (Mar 2024)</option>
+                            <option value="friendly-match">Friendly Match (May 2024)</option>
+                            <option value="summer-open">Summer Open (Jul 2024)</option>
+                        </select>
+                    </div>
+                    
                     <div class="chart-container small">
                         <canvas id="progressChart"></canvas>
                     </div>
@@ -454,30 +465,110 @@
         // Performance Chart - Menampilkan kesalahan vs target per kategori
         const progressCtx = document.getElementById('progressChart').getContext('2d');
         
-        // Data: [target, kesalahan] untuk setiap kategori
-        const performanceData = {
-            labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
-            datasets: [
-                {
-                    label: 'Target',
-                    data: [90, 85, 80, 85, 95],
-                    backgroundColor: '#2C5F4B',
-                    borderRadius: 4,
-                    barThickness: 20
-                },
-                {
-                    label: 'Kesalahan',
-                    data: [12, 18, 22, 14, 8],
-                    backgroundColor: '#E85D04',
-                    borderRadius: 4,
-                    barThickness: 20
-                }
-            ]
+        // Data performance berdasarkan event
+        const performanceDataByEvent = {
+            'all': {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                datasets: [
+                    {
+                        label: 'Target',
+                        data: [90, 85, 80, 85, 95],
+                        backgroundColor: '#2C5F4B',
+                        borderRadius: 4,
+                        barThickness: 20
+                    },
+                    {
+                        label: 'Kesalahan',
+                        data: [12, 18, 22, 14, 8],
+                        backgroundColor: '#E85D04',
+                        borderRadius: 4,
+                        barThickness: 20
+                    }
+                ]
+            },
+            'tournament-2024': {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                datasets: [
+                    {
+                        label: 'Target',
+                        data: [88, 82, 78, 83, 92],
+                        backgroundColor: '#2C5F4B',
+                        borderRadius: 4,
+                        barThickness: 20
+                    },
+                    {
+                        label: 'Kesalahan',
+                        data: [15, 20, 25, 16, 10],
+                        backgroundColor: '#E85D04',
+                        borderRadius: 4,
+                        barThickness: 20
+                    }
+                ]
+            },
+            'club-championship': {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                datasets: [
+                    {
+                        label: 'Target',
+                        data: [90, 85, 80, 85, 95],
+                        backgroundColor: '#2C5F4B',
+                        borderRadius: 4,
+                        barThickness: 20
+                    },
+                    {
+                        label: 'Kesalahan',
+                        data: [10, 16, 20, 12, 7],
+                        backgroundColor: '#E85D04',
+                        borderRadius: 4,
+                        barThickness: 20
+                    }
+                ]
+            },
+            'friendly-match': {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                datasets: [
+                    {
+                        label: 'Target',
+                        data: [92, 88, 82, 87, 96],
+                        backgroundColor: '#2C5F4B',
+                        borderRadius: 4,
+                        barThickness: 20
+                    },
+                    {
+                        label: 'Kesalahan',
+                        data: [8, 14, 18, 10, 5],
+                        backgroundColor: '#E85D04',
+                        borderRadius: 4,
+                        barThickness: 20
+                    }
+                ]
+            },
+            'summer-open': {
+                labels: ['Forehand', 'Backhand', 'Serve', 'Volley', 'Footwork'],
+                datasets: [
+                    {
+                        label: 'Target',
+                        data: [93, 89, 84, 88, 97],
+                        backgroundColor: '#2C5F4B',
+                        borderRadius: 4,
+                        barThickness: 20
+                    },
+                    {
+                        label: 'Kesalahan',
+                        data: [7, 12, 16, 9, 4],
+                        backgroundColor: '#E85D04',
+                        borderRadius: 4,
+                        barThickness: 20
+                    }
+                ]
+            }
         };
+        
+        let currentPerformanceData = performanceDataByEvent['all'];
         
         const progressChart = new Chart(progressCtx, {
             type: 'bar',
-            data: performanceData,
+            data: currentPerformanceData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -513,6 +604,15 @@
                     }
                 }
             }
+        });
+        
+        // Event filter listener
+        const eventFilter = document.getElementById('eventFilter');
+        eventFilter.addEventListener('change', function() {
+            const selectedEvent = this.value;
+            currentPerformanceData = performanceDataByEvent[selectedEvent];
+            progressChart.data = currentPerformanceData;
+            progressChart.update();
         });
     </script>
 </body>
