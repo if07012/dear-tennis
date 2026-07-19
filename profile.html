@@ -312,19 +312,51 @@
                     </div>
                     <h2>Performance Overview</h2>
                     
-                    <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
-                        <label for="eventFilter" style="font-weight: 500; color: var(--graphite); font-size: 0.875rem;">Filter by Event:</label>
-                        <select id="eventFilter" multiple style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--light-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; color: var(--hunter-green); background: var(--white); cursor: pointer; min-width: 200px; min-height: 80px;">
-                            <option value="tournament-2024">Tournament 2024 (Jan 2024)</option>
-                            <option value="club-championship">Club Championship (Mar 2024)</option>
-                            <option value="friendly-match">Friendly Match (May 2024)</option>
-                            <option value="summer-open">Summer Open (Jul 2024)</option>
-                        </select>
-                        <button id="clearFilterBtn" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--spicy-paprika); background: var(--white); color: var(--spicy-paprika); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 500; transition: all var(--transition-fast);">Clear Filter</button>
+                    <div class="event-filter-container" style="margin-bottom: 20px;">
+                        <div class="filter-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div class="filter-icon" style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--spicy-paprika), var(--reddish-brown)); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color: var(--white);">
+                                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <label style="font-weight: 600; color: var(--hunter-green); font-size: 1rem; display: block;">Filter by Event</label>
+                                <p style="font-size: 0.75rem; color: var(--dark-gray); margin: 0;">Select one or more events to analyze performance</p>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-chips" id="filterChips" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <button class="filter-chip active" data-event="tournament-2024" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--hunter-green); background: linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(44, 95, 75, 0.05)); color: var(--hunter-green); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                <span>🏆</span>
+                                <span>Tournament 2024</span>
+                            </button>
+                            <button class="filter-chip active" data-event="club-championship" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--muted-teal); background: linear-gradient(135deg, rgba(69, 139, 116, 0.1), rgba(69, 139, 116, 0.05)); color: var(--muted-teal); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                <span>🎾</span>
+                                <span>Club Championship</span>
+                            </button>
+                            <button class="filter-chip active" data-event="friendly-match" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--spicy-paprika); background: linear-gradient(135deg, rgba(232, 93, 4, 0.1), rgba(232, 93, 4, 0.05)); color: var(--spicy-paprika); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                <span>🤝</span>
+                                <span>Friendly Match</span>
+                            </button>
+                            <button class="filter-chip active" data-event="summer-open" style="padding: 10px 18px; border-radius: 25px; border: 2px solid var(--reddish-brown); background: linear-gradient(135deg, rgba(150, 62, 4, 0.1), rgba(150, 62, 4, 0.05)); color: var(--reddish-brown); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast); display: flex; align-items: center; gap: 8px;">
+                                <span>☀️</span>
+                                <span>Summer Open</span>
+                            </button>
+                        </div>
+                        
+                        <div class="filter-actions" style="display: flex; gap: 10px; margin-top: 16px; align-items: center;">
+                            <button id="selectAllBtn" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--hunter-green); background: var(--white); color: var(--hunter-green); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 500; transition: all var(--transition-fast);" onmouseover="this.style.background='var(--hunter-green)';this.style.color='var(--white)'" onmouseout="this.style.background='var(--white)';this.style.color='var(--hunter-green)'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
+                                Select All
+                            </button>
+                            <button id="clearFilterBtn" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--spicy-paprika); background: var(--white); color: var(--spicy-paprika); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 500; transition: all var(--transition-fast);" onmouseover="this.style.background='var(--spicy-paprika)';this.style.color='var(--white)'" onmouseout="this.style.background='var(--white)';this.style.color='var(--spicy-paprika)'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
+                                Clear Filter
+                            </button>
+                            <span id="selectedCount" style="margin-left: auto; font-size: 0.875rem; color: var(--dark-gray); font-weight: 500;">4 events selected</span>
+                        </div>
                     </div>
                     
-                    <div style="margin-bottom: 16px; padding: 12px 16px; background: linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(232, 93, 4, 0.1)); border-radius: 12px; border-left: 4px solid var(--spicy-paprika);">
-                        <p style="margin: 0; font-size: 0.875rem; color: var(--graphite); line-height: 1.5;">
+                    <div style="margin-bottom: 16px; padding: 16px 20px; background: linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(232, 93, 4, 0.1)); border-radius: 16px; border-left: 4px solid var(--spicy-paprika);">
+                        <p style="margin: 0; font-size: 0.875rem; color: var(--graphite); line-height: 1.6;">
                             <strong style="color: var(--hunter-green);">Baseline:</strong> Garis putus-putus menunjukkan rata-rata Target vs Kesalahan.<br>
                             <strong style="color: #9D4EDD;">Pergerakan (garis ungu):</strong> Menunjukkan trend performa antara target dan kesalahan di setiap kategori. Naik = performa membaik, turun = perlu perbaikan.
                         </p>
@@ -343,50 +375,53 @@
                         </svg>
                     </div>
                     <h2>Skill Breakdown</h2>
-                    <div class="skill-bars">
+                    <p style="font-size: 0.875rem; color: var(--dark-gray); margin-bottom: 20px; line-height: 1.5;">
+                        Skill breakdown ini dihitung berdasarkan rata-rata performa dari event yang dipilih di filter atas.
+                    </p>
+                    <div class="skill-bars" id="skillBreakdownBars">
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
                                 <span class="skill-bar-label">Forehand</span>
-                                <span class="skill-bar-value">85%</span>
+                                <span class="skill-bar-value" id="forehandValue">85%</span>
                             </div>
                             <div class="skill-bar-track">
-                                <div class="skill-bar-fill" style="width: 85%; background: linear-gradient(90deg, var(--spicy-paprika), var(--reddish-brown));"></div>
+                                <div class="skill-bar-fill" id="forehandBar" style="width: 85%; background: linear-gradient(90deg, var(--spicy-paprika), var(--reddish-brown));"></div>
                             </div>
                         </div>
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
                                 <span class="skill-bar-label">Backhand</span>
-                                <span class="skill-bar-value">72%</span>
+                                <span class="skill-bar-value" id="backhandValue">72%</span>
                             </div>
                             <div class="skill-bar-track">
-                                <div class="skill-bar-fill" style="width: 72%; background: linear-gradient(90deg, var(--hunter-green), var(--muted-teal));"></div>
+                                <div class="skill-bar-fill" id="backhandBar" style="width: 72%; background: linear-gradient(90deg, var(--hunter-green), var(--muted-teal));"></div>
                             </div>
                         </div>
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
                                 <span class="skill-bar-label">Serve</span>
-                                <span class="skill-bar-value">68%</span>
+                                <span class="skill-bar-value" id="serveValue">68%</span>
                             </div>
                             <div class="skill-bar-track">
-                                <div class="skill-bar-fill" style="width: 68%; background: linear-gradient(90deg, var(--muted-teal), var(--hunter-green));"></div>
+                                <div class="skill-bar-fill" id="serveBar" style="width: 68%; background: linear-gradient(90deg, var(--muted-teal), var(--hunter-green));"></div>
                             </div>
                         </div>
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
                                 <span class="skill-bar-label">Volley</span>
-                                <span class="skill-bar-value">79%</span>
+                                <span class="skill-bar-value" id="volleyValue">79%</span>
                             </div>
                             <div class="skill-bar-track">
-                                <div class="skill-bar-fill" style="width: 79%; background: linear-gradient(90deg, var(--reddish-brown), var(--spicy-paprika));"></div>
+                                <div class="skill-bar-fill" id="volleyBar" style="width: 79%; background: linear-gradient(90deg, var(--reddish-brown), var(--spicy-paprika));"></div>
                             </div>
                         </div>
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
                                 <span class="skill-bar-label">Footwork</span>
-                                <span class="skill-bar-value">91%</span>
+                                <span class="skill-bar-value" id="footworkValue">91%</span>
                             </div>
                             <div class="skill-bar-track">
-                                <div class="skill-bar-fill" style="width: 91%; background: linear-gradient(90deg, var(--spicy-paprika), var(--hunter-green));"></div>
+                                <div class="skill-bar-fill" id="footworkBar" style="width: 91%; background: linear-gradient(90deg, var(--spicy-paprika), var(--hunter-green));"></div>
                             </div>
                         </div>
                     </div>
@@ -659,33 +694,162 @@
             }
         });
         
-        // Event filter listener for multi-select
-        const eventFilter = document.getElementById('eventFilter');
-        eventFilter.addEventListener('change', function() {
-            selectedEvents = getSelectedEvents();
+        // Skill data based on events (for skill breakdown calculation)
+        const skillDataByEvent = {
+            'tournament-2024': {
+                Forehand: 85, Backhand: 72, Serve: 68, Volley: 79, Footwork: 91
+            },
+            'club-championship': {
+                Forehand: 88, Backhand: 75, Serve: 71, Volley: 82, Footwork: 93
+            },
+            'friendly-match': {
+                Forehand: 90, Backhand: 78, Serve: 74, Volley: 85, Footwork: 95
+            },
+            'summer-open': {
+                Forehand: 92, Backhand: 80, Serve: 76, Volley: 87, Footwork: 96
+            }
+        };
+        
+        // Function to calculate skill breakdown from selected events
+        function calculateSkillBreakdown(selectedEvents) {
             if (selectedEvents.length === 0) {
-                // If no selection, show all events
+                return { Forehand: 0, Backhand: 0, Serve: 0, Volley: 0, Footwork: 0 };
+            }
+            
+            const skills = { Forehand: 0, Backhand: 0, Serve: 0, Volley: 0, Footwork: 0 };
+            
+            selectedEvents.forEach(event => {
+                const data = skillDataByEvent[event];
+                for (const skill in skills) {
+                    skills[skill] += data[skill];
+                }
+            });
+            
+            for (const skill in skills) {
+                skills[skill] = Math.round(skills[skill] / selectedEvents.length);
+            }
+            
+            return skills;
+        }
+        
+        // Function to update skill breakdown bars
+        function updateSkillBreakdown(selectedEvents) {
+            const skills = calculateSkillBreakdown(selectedEvents);
+            
+            const skillElements = {
+                Forehand: { value: document.getElementById('forehandValue'), bar: document.getElementById('forehandBar') },
+                Backhand: { value: document.getElementById('backhandValue'), bar: document.getElementById('backhandBar') },
+                Serve: { value: document.getElementById('serveValue'), bar: document.getElementById('serveBar') },
+                Volley: { value: document.getElementById('volleyValue'), bar: document.getElementById('volleyBar') },
+                Footwork: { value: document.getElementById('footworkValue'), bar: document.getElementById('footworkBar') }
+            };
+            
+            for (const skill in skills) {
+                const value = skills[skill];
+                skillElements[skill].value.textContent = value + '%';
+                skillElements[skill].bar.style.width = value + '%';
+                
+                // Add animation effect
+                skillElements[skill].bar.style.transition = 'width 0.5s ease';
+            }
+        }
+        
+        // Filter chips functionality
+        const filterChips = document.querySelectorAll('.filter-chip');
+        const selectedCountEl = document.getElementById('selectedCount');
+        
+        filterChips.forEach(chip => {
+            chip.addEventListener('click', function() {
+                this.classList.toggle('active');
+                
+                // Update styles based on active state
+                if (this.classList.contains('active')) {
+                    const event = this.dataset.event;
+                    const colors = {
+                        'tournament-2024': { border: 'var(--hunter-green)', bg: 'linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(44, 95, 75, 0.05))', text: 'var(--hunter-green)' },
+                        'club-championship': { border: 'var(--muted-teal)', bg: 'linear-gradient(135deg, rgba(69, 139, 116, 0.1), rgba(69, 139, 116, 0.05))', text: 'var(--muted-teal)' },
+                        'friendly-match': { border: 'var(--spicy-paprika)', bg: 'linear-gradient(135deg, rgba(232, 93, 4, 0.1), rgba(232, 93, 4, 0.05))', text: 'var(--spicy-paprika)' },
+                        'summer-open': { border: 'var(--reddish-brown)', bg: 'linear-gradient(135deg, rgba(150, 62, 4, 0.1), rgba(150, 62, 4, 0.05))', text: 'var(--reddish-brown)' }
+                    };
+                    const color = colors[event];
+                    this.style.borderColor = color.border;
+                    this.style.background = color.bg;
+                    this.style.color = color.text;
+                } else {
+                    this.style.borderColor = 'var(--light-gray)';
+                    this.style.background = 'var(--off-white)';
+                    this.style.color = 'var(--dark-gray)';
+                }
+                
+                updateFilterState();
+            });
+        });
+        
+        function getSelectedEventsFromChips() {
+            return Array.from(filterChips)
+                .filter(chip => chip.classList.contains('active'))
+                .map(chip => chip.dataset.event);
+        }
+        
+        function updateFilterState() {
+            selectedEvents = getSelectedEventsFromChips();
+            if (selectedEvents.length === 0) {
                 selectedEvents = Object.keys(performanceDataByEvent);
             }
+            
+            // Update progress chart
             progressChart.data = createChartData(selectedEvents);
             progressChart.update();
-        });
+            
+            // Update skill breakdown
+            updateSkillBreakdown(selectedEvents);
+            
+            // Update count display
+            selectedCountEl.textContent = selectedEvents.length + ' event' + (selectedEvents.length !== 1 ? 's' : '') + ' selected';
+        }
         
-        // Clear filter button
-        const clearFilterBtn = document.getElementById('clearFilterBtn');
-        clearFilterBtn.addEventListener('click', function() {
-            Array.from(eventFilter.options).forEach(option => {
-                option.selected = true;
+        // Select All button
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        selectAllBtn.addEventListener('click', function() {
+            filterChips.forEach(chip => {
+                chip.classList.add('active');
+                const event = chip.dataset.event;
+                const colors = {
+                    'tournament-2024': { border: 'var(--hunter-green)', bg: 'linear-gradient(135deg, rgba(44, 95, 75, 0.1), rgba(44, 95, 75, 0.05))', text: 'var(--hunter-green)' },
+                    'club-championship': { border: 'var(--muted-teal)', bg: 'linear-gradient(135deg, rgba(69, 139, 116, 0.1), rgba(69, 139, 116, 0.05))', text: 'var(--muted-teal)' },
+                    'friendly-match': { border: 'var(--spicy-paprika)', bg: 'linear-gradient(135deg, rgba(232, 93, 4, 0.1), rgba(232, 93, 4, 0.05))', text: 'var(--spicy-paprika)' },
+                    'summer-open': { border: 'var(--reddish-brown)', bg: 'linear-gradient(135deg, rgba(150, 62, 4, 0.1), rgba(150, 62, 4, 0.05))', text: 'var(--reddish-brown)' }
+                };
+                const color = colors[event];
+                chip.style.borderColor = color.border;
+                chip.style.background = color.bg;
+                chip.style.color = color.text;
             });
-            selectedEvents = Object.keys(performanceDataByEvent);
-            progressChart.data = createChartData(selectedEvents);
-            progressChart.update();
+            updateFilterState();
         });
         
-        // Select all by default
-        Array.from(eventFilter.options).forEach(option => {
-            option.selected = true;
+        // Clear filter button - now works with chips
+        clearFilterBtn.addEventListener('click', function() {
+            filterChips.forEach(chip => {
+                chip.classList.remove('active');
+                chip.style.borderColor = 'var(--light-gray)';
+                chip.style.background = 'var(--off-white)';
+                chip.style.color = 'var(--dark-gray)';
+            });
+            selectedEvents = [];
+            
+            // Show all events when cleared
+            progressChart.data = createChartData(Object.keys(performanceDataByEvent));
+            progressChart.update();
+            
+            // Reset skill breakdown to all events average
+            updateSkillBreakdown(Object.keys(performanceDataByEvent));
+            
+            selectedCountEl.textContent = Object.keys(performanceDataByEvent).length + ' events selected';
         });
+        
+        // Initialize with all events selected
+        updateFilterState();
     </script>
 </body>
 </html>
