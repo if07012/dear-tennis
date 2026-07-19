@@ -319,10 +319,51 @@
             padding: 16px;
             border: 1px solid rgba(107, 91, 149, 0.2);
             transition: all var(--transition-fast);
+            position: relative;
         }
         .funmatch-match-card:hover {
             box-shadow: var(--shadow-md);
             transform: translateX(4px);
+        }
+        
+        /* Elegant Win/Loss Indicator */
+        .match-result-indicator {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            backdrop-filter: blur(4px);
+        }
+        
+        .match-result-indicator.win {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            color: #2e7d32;
+            border: 1px solid rgba(46, 125, 50, 0.2);
+        }
+        
+        .match-result-indicator.loss {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            color: #c62828;
+            border: 1px solid rgba(198, 40, 40, 0.2);
+        }
+        
+        .match-result-indicator.draw {
+            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+            color: #616161;
+            border: 1px solid rgba(97, 97, 97, 0.2);
+        }
+        
+        .match-result-icon {
+            font-size: 0.9rem;
+            line-height: 1;
         }
         .funmatch-match-header {
             display: flex;
@@ -1304,9 +1345,9 @@
                 location: 'Kemang Tennis Court',
                 eventRank: 2,
                 matches: [
-                    { score: '6-4, 3-6, 6-3', isDoubles: true, partners: ['Andi Wijaya', 'Budi Santoso'], opponent: 'Team A' },
-                    { score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'Carlos Mendez' },
-                    { score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan'], opponent: 'Team B' }
+                    { score: '6-4, 3-6, 6-3', isDoubles: true, partners: ['Andi Wijaya', 'Budi Santoso'], opponent: 'Team A', result: 'win' },
+                    { score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'Carlos Mendez', result: 'win' },
+                    { score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan'], opponent: 'Team B', result: 'loss' }
                 ]
             },
             { id: 5, title: 'Spring Showdown', date: '2024-04-18', type: 'open', icon: '🌸', location: 'PIK Tennis Arena' },
@@ -1321,7 +1362,7 @@
                 location: 'Ciputra Golf Club',
                 eventRank: 1,
                 matches: [
-                    { score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'David Lee' }
+                    { score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'David Lee', result: 'win' }
                 ]
             },
             { id: 9, title: 'Advanced Training', date: '2024-01-10', type: 'training', icon: '💪', location: 'Senayan Sports Club' },
@@ -1334,8 +1375,8 @@
                 location: 'Jakarta Tennis Center',
                 eventRank: 3,
                 matches: [
-                    { score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan', 'David Lim'], opponent: 'Team X' },
-                    { score: '6-7, 6-4, 6-2', isDoubles: true, partners: ['Eko Prasetyo'], opponent: 'Team Y' }
+                    { score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan', 'David Lim'], opponent: 'Team X', result: 'win' },
+                    { score: '6-7, 6-4, 6-2', isDoubles: true, partners: ['Eko Prasetyo'], opponent: 'Team Y', result: 'loss' }
                 ]
             }
         ];
@@ -1363,8 +1404,27 @@
                         ? `Partner: ${match.partners.join(', ')}` 
                         : '';
                     
+                    // Determine match result
+                    let resultClass = 'draw';
+                    let resultText = 'DRAW';
+                    let resultIcon = '−';
+                    
+                    if (match.result === 'win') {
+                        resultClass = 'win';
+                        resultText = 'WIN';
+                        resultIcon = '✓';
+                    } else if (match.result === 'loss') {
+                        resultClass = 'loss';
+                        resultText = 'LOSS';
+                        resultIcon = '✕';
+                    }
+                    
                     return `
                         <div class="funmatch-match-card">
+                            <div class="match-result-indicator ${resultClass}">
+                                <span class="match-result-icon">${resultIcon}</span>
+                                <span>${resultText}</span>
+                            </div>
                             <div class="funmatch-match-header">
                                 <span class="funmatch-match-type">${matchType}</span>
                             </div>
