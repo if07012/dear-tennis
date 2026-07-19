@@ -342,14 +342,6 @@
             padding: 4px 12px;
             border-radius: 12px;
         }
-        .funmatch-match-rank {
-            background: linear-gradient(135deg, #6B5B95, #8B7FA8);
-            color: var(--white);
-            padding: 6px 14px;
-            border-radius: 16px;
-            font-weight: 700;
-            font-size: 0.875rem;
-        }
         .funmatch-match-score {
             display: flex;
             align-items: center;
@@ -1310,10 +1302,11 @@
                 type: 'funmatch', 
                 icon: '🤝', 
                 location: 'Kemang Tennis Court',
+                eventRank: 2,
                 matches: [
-                    { rank: 2, score: '6-4, 3-6, 6-3', isDoubles: true, partners: ['Andi Wijaya', 'Budi Santoso'], opponent: 'Team A' },
-                    { rank: 1, score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'Carlos Mendez' },
-                    { rank: 3, score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan'], opponent: 'Team B' }
+                    { score: '6-4, 3-6, 6-3', isDoubles: true, partners: ['Andi Wijaya', 'Budi Santoso'], opponent: 'Team A' },
+                    { score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'Carlos Mendez' },
+                    { score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan'], opponent: 'Team B' }
                 ]
             },
             { id: 5, title: 'Spring Showdown', date: '2024-04-18', type: 'open', icon: '🌸', location: 'PIK Tennis Arena' },
@@ -1326,8 +1319,9 @@
                 type: 'funmatch', 
                 icon: '⭐', 
                 location: 'Ciputra Golf Club',
+                eventRank: 1,
                 matches: [
-                    { rank: 1, score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'David Lee' }
+                    { score: '7-5, 6-2', isDoubles: false, partners: [], opponent: 'David Lee' }
                 ]
             },
             { id: 9, title: 'Advanced Training', date: '2024-01-10', type: 'training', icon: '💪', location: 'Senayan Sports Club' },
@@ -1338,9 +1332,10 @@
                 type: 'funmatch', 
                 icon: '🎉', 
                 location: 'Jakarta Tennis Center',
+                eventRank: 3,
                 matches: [
-                    { rank: 3, score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan', 'David Lim'], opponent: 'Team X' },
-                    { rank: 2, score: '6-7, 6-4, 6-2', isDoubles: true, partners: ['Eko Prasetyo'], opponent: 'Team Y' }
+                    { score: '4-6, 6-3, 6-4', isDoubles: true, partners: ['Charlie Tan', 'David Lim'], opponent: 'Team X' },
+                    { score: '6-7, 6-4, 6-2', isDoubles: true, partners: ['Eko Prasetyo'], opponent: 'Team Y' }
                 ]
             }
         ];
@@ -1372,7 +1367,6 @@
                         <div class="funmatch-match-card">
                             <div class="funmatch-match-header">
                                 <span class="funmatch-match-type">${matchType}</span>
-                                <span class="funmatch-match-rank">#${match.rank}</span>
                             </div>
                             <div class="funmatch-match-score">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1423,6 +1417,11 @@
                                     ${event.location}
                                 </div>
                             </div>
+                            ${event.type === 'funmatch' && event.eventRank ? `
+                            <div class="event-history-rank">
+                                <span class="rank-badge">#${event.eventRank}</span>
+                            </div>
+                            ` : ''}
                         </div>
                         ${matchesHtml}
                     </div>
