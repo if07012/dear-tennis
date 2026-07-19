@@ -208,6 +208,33 @@
             color: var(--spicy-paprika);
             transform: translateX(-4px);
         }
+        .category-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .category-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--light-gray);
+            background: var(--white);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--graphite);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: 'Inter', sans-serif;
+        }
+        .category-btn:hover {
+            border-color: var(--hunter-green);
+            color: var(--hunter-green);
+        }
+        .category-btn.active {
+            background: var(--hunter-green);
+            border-color: var(--hunter-green);
+            color: var(--white);
+        }
         @media (max-width: 968px) {
             .profile-header {
                 grid-template-columns: 1fr;
@@ -311,6 +338,17 @@
                         </svg>
                     </div>
                     <h2>Progress Trend</h2>
+                    
+                    <!-- Category Selector -->
+                    <div class="category-selector">
+                        <button class="category-btn active" data-category="all">All</button>
+                        <button class="category-btn" data-category="forehand">Forehand</button>
+                        <button class="category-btn" data-category="backhand">Backhand</button>
+                        <button class="category-btn" data-category="serve">Serve</button>
+                        <button class="category-btn" data-category="volley">Volley</button>
+                        <button class="category-btn" data-category="footwork">Footwork</button>
+                    </div>
+                    
                     <div class="chart-container small">
                         <canvas id="progressChart"></canvas>
                     </div>
@@ -450,29 +488,91 @@
             }
         });
 
+        // Progress Trend Chart dengan Category Selector
         const progressCtx = document.getElementById('progressChart').getContext('2d');
-        new Chart(progressCtx, {
+        
+        // Data per kategori
+        const trendData = {
+            all: {
+                label: 'Overall Progress',
+                data: [65, 68, 72, 71, 75, 78, 76, 82],
+                borderColor: '#2C5F4B',
+                backgroundColor: 'rgba(44, 95, 75, 0.1)'
+            },
+            forehand: {
+                label: 'Forehand',
+                data: [70, 72, 75, 78, 80, 82, 84, 85],
+                borderColor: '#FF6B35',
+                backgroundColor: 'rgba(255, 107, 53, 0.1)'
+            },
+            backhand: {
+                label: 'Backhand',
+                data: [60, 62, 65, 68, 70, 71, 72, 72],
+                borderColor: '#F7C548',
+                backgroundColor: 'rgba(247, 197, 72, 0.1)'
+            },
+            serve: {
+                label: 'Serve',
+                data: [55, 58, 60, 62, 65, 66, 67, 68],
+                borderColor: '#4ECDC4',
+                backgroundColor: 'rgba(78, 205, 196, 0.1)'
+            },
+            volley: {
+                label: 'Volley',
+                data: [68, 70, 72, 74, 76, 77, 78, 79],
+                borderColor: '#A8DADC',
+                backgroundColor: 'rgba(168, 218, 220, 0.1)'
+            },
+            footwork: {
+                label: 'Footwork',
+                data: [80, 82, 84, 86, 88, 89, 90, 91],
+                borderColor: '#457B9D',
+                backgroundColor: 'rgba(69, 123, 157, 0.1)'
+            }
+        };
+        
+        let currentCategory = 'all';
+        
+        const progressChart = new Chart(progressCtx, {
             type: 'line',
             data: {
                 labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
                 datasets: [{
-                    label: 'Overall Score',
-                    data: [65, 68, 72, 71, 75, 78, 76, 82],
-                    borderColor: '#2C5F4B',
-                    backgroundColor: 'rgba(44, 95, 75, 0.1)',
+                    label: trendData[currentCategory].label,
+                    data: trendData[currentCategory].data,
+                    borderColor: trendData[currentCategory].borderColor,
+                    backgroundColor: trendData[currentCategory].backgroundColor,
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: '#E85D04',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
                     pointRadius: 5,
-                    pointHoverRadius: 7
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: trendData[currentCategory].borderColor,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { size: 13, weight: '600', family: "'Inter', sans-serif" },
+                            color: '#3A3A3A'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: { size: 14, weight: '600' },
+                        bodyFont: { size: 13 },
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: false,
@@ -485,9 +585,29 @@
                         grid: { display: false },
                         ticks: { font: { family: "'Inter', sans-serif" }, color: '#3A3A3A' }
                     }
-                },
-                plugins: { legend: { display: false } }
+                }
             }
+        });
+        
+        // Category selector functionality
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all buttons
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Update chart
+                const category = this.dataset.category;
+                const dataset = trendData[category];
+                
+                progressChart.data.datasets[0].label = dataset.label;
+                progressChart.data.datasets[0].data = dataset.data;
+                progressChart.data.datasets[0].borderColor = dataset.borderColor;
+                progressChart.data.datasets[0].backgroundColor = dataset.backgroundColor;
+                progressChart.data.datasets[0].pointBackgroundColor = dataset.borderColor;
+                progressChart.update();
+            });
         });
     </script>
 </body>
