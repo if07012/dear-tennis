@@ -63,6 +63,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===================================
     const revealElements = document.querySelectorAll('.reveal-left, .reveal-right, .reveal-up, .reveal-scale');
     const revealImages = document.querySelectorAll('.reveal-image');
+    const sectionTags = document.querySelectorAll('.section-tag');
+    const sectionTitles = document.querySelectorAll('.section-title');
+    const sectionSubtitles = document.querySelectorAll('.section-subtitle');
     
     // Use Intersection Observer for better performance
     const revealObserverOptions = {
@@ -88,6 +91,19 @@ document.addEventListener('DOMContentLoaded', function() {
         revealObserver.observe(image);
     });
     
+    // Observe section tags, titles, and subtitles
+    sectionTags.forEach(tag => {
+        revealObserver.observe(tag);
+    });
+    
+    sectionTitles.forEach(title => {
+        revealObserver.observe(title);
+    });
+    
+    sectionSubtitles.forEach(subtitle => {
+        revealObserver.observe(subtitle);
+    });
+    
     // Fallback scroll check for older browsers
     function checkReveal() {
         const triggerBottom = window.innerHeight * 0.85;
@@ -97,6 +113,28 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (boxTop < triggerBottom) {
                 element.classList.add('active');
+            }
+        });
+        
+        // Also check section tags, titles, and subtitles
+        sectionTags.forEach(tag => {
+            const boxTop = tag.getBoundingClientRect().top;
+            if (boxTop < triggerBottom) {
+                tag.classList.add('active');
+            }
+        });
+        
+        sectionTitles.forEach(title => {
+            const boxTop = title.getBoundingClientRect().top;
+            if (boxTop < triggerBottom) {
+                title.classList.add('active');
+            }
+        });
+        
+        sectionSubtitles.forEach(subtitle => {
+            const boxTop = subtitle.getBoundingClientRect().top;
+            if (boxTop < triggerBottom) {
+                subtitle.classList.add('active');
             }
         });
     }
