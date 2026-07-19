@@ -13,17 +13,13 @@ target/
 venv/
 node_modules/
 .julia/
-zig*/
-.mypy_cache/
-.pytest_cache/
-.gradle/
+zig-cache/
 
 # Logs and temp files
 *.log
 *.tmp
 *.swp
 *.swo
-*.out
 
 # Environment
 .env
@@ -33,8 +29,10 @@ zig*/
 # Editors
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# System files
+# System
 .DS_Store
 Thumbs.db
 
@@ -42,6 +40,22 @@ Thumbs.db
 coverage/
 htmlcov/
 .coverage
+
+# Python specific
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg-info/
+.eggs/
+
+# JavaScript/Node specific
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Compressed files
 *.zip
