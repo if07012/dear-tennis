@@ -2647,11 +2647,20 @@
         function createGalleryItem(event) {
             if (!event.photos || event.photos.length === 0) return '';
             
-            const formattedDate = new Date(event.date).toLocaleDateString('en-US', { 
-                day: 'numeric', 
-                month: 'long', 
-                year: 'YYYY' 
-            });
+            // Fix date parsing and format
+            let formattedDate = 'Date not available';
+            try {
+                const dateObj = event.date ? new Date(event.date + 'T00:00:00') : new Date();
+                if (!isNaN(dateObj.getTime())) {
+                    formattedDate = dateObj.toLocaleDateString('en-US', { 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric' 
+                    });
+                }
+            } catch (e) {
+                console.error('Error formatting date:', e);
+            }
             
             return `
                 <div class="gallery-item" data-event-id="${event.id}" onclick="openLightbox(${event.id}, 0)">
