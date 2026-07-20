@@ -2708,7 +2708,7 @@
             let filtered = [...eventHistoryData];
             
             // Hanya tampilkan Fun Match dan Training
-            const allowedTypes = ['Fun Match', 'Training'];
+            const allowedTypes = ['funmatch', 'training'];
             filtered = filtered.filter(event => allowedTypes.includes(event.type));
             
             // Filter by type
