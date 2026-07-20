@@ -1604,6 +1604,13 @@
     </main>
 
     <script>
+        // Event Gallery Variables - Must be declared first for onclick handlers
+        let currentGalleryPage = 1;
+        const galleryItemsPerPage = 6;
+        let currentGalleryFilter = 'all';
+        let lightboxImages = [];
+        let currentLightboxIndex = 0;
+
         const skillsCtx = document.getElementById('skillsChart').getContext('2d');
         new Chart(skillsCtx, {
             type: 'radar',
@@ -2613,12 +2620,7 @@
             }
         }
 
-        // Event Gallery Functions
-        let currentGalleryPage = 1;
-        const galleryItemsPerPage = 6;
-        let currentGalleryFilter = 'all';
-        let lightboxImages = [];
-        let currentLightboxIndex = 0;
+        // Event Gallery Functions (variables already declared at top)
 
         function filterGallery(filter) {
             currentGalleryFilter = filter;
