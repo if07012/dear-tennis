@@ -103,6 +103,12 @@
             padding: 40px;
             box-shadow: var(--shadow-md);
         }
+        .profile-section-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
         .section-icon {
             width: 48px;
             height: 48px;
@@ -111,7 +117,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
+            flex-shrink: 0;
         }
         .section-icon svg {
             width: 24px;
@@ -120,7 +126,7 @@
         }
         .profile-section h2 {
             font-size: 1.5rem;
-            margin-bottom: 24px;
+            margin: 0;
             color: var(--hunter-green);
         }
         .chart-container {
@@ -772,25 +778,29 @@
 
             <div class="profile-main">
                 <section class="profile-section">
-                    <div class="section-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 20V10M12 20V4M6 20v-6"/>
-                        </svg>
+                    <div class="profile-section-header">
+                        <div class="section-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 20V10M12 20V4M6 20v-6"/>
+                            </svg>
+                        </div>
+                        <h2>Skill Overview</h2>
                     </div>
-                    <h2>Skill Overview</h2>
                     <div class="chart-container">
                         <canvas id="skillsChart"></canvas>
                     </div>
                 </section>
 
                 <section class="profile-section">
-                    <div class="section-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                            <polyline points="17 6 23 6 23 12"/>
-                        </svg>
+                    <div class="profile-section-header">
+                        <div class="section-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                                <polyline points="17 6 23 6 23 12"/>
+                            </svg>
+                        </div>
+                        <h2>Performance Overview</h2>
                     </div>
-                    <h2>Performance Overview</h2>
                     
                     <div class="event-filter-container" style="margin-bottom: 20px;">
                         <div class="filter-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; cursor: pointer;" id="filterHeader">
@@ -912,13 +922,15 @@
                 </section>
 
                 <section class="profile-section">
-                    <div class="section-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M12 6v6l4 2"/>
-                        </svg>
+                    <div class="profile-section-header">
+                        <div class="section-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                        </div>
+                        <h2>Skill Breakdown</h2>
                     </div>
-                    <h2>Skill Breakdown</h2>
                     <p style="font-size: 0.875rem; color: var(--dark-gray); margin-bottom: 20px; line-height: 1.5;">
                         Skill breakdown ini dihitung berdasarkan rata-rata performa dari event yang dipilih di filter atas.
                     </p>
@@ -1198,13 +1210,15 @@
                 </section>
 
                 <section class="profile-section">
-                    <div class="section-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="8" r="7"/>
-                            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
-                        </svg>
+                    <div class="profile-section-header">
+                        <div class="section-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="8" r="7"/>
+                                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+                            </svg>
+                        </div>
+                        <h2>Achievements</h2>
                     </div>
-                    <h2>Achievements</h2>
                     <div class="achievement-grid">
                         <div class="achievement-badge">
                             <div class="achievement-icon">🏆</div>
@@ -1234,15 +1248,17 @@
                 </section>
 
                 <section class="profile-section">
-                    <div class="section-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
-                        </svg>
+                    <div class="profile-section-header">
+                        <div class="section-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                        </div>
+                        <h2>Event History</h2>
                     </div>
-                    <h2>Event History</h2>
                     <p style="font-size: 0.875rem; color: var(--dark-gray); margin-bottom: 24px; line-height: 1.5;">
                         Riwayat event yang pernah diikuti, diurutkan berdasarkan tanggal.
                     </p>
