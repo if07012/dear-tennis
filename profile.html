@@ -134,36 +134,197 @@
         .skill-bars {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 24px;
+        }
+        .skill-item {
+            background: var(--off-white);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all var(--transition-fast);
+        }
+        .skill-item:hover {
+            background: var(--white);
+            box-shadow: var(--shadow-md);
+            transform: translateX(4px);
         }
         .skill-bar-item {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            
         }
         .skill-bar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 12px;
+            gap: 16px;
+        }
+        .skill-bar-label-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .skill-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        .skill-icon.forehand { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+        .skill-icon.backhand { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
+        .skill-icon.serve { background: linear-gradient(135deg, #fff3e0, #ffe0b2); }
+        .skill-icon.volley { background: linear-gradient(135deg, #fce4ec, #f8bbd9); }
+        .skill-icon.footwork { background: linear-gradient(135deg, #f3e5f5, #e1bee7); }
+        .skill-icon svg {
+            width: 22px;
+            height: 22px;
+            color: var(--hunter-green);
         }
         .skill-bar-label {
-            font-weight: 500;
+            font-weight: 600;
             color: var(--graphite);
+            font-size: 1rem;
+        }
+        .skill-level-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .skill-level-badge.expert {
+            background: linear-gradient(135deg, #ffd700, #ffb300);
+            color: #5d4e00;
+        }
+        .skill-level-badge.advanced {
+            background: linear-gradient(135deg, #9c27b0, #ba68c8);
+            color: var(--white);
+        }
+        .skill-level-badge.intermediate {
+            background: linear-gradient(135deg, #2196f3, #64b5f6);
+            color: var(--white);
+        }
+        .skill-level-badge.beginner {
+            background: linear-gradient(135deg, #ff9800, #ffb74d);
+            color: var(--white);
+        }
+        .skill-bar-value-wrapper {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
         }
         .skill-bar-value {
             font-weight: 700;
             color: var(--hunter-green);
+            font-size: 1.25rem;
+        }
+        .skill-bar-max {
+            font-size: 0.875rem;
+            color: var(--dark-gray);
+            font-weight: 500;
         }
         .skill-bar-track {
-            height: 12px;
+            height: 16px;
             background: var(--light-gray);
-            border-radius: 6px;
+            border-radius: 8px;
             overflow: hidden;
+            margin-bottom: 12px;
+            position: relative;
         }
         .skill-bar-fill {
             height: 100%;
-            border-radius: 6px;
+            border-radius: 8px;
             transition: width 1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .skill-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                rgba(255,255,255,0.2) 0%,
+                rgba(255,255,255,0) 50%,
+                rgba(255,255,255,0.1) 100%
+            );
+        }
+        .skill-description {
+            font-size: 0.8rem;
+            color: var(--dark-gray);
+            line-height: 1.5;
+            padding-left: 52px;
+        }
+        .skill-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding-left: 52px;
+            margin-top: 12px;
+        }
+        .skill-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, opacity 0.3s ease;
+            opacity: 0;
+        }
+        .skill-details.show {
+            max-height: 500px;
+            opacity: 1;
+        }
+        .skill-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--hunter-green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all var(--transition-fast);
+            border-radius: 8px;
+            margin: 0;
+        }
+        .skill-toggle-btn:hover {
+            background: rgba(44, 95, 75, 0.1);
+        }
+        .skill-toggle-btn svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+        }
+        .skill-toggle-btn.active svg {
+            transform: rotate(180deg);
+        }
+        .skill-stat-mini {
+            text-align: center;
+            padding: 8px;
+            background: var(--white);
+            border-radius: 8px;
+        }
+        .skill-stat-mini-value {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--hunter-green);
+        }
+        .skill-stat-mini-label {
+            font-size: 0.65rem;
+            color: var(--dark-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-top: 2px;
         }
         .achievement-grid {
             display: grid;
@@ -477,6 +638,77 @@
             .chart-container {
                 height: 250px;
             }
+            .skill-bar-item {
+                padding: 16px;
+            }
+            .skill-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1.1rem;
+            }
+            .skill-icon svg {
+                width: 18px;
+                height: 18px;
+            }
+            .skill-bar-label {
+                font-size: 0.9rem;
+            }
+            .skill-bar-value {
+                font-size: 1.1rem;
+            }
+            .skill-description,
+            .skill-stats {
+                padding-left: 48px;
+            }
+            .skill-toggle-btn {
+                margin-left: 48px;
+            }
+            .skill-stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            .skill-stat-mini {
+                padding: 6px;
+            }
+            .skill-stat-mini-value {
+                font-size: 0.8rem;
+            }
+            .skill-stat-mini-label {
+                font-size: 0.6rem;
+            }
+            .skill-item {
+                padding: 16px;
+            }
+        }
+        @media (max-width: 480px) {
+            .skill-item {
+                padding: 12px;
+            }
+            .skill-bar-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .skill-bar-header > div:last-child {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .skill-bar-header > div:last-child > div:first-child {
+                text-align: left !important;
+            }
+            .skill-description,
+            .skill-stats {
+                padding-left: 0;
+            }
+            .skill-toggle-btn {
+                margin-left: 0;
+            }
+            .skill-level-badge {
+                font-size: 0.65rem;
+                padding: 3px 10px;
+            }
         }
     </style>
 </head>
@@ -691,50 +923,276 @@
                         Skill breakdown ini dihitung berdasarkan rata-rata performa dari event yang dipilih di filter atas.
                     </p>
                     <div class="skill-bars" id="skillBreakdownBars">
+                        <!-- Forehand -->
+                        <div class="skill-item">
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
-                                <span class="skill-bar-label">Forehand</span>
-                                <span class="skill-bar-value" id="forehandValue">85%</span>
+                                <div class="skill-bar-label-wrapper">
+                                    <div class="skill-icon forehand">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M14.5 2L22 9.5L12 19.5C12 19.5 6 21 4 19C2 17 3.5 11 3.5 11L13.5 1L14.5 2Z"/>
+                                            <circle cx="18" cy="6" r="2"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="skill-bar-label">Forehand</span>
+                                        <div style="font-size: 0.7rem; color: var(--dark-gray); font-weight: 500;">Groundstroke utama dari sisi dominan</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="text-align: right;">
+                                        <div class="skill-bar-value-wrapper">
+                                            <span class="skill-bar-value" id="forehandValue">85</span>
+                                            <span class="skill-bar-max">/100</span>
+                                        </div>
+                                        <span class="skill-level-badge expert">Expert</span>
+                                    </div>
+                                    <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="skill-bar-track">
-                                <div class="skill-bar-fill" id="forehandBar" style="width: 85%; background: linear-gradient(90deg, var(--hunter-green), var(--muted-teal));"></div>
+                                <div class="skill-bar-fill" id="forehandBar" style="width: 85%; background: linear-gradient(90deg, #2ECC71, #27AE60);"></div>
+                            </div>
+                            <div class="skill-details">
+                                <p class="skill-description">Konsistensi dan akurasi forehand sangat baik dengan kontrol bola yang matang.</p>
+                                <div class="skill-stats">
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">92%</span>
+                                        <span class="skill-stat-mini-label">Accuracy</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">78%</span>
+                                        <span class="skill-stat-mini-label">Power</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">85%</span>
+                                        <span class="skill-stat-mini-label">Consistency</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                        </div>
+
+                        <!-- Backhand -->
+                        <div class="skill-item">
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
-                                <span class="skill-bar-label">Backhand</span>
-                                <span class="skill-bar-value" id="backhandValue">72%</span>
+                                <div class="skill-bar-label-wrapper">
+                                    <div class="skill-icon backhand">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M9.5 2L2 9.5L12 19.5C12 19.5 18 21 20 19C22 17 20.5 11 20.5 11L10.5 1L9.5 2Z"/>
+                                            <circle cx="6" cy="6" r="2"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="skill-bar-label">Backhand</span>
+                                        <div style="font-size: 0.7rem; color: var(--dark-gray); font-weight: 500;">Groundstroke dari sisi non-dominan</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="text-align: right;">
+                                        <div class="skill-bar-value-wrapper">
+                                            <span class="skill-bar-value" id="backhandValue">72</span>
+                                            <span class="skill-bar-max">/100</span>
+                                        </div>
+                                        <span class="skill-level-badge intermediate">Intermediate</span>
+                                    </div>
+                                    <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="skill-bar-track">
-                                <div class="skill-bar-fill" id="backhandBar" style="width: 72%; background: linear-gradient(90deg, var(--hunter-green), var(--muted-teal));"></div>
+                                <div class="skill-bar-fill" id="backhandBar" style="width: 72%; background: linear-gradient(90deg, #3498DB, #2980B9);"></div>
+                            </div>
+                            <div class="skill-details">
+                                <p class="skill-description">Backhand cukup solid namun perlu peningkatan dalam hal power dan konsistensi.</p>
+                                <div class="skill-stats">
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">75%</span>
+                                        <span class="skill-stat-mini-label">Accuracy</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">65%</span>
+                                        <span class="skill-stat-mini-label">Power</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">76%</span>
+                                        <span class="skill-stat-mini-label">Consistency</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                        </div>
+
+                        <!-- Serve -->
+                        <div class="skill-item">
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
-                                <span class="skill-bar-label">Serve</span>
-                                <span class="skill-bar-value" id="serveValue">68%</span>
+                                <div class="skill-bar-label-wrapper">
+                                    <div class="skill-icon serve">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="3"/>
+                                            <path d="M12 2V6M12 18V22M2 12H6M18 12H22"/>
+                                            <path d="M4.93 4.93L7.76 7.76M16.24 16.24L19.07 19.07"/>
+                                            <path d="M4.93 19.07L7.76 16.24M16.24 7.76L19.07 4.93"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="skill-bar-label">Serve</span>
+                                        <div style="font-size: 0.7rem; color: var(--dark-gray); font-weight: 500;">Pukulan pembuka poin</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="text-align: right;">
+                                        <div class="skill-bar-value-wrapper">
+                                            <span class="skill-bar-value" id="serveValue">68</span>
+                                            <span class="skill-bar-max">/100</span>
+                                        </div>
+                                        <span class="skill-level-badge beginner">Beginner</span>
+                                    </div>
+                                    <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="skill-bar-track">
-                                <div class="skill-bar-fill" id="serveBar" style="width: 68%; background: linear-gradient(90deg, var(--muted-teal), var(--hunter-green));"></div>
+                                <div class="skill-bar-fill" id="serveBar" style="width: 68%; background: linear-gradient(90deg, #F39C12, #E67E22);"></div>
+                            </div>
+                            <div class="skill-details">
+                                <p class="skill-description">Serve memerlukan perbaikan teknik dan konsistensi untuk meningkatkan efektivitas.</p>
+                                <div class="skill-stats">
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">70%</span>
+                                        <span class="skill-stat-mini-label">Accuracy</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">62%</span>
+                                        <span class="skill-stat-mini-label">Power</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">72%</span>
+                                        <span class="skill-stat-mini-label">Consistency</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                        </div>
+
+                        <!-- Volley -->
+                        <div class="skill-item">
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
-                                <span class="skill-bar-label">Volley</span>
-                                <span class="skill-bar-value" id="volleyValue">79%</span>
+                                <div class="skill-bar-label-wrapper">
+                                    <div class="skill-icon volley">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="skill-bar-label">Volley</span>
+                                        <div style="font-size: 0.7rem; color: var(--dark-gray); font-weight: 500;">Pukulan di dekat net</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="text-align: right;">
+                                        <div class="skill-bar-value-wrapper">
+                                            <span class="skill-bar-value" id="volleyValue">79</span>
+                                            <span class="skill-bar-max">/100</span>
+                                        </div>
+                                        <span class="skill-level-badge advanced">Advanced</span>
+                                    </div>
+                                    <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="skill-bar-track">
-                                <div class="skill-bar-fill" id="volleyBar" style="width: 79%; background: linear-gradient(90deg, var(--hunter-green), var(--muted-teal));"></div>
+                                <div class="skill-bar-fill" id="volleyBar" style="width: 79%; background: linear-gradient(90deg, #E91E63, #D81B60);"></div>
+                            </div>
+                            <div class="skill-details">
+                                <p class="skill-description">Volley menunjukkan kemampuan net play yang baik dengan refleks cepat.</p>
+                                <div class="skill-stats">
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">82%</span>
+                                        <span class="skill-stat-mini-label">Accuracy</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">71%</span>
+                                        <span class="skill-stat-mini-label">Power</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">84%</span>
+                                        <span class="skill-stat-mini-label">Consistency</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Footwork -->
+                        <div class="skill-item">
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
-                                <span class="skill-bar-label">Footwork</span>
-                                <span class="skill-bar-value" id="footworkValue">91%</span>
+                                <div class="skill-bar-label-wrapper">
+                                    <div class="skill-icon footwork">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M4 16v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2"/>
+                                            <path d="M4 16c0 2.21 1.79 4 4 4h2"/>
+                                            <path d="M14 20h2a4 4 0 0 0 4-4v-2"/>
+                                            <path d="M8 10V6a4 4 0 0 1 4-4h4"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="skill-bar-label">Footwork</span>
+                                        <div style="font-size: 0.7rem; color: var(--dark-gray); font-weight: 500;">Pergerakan kaki di lapangan</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="text-align: right;">
+                                        <div class="skill-bar-value-wrapper">
+                                            <span class="skill-bar-value" id="footworkValue">91</span>
+                                            <span class="skill-bar-max">/100</span>
+                                        </div>
+                                        <span class="skill-level-badge expert">Expert</span>
+                                    </div>
+                                    <button class="skill-toggle-btn" onclick="toggleSkillDetails(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="skill-bar-track">
-                                <div class="skill-bar-fill" id="footworkBar" style="width: 91%; background: linear-gradient(90deg, var(--hunter-green), var(--muted-teal));"></div>
+                                <div class="skill-bar-fill" id="footworkBar" style="width: 91%; background: linear-gradient(90deg, #9B59B6, #8E44AD);"></div>
                             </div>
+                            <div class="skill-details">
+                                <p class="skill-description">Footwork luar biasa dengan pergerakan cepat dan posisi yang tepat di lapangan.</p>
+                                <div class="skill-stats">
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">95%</span>
+                                        <span class="skill-stat-mini-label">Speed</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">88%</span>
+                                        <span class="skill-stat-mini-label">Agility</span>
+                                    </div>
+                                    <div class="skill-stat-mini">
+                                        <span class="skill-stat-mini-value">90%</span>
+                                        <span class="skill-stat-mini-label">Balance</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         </div>
                     </div>
                 </section>
@@ -1809,6 +2267,19 @@
 
         // Initialize with all events selected
         updateFilterState();
+
+        // Toggle skill details function
+        function toggleSkillDetails(button) {
+            const details = button.closest('.skill-item').querySelector('.skill-details');
+            
+            if (details.classList.contains('show')) {
+                details.classList.remove('show');
+                button.classList.remove('active');
+            } else {
+                details.classList.add('show');
+                button.classList.add('active');
+            }
+        }
     </script>
 </body>
 </html>
