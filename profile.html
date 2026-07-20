@@ -1901,16 +1901,22 @@
             }
             
             const skills = { Forehand: 0, Backhand: 0, Serve: 0, Volley: 0, Footwork: 0 };
+            let validEventsCount = 0;
             
             selectedEvents.forEach(event => {
                 const data = skillDataByEvent[event];
-                for (const skill in skills) {
-                    skills[skill] += data[skill];
+                if (data) {
+                    for (const skill in skills) {
+                        skills[skill] += data[skill];
+                    }
+                    validEventsCount++;
                 }
             });
             
-            for (const skill in skills) {
-                skills[skill] = Math.round(skills[skill] / selectedEvents.length);
+            if (validEventsCount > 0) {
+                for (const skill in skills) {
+                    skills[skill] = Math.round(skills[skill] / validEventsCount);
+                }
             }
             
             return skills;
