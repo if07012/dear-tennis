@@ -136,16 +136,19 @@
             flex-direction: column;
             gap: 24px;
         }
-        .skill-bar-item {
+        .skill-item {
             background: var(--off-white);
             border-radius: 16px;
             padding: 20px;
             transition: all var(--transition-fast);
         }
-        .skill-bar-item:hover {
+        .skill-item:hover {
             background: var(--white);
             box-shadow: var(--shadow-md);
             transform: translateX(4px);
+        }
+        .skill-bar-item {
+            
         }
         .skill-bar-header {
             display: flex;
@@ -673,8 +676,14 @@
             .skill-stat-mini-label {
                 font-size: 0.6rem;
             }
+            .skill-item {
+                padding: 16px;
+            }
         }
         @media (max-width: 480px) {
+            .skill-item {
+                padding: 12px;
+            }
             .skill-bar-header {
                 flex-direction: column;
                 align-items: flex-start;
@@ -915,6 +924,7 @@
                     </p>
                     <div class="skill-bars" id="skillBreakdownBars">
                         <!-- Forehand -->
+                        <div class="skill-item">
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
                                 <div class="skill-bar-label-wrapper">
@@ -965,8 +975,10 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
 
                         <!-- Backhand -->
+                        <div class="skill-item">
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
                                 <div class="skill-bar-label-wrapper">
@@ -1017,8 +1029,10 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
 
                         <!-- Serve -->
+                        <div class="skill-item">
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
                                 <div class="skill-bar-label-wrapper">
@@ -1071,8 +1085,10 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
 
                         <!-- Volley -->
+                        <div class="skill-item">
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
                                 <div class="skill-bar-label-wrapper">
@@ -1124,6 +1140,7 @@
                         </div>
 
                         <!-- Footwork -->
+                        <div class="skill-item">
                         <div class="skill-bar-item">
                             <div class="skill-bar-header">
                                 <div class="skill-bar-label-wrapper">
@@ -1175,6 +1192,7 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
                         </div>
                     </div>
                 </section>
@@ -2252,7 +2270,7 @@
 
         // Toggle skill details function
         function toggleSkillDetails(button) {
-            const details = button.parentElement.nextElementSibling;
+            const details = button.closest('.skill-item').querySelector('.skill-details');
             
             if (details.classList.contains('show')) {
                 details.classList.remove('show');
