@@ -1502,8 +1502,6 @@
                     <!-- Gallery Filter -->
                     <div class="gallery-filters" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;">
                         <button class="gallery-filter-btn active" data-filter="all" style="padding: 10px 20px; border-radius: 12px; border: 2px solid var(--hunter-green); background: var(--hunter-green); color: var(--white); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast);" onclick="filterGallery('all')">All Events</button>
-                        <button class="gallery-filter-btn" data-filter="tournament" style="padding: 10px 20px; border-radius: 12px; border: 2px solid var(--light-gray); background: var(--off-white); color: var(--dark-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast);" onclick="filterGallery('tournament')">Tournament</button>
-                        <button class="gallery-filter-btn" data-filter="championship" style="padding: 10px 20px; border-radius: 12px; border: 2px solid var(--light-gray); background: var(--off-white); color: var(--dark-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast);" onclick="filterGallery('championship')">Championship</button>
                         <button class="gallery-filter-btn" data-filter="funmatch" style="padding: 10px 20px; border-radius: 12px; border: 2px solid var(--light-gray); background: var(--off-white); color: var(--dark-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast);" onclick="filterGallery('funmatch')">Fun Match</button>
                         <button class="gallery-filter-btn" data-filter="training" style="padding: 10px 20px; border-radius: 12px; border: 2px solid var(--light-gray); background: var(--off-white); color: var(--dark-gray); font-family: 'Inter', sans-serif; font-size: 0.875rem; cursor: pointer; font-weight: 600; transition: all var(--transition-fast);" onclick="filterGallery('training')">Training</button>
                     </div>
@@ -2708,6 +2706,10 @@
 
         function getFilteredGalleryEvents() {
             let filtered = [...eventHistoryData];
+            
+            // Hanya tampilkan Fun Match dan Training
+            const allowedTypes = ['Fun Match', 'Training'];
+            filtered = filtered.filter(event => allowedTypes.includes(event.type));
             
             // Filter by type
             if (currentGalleryFilter !== 'all') {
