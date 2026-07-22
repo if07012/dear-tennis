@@ -1710,7 +1710,9 @@ html.lenis {
 .login-section {
     position: relative;
     min-height: 100vh;
-    padding: 120px 0 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: linear-gradient(135deg, var(--hunter-green) 0%, var(--hunter-green-dark) 100%);
     overflow: hidden;
 }
@@ -1728,13 +1730,12 @@ html.lenis {
     z-index: 0;
 }
 
-.login-container {
+.login-wrapper {
     position: relative;
     z-index: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    align-items: center;
+    width: 100%;
+    max-width: 480px;
+    padding: 20px;
 }
 
 .login-card {
@@ -1927,69 +1928,10 @@ html.lenis {
     color: var(--spicy-paprika-hover);
 }
 
-.login-benefits {
-    color: var(--white);
-}
-
-.login-benefits h2 {
-    color: var(--white);
-    font-size: 1.75rem;
-    margin-bottom: 32px;
-}
-
-.benefits-list {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.benefits-list li {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-}
-
-.benefit-icon {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted-teal-light);
-}
-
-.benefit-icon svg {
-    width: 24px;
-    height: 24px;
-}
-
-.benefit-content h3 {
-    color: var(--white);
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.benefit-content p {
-    color: var(--light-gray);
-    font-size: 0.875rem;
-    line-height: 1.5;
-}
-
 /* Login Page Responsive */
-@media (max-width: 968px) {
-    .login-container {
-        grid-template-columns: 1fr;
-        max-width: 500px;
-        margin: 0 auto;
-    }
-
-    .login-benefits {
-        display: none;
+@media (max-width: 768px) {
+    .login-wrapper {
+        max-width: 420px;
     }
 
     .login-card {
@@ -1998,8 +1940,8 @@ html.lenis {
 }
 
 @media (max-width: 480px) {
-    .login-section {
-        padding: 100px 0 40px;
+    .login-wrapper {
+        padding: 15px;
     }
 
     .login-card {
@@ -2009,10 +1951,6 @@ html.lenis {
 
     .login-title {
         font-size: 1.5rem;
-    }
-
-    .social-login {
-        grid-template-columns: 1fr;
     }
 
     .form-options {
