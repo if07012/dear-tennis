@@ -5,60 +5,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // ===================================
-    // NAVIGATION (same as main.js for consistency)
-    // ===================================
-    const navbar = document.getElementById('navbar');
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const navMenu = document.getElementById('navMenu');
-    const navLinks = document.querySelectorAll('.nav-link');
-    
-    // Navbar scroll effect
-    function handleNavbarScroll() {
-        if (window.scrollY > 100) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
-    }
-    
-    window.addEventListener('scroll', handleNavbarScroll);
-    handleNavbarScroll(); // Check on load
-    
-    // Mobile menu toggle
-    const navMenuOverlay = document.getElementById('navMenuOverlay');
-    
-    if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', function() {
-            const isActive = navMenu.classList.contains('active');
-            if (isActive) {
-                navMenu.classList.remove('active');
-                navMenuOverlay.classList.remove('active');
-                this.classList.remove('active');
-            } else {
-                navMenu.classList.add('active');
-                navMenuOverlay.classList.add('active');
-                this.classList.add('active');
-            }
-        });
-        
-        // Close mobile menu when clicking on overlay
-        navMenuOverlay.addEventListener('click', function() {
-            navMenu.classList.remove('active');
-            navMenuOverlay.classList.remove('active');
-            mobileMenuBtn.classList.remove('active');
-        });
-        
-        // Close mobile menu on link click
-        navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                navMenu.classList.remove('active');
-                navMenuOverlay.classList.remove('active');
-                mobileMenuBtn.classList.remove('active');
-            });
-        });
-    }
-    
-    // ===================================
     // PASSWORD VISIBILITY TOGGLE
     // ===================================
     const togglePasswordBtn = document.getElementById('togglePassword');
@@ -148,22 +94,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ===================================
-    // SOCIAL LOGIN BUTTONS
+    // SOCIAL LOGIN BUTTONS (Removed)
     // ===================================
-    const googleLoginBtn = document.getElementById('googleLogin');
-    const facebookLoginBtn = document.getElementById('facebookLogin');
-    
-    if (googleLoginBtn) {
-        googleLoginBtn.addEventListener('click', function() {
-            showNotification('Google login coming soon!', 'info');
-        });
-    }
-    
-    if (facebookLoginBtn) {
-        facebookLoginBtn.addEventListener('click', function() {
-            showNotification('Facebook login coming soon!', 'info');
-        });
-    }
+    // Social login buttons have been removed from the UI
     
     // ===================================
     // REMEMBER ME FUNCTIONALITY
