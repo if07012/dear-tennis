@@ -66,109 +66,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ===================================
-    // GSAP ENTRANCE ANIMATIONS
+    // GSAP ENTRANCE ANIMATIONS - DISABLED
+    // All elements now visible immediately
     // ===================================
     function initEntranceAnimations() {
-        // Check for reduced motion preference
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        // Set all elements to visible immediately without animation
+        const elements = [
+            '.login-section',
+            '.particle',
+            '#loginLogo',
+            '.login-title',
+            '.login-subtitle',
+            '.form-group',
+            '#formOptions',
+            '#loginBtn'
+        ];
         
-        if (prefersReducedMotion) {
-            // Skip animations for users who prefer reduced motion
-            document.querySelector('.login-card').style.opacity = '1';
-            document.querySelector('.login-card').style.transform = 'none';
-            return;
-        }
-        
-        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-        
-        // Background fade in
-        tl.from('.login-section', {
-            opacity: 0,
-            duration: 1
+        elements.forEach(selector => {
+            const el = document.querySelectorAll(selector);
+            el.forEach(element => {
+                element.style.opacity = '1';
+                element.style.transform = 'none';
+            });
         });
-        
-        // Particles appear
-        tl.from('.particle', {
-            opacity: 0,
-            scale: 0,
-            stagger: {
-                amount: 1,
-                from: 'random'
-            },
-            duration: 0.8
-        }, '-=0.5');
-        
-        // Logo animation
-        tl.from('#loginLogo', {
-            opacity: 0,
-            scale: 0.5,
-            rotation: -15,
-            duration: 0.8,
-            ease: 'back.out(1.7)'
-        }, '-=0.6');
-        
-        // Header animations
-        tl.from(['.login-title', '.login-subtitle'], {
-            opacity: 0,
-            y: 30,
-            stagger: 0.1,
-            duration: 0.8
-        }, '-=0.4');
-        
-        // Form groups with stagger
-        tl.from('.form-group', {
-            opacity: 0,
-            y: 20,
-            stagger: 0.15,
-            duration: 0.6
-        }, '-=0.3');
-        
-        // Form options
-        tl.from('#formOptions', {
-            opacity: 0,
-            y: 20,
-            duration: 0.5
-        }, '-=0.3');
-        
-        // Login button
-        tl.from('#loginBtn', {
-            opacity: 0,
-            y: 20,
-            scale: 0.95,
-            duration: 0.5
-        }, '-=0.3');
-        
-        // Divider
-        tl.from('#loginDivider', {
-            opacity: 0,
-            scale: 0.8,
-            duration: 0.4
-        }, '-=0.2');
-        
-        // Social login buttons
-        tl.from('.social-login', {
-            opacity: 0,
-            y: 20,
-            duration: 0.5
-        }, '-=0.2');
-        
-        tl.from('.social-btn', {
-            opacity: 0,
-            y: 10,
-            stagger: 0.1,
-            duration: 0.4
-        }, '-=0.3');
-        
-        // Signup link
-        tl.from('#signupLink', {
-            opacity: 0,
-            y: 10,
-            duration: 0.4
-        }, '-=0.2');
     }
     
-    // Initialize entrance animations
-    setTimeout(initEntranceAnimations, 100);
+    // Initialize entrance animations (instant)
+    initEntranceAnimations();
     
     // ===================================
     // PARALLAX EFFECT ON CARD
@@ -386,51 +310,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ===================================
-    // SOCIAL LOGIN BUTTONS (Ripple Effect)
-    // ===================================
-    const socialBtns = document.querySelectorAll('.social-btn');
-    
-    socialBtns.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            const rect = this.getBoundingClientRect();
-            const ripple = document.createElement('span');
-            ripple.style.cssText = `
-                position: absolute;
-                border-radius: 50%;
-                background: rgba(44, 95, 75, 0.2);
-                transform: scale(0);
-                animation: ripple 0.6s linear;
-                pointer-events: none;
-            `;
-            
-            const size = Math.max(rect.width, rect.height);
-            ripple.style.width = ripple.style.height = `${size}px`;
-            ripple.style.left = `${e.clientX - rect.left - size/2}px`;
-            ripple.style.top = `${e.clientY - rect.top - size/2}px`;
-            
-            this.appendChild(ripple);
-            
-            setTimeout(() => ripple.remove(), 600);
-            
-            // Show notification
-            const provider = this.textContent.trim();
-            showNotification(`${provider} login coming soon!`, 'info');
-        });
-    });
-    
-    // Add ripple keyframes
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes ripple {
-            to {
-                transform: scale(4);
-                opacity: 0;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-    
-    // ===================================
     // FORGOT PASSWORD LINK
     // ===================================
     const forgotLink = document.getElementById('forgotLink');
@@ -446,25 +325,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 duration: 0.2,
                 yoyo: true,
                 repeat: 1
-            });
-        });
-    }
-    
-    // ===================================
-    // SIGNUP LINK
-    // ===================================
-    const signupLink = document.querySelector('#signupLink a');
-    
-    if (signupLink) {
-        signupLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            showNotification('Registration feature coming soon!', 'info');
-            
-            // Animate
-            gsap.to(this, {
-                scale: 1.05,
-                color: '#E85D04',
-                duration: 0.3
             });
         });
     }
