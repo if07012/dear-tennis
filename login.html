@@ -86,8 +86,6 @@
                 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
             position: relative;
             overflow: hidden;
-            transform: translateY(60px);
-            opacity: 0;
         }
         
         .login-card::before {
@@ -137,8 +135,6 @@
         .login-logo {
             display: inline-block;
             margin-bottom: 20px;
-            transform: scale(0.8) rotate(-5deg);
-            opacity: 0;
         }
         
         .login-logo svg {
@@ -153,21 +149,8 @@
             filter: drop-shadow(0 4px 8px rgba(232, 93, 4, 0.3));
         }
         
-        /* Header Animations */
-        .login-title {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        
-        .login-subtitle {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        
         /* Enhanced Form Inputs */
         .form-group {
-            opacity: 0;
-            transform: translateY(20px);
         }
         
         .form-group input {
@@ -344,7 +327,7 @@
         #loginBtn {
             position: relative;
             overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         
         #loginBtn::before {
@@ -357,7 +340,7 @@
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.2);
             transform: translate(-50%, -50%);
-            transition: width 0.6s ease, height 0.6s ease;
+            transition: width 0.3s ease, height 0.3s ease;
         }
         
         #loginBtn:hover::before {
@@ -413,88 +396,6 @@
             to { transform: rotate(360deg); }
         }
         
-        /* Divider */
-        .login-divider {
-            opacity: 0;
-        }
-        
-        .login-divider::before {
-            background: linear-gradient(
-                to right,
-                transparent,
-                rgba(255, 255, 255, 0.3),
-                transparent
-            );
-        }
-        
-        /* Social Login Buttons */
-        .social-login {
-            opacity: 0;
-        }
-        
-        .social-btn {
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .social-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(44, 95, 75, 0.1);
-            transform: translate(-50%, -50%);
-            transition: width 0.4s ease, height 0.4s ease;
-        }
-        
-        .social-btn:hover::before {
-            width: 200px;
-            height: 200px;
-        }
-        
-        .social-btn:hover {
-            transform: translateY(-3px) scale(1.03);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-        }
-        
-        .social-btn svg {
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        
-        .social-btn:hover svg {
-            transform: scale(1.2) rotate(5deg);
-        }
-        
-        /* Signup Link */
-        .signup-link {
-            opacity: 0;
-        }
-        
-        .signup-link a {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .signup-link a::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--spicy-paprika);
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .signup-link a:hover::after {
-            width: 100%;
-        }
-        
-        /* Success Checkmark Animation */
         .success-checkmark {
             display: none;
             width: 24px;
@@ -641,32 +542,6 @@
                             <span class="btn-text">Sign In</span>
                         </button>
                     </form>
-                    
-                    <div class="login-divider" id="loginDivider">
-                        <span>or continue with</span>
-                    </div>
-
-                    <div class="social-login" id="socialLogin">
-                        <button class="social-btn" type="button" aria-label="Continue with Google">
-                            <svg viewBox="0 0 24 24" width="20" height="20">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            Google
-                        </button>
-                        <button class="social-btn" type="button" aria-label="Continue with GitHub">
-                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-1.334-.435-.31-.719-.78-.719-.78-.591-.404.045-.396.045-.396.653.046.995.671.995.671.581.993 1.527.707 1.894.541.059-.42.227-.707.412-.868-2.104-.24-4.316-1.052-4.316-1.052-.345-.236-.592-.605-.592-.605-.483-.33.036-.322.036-.322.534.038.815.55.815.55.474.81 1.25 1.206 1.883.986.06-.385.235-.708.435-.87-1.529-.174-3.137-.765-3.137-.765-.28-.195-.454-.48-.454-.48-.367-.25.025-.242.025-.242.407.029.62.42.62.42.361.619.961.985 1.624.966.04-.385.27-.707.495-.867-1.733-.197-3.555-.866-3.555-.866-.224-.194-.378-.478-.378-.478-.306-.21.03-.203.03-.203.382.027.58.398.58.398.336.57.894.958 1.597.936.044-.385.293-.707.537-.867-1.35-.153-2.775-.675-2.775-.675-.14-.11-.228-.28-.228-.28-.248-.17.027-.163.027-.163.273.02.416.28.416.28.24.41.637.74 1.107.724.044-.385.313-.707.582-.867-1.21-.137-2.476-.605-2.476-.605-.103-.07-.17-.17-.17-.17-.16-.11.026-.103.026-.103.19.014.288.28.288.28.163.277.435.55.816.537.03-.385.32-.707.615-.867-1.075-.122-2.205-.538-2.205-.538-.07-.05-.11-.12-.11-.12-.11-.07.02-.063.02-.063.135.01.206.27.206.27.12.205.33.41.63.397.03-.385.35-.707.69-.867-.93-.105-1.91-.45-1.91-.45-.05-.04-.08-.09-.08-.09-.07-.05.02-.043.02-.043.095.007.146.26.146.26.08.14.21.27.38.26.02-.385.37-.707.74-.867-.75-.085-1.53-.38-1.53-.38-.03-.03-.05-.06-.05-.06-.04-.03.01-.023.01-.023.065.005.1.25.1.25.05.08.13.15.24.14.02-.385.41-.707.83-.867-.62-.07-1.27-.27-1.27-.27-.02-.02-.03-.04-.03-.04-.02-.02.01-.013.01-.013.04.003.07.24.07.24.03.05.09.1.17.09.01-.385.45-.707.91-.867z"/>
-                            </svg>
-                            GitHub
-                        </button>
-                    </div>
-
-                    <div class="signup-link" id="signupLink">
-                        <p>Don't have an account? <a href="#">Create one</a></p>
-                    </div>
                 </div>
             </div>
         </div>
