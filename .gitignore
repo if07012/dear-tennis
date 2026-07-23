@@ -1,1 +1,3 @@
-(css/styles.css, js/login.js, login.html are all source files, no build artifacts, dependencies, or temp files in the changes)
+(css/styles.css) is a source code file, and there are no build artifacts, dependencies, or temporary files in the changes provided.
+
+No .gitignore rules are needed for this change set.
