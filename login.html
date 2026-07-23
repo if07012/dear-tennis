@@ -171,6 +171,7 @@
         }
         
         .form-group input {
+            z-index: 1;
             position: relative;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -215,6 +216,7 @@
         }
         
         .form-group input {
+            z-index: 1;
             padding-left: 44px;
         }
         
@@ -236,7 +238,9 @@
         .form-group input:not(:placeholder-shown) ~ .floating-label,
         .form-group.focused .floating-label {
             top: 0;
-            left: 36px;
+            left: 44px;
+            padding: 0 6px;
+            margin-top: -10px;
             font-size: 0.75rem;
             color: var(--hunter-green);
             background: var(--white);
@@ -667,74 +671,6 @@
             </div>
         </div>
     </section>
-
-    <!-- Footer -->
-    <footer class="footer" style="background: rgba(30, 66, 52, 0.95); backdrop-filter: blur(10px);">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a href="index.html" class="logo">
-                        <span class="logo-text">Dear Tennis</span>
-                    </a>
-                    <p style="color: rgba(255,255,255,0.8);">More than just a game. It's a community where passion meets connection.</p>
-                    <div class="social-links">
-                        <a href="#" aria-label="Facebook" style="color: rgba(255,255,255,0.7);">
-                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                            </svg>
-                        </a>
-                        <a href="#" aria-label="Instagram" style="color: rgba(255,255,255,0.7);">
-                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                                <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" fill="none" stroke="currentColor" stroke-width="2"/>
-                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                            </svg>
-                        </a>
-                        <a href="#" aria-label="Twitter" style="color: rgba(255,255,255,0.7);">
-                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/>
-                            </svg>
-                        </a>
-                        <a href="#" aria-label="YouTube" style="color: rgba(255,255,255,0.7);">
-                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                <path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 11.75a29 29 0 00.46 5.33A2.78 2.78 0 003.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 001.94-2 29 29 0 00.46-5.25 29 29 0 00-.46-5.33z"/>
-                                <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="#fff"/>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-                <div class="footer-links">
-                    <h4 style="color: var(--white);">Quick Links</h4>
-                    <ul>
-                        <li><a href="index.html#about" style="color: rgba(255,255,255,0.7);">About Us</a></li>
-                        <li><a href="index.html#activities" style="color: rgba(255,255,255,0.7);">Activities</a></li>
-                        <li><a href="index.html#events" style="color: rgba(255,255,255,0.7);">Events</a></li>
-                        <li><a href="index.html#gallery" style="color: rgba(255,255,255,0.7);">Gallery</a></li>
-                    </ul>
-                </div>
-                <div class="footer-links">
-                    <h4 style="color: var(--white);">Support</h4>
-                    <ul>
-                        <li><a href="index.html#faq" style="color: rgba(255,255,255,0.7);">FAQ</a></li>
-                        <li><a href="#" style="color: rgba(255,255,255,0.7);">Contact</a></li>
-                        <li><a href="#" style="color: rgba(255,255,255,0.7);">Privacy Policy</a></li>
-                        <li><a href="#" style="color: rgba(255,255,255,0.7);">Terms of Service</a></li>
-                    </ul>
-                </div>
-                <div class="footer-newsletter">
-                    <h4 style="color: var(--white);">Stay Updated</h4>
-                    <p style="color: rgba(255,255,255,0.7);">Subscribe to our newsletter for the latest news and events.</p>
-                    <form class="newsletter-form">
-                        <input type="email" placeholder="Your email address" required style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white;">
-                        <button type="submit" class="btn btn-primary">Subscribe</button>
-                    </form>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p style="color: rgba(255,255,255,0.6);">&copy; 2024 Dear Tennis. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
 
     <!-- GSAP for Animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
