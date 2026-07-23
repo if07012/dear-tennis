@@ -98,15 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
             duration: 0.8
         }, '-=0.5');
         
-        // Login card slide up
-        tl.to('.login-card', {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 1,
-            ease: 'power3.out'
-        }, '-=0.3');
-        
         // Logo animation
         tl.from('#loginLogo', {
             opacity: 0,
@@ -174,16 +165,6 @@ document.addEventListener('DOMContentLoaded', function() {
             y: 10,
             duration: 0.4
         }, '-=0.2');
-        
-        // Add floating animation to card after entrance
-        gsap.to('.login-card', {
-            y: 5,
-            duration: 2,
-            repeat: -1,
-            yoyo: true,
-            ease: 'sine.inOut',
-            delay: 1
-        });
     }
     
     // Initialize entrance animations
