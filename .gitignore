@@ -1,3 +1,6 @@
 (css/styles.css) is a source code file, and there are no build artifacts, dependencies, or temporary files in the changes provided.
 
 No .gitignore rules are needed for this change set.
+node_modules
+/.next/*
+/.env

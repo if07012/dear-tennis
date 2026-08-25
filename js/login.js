@@ -244,57 +244,83 @@ document.addEventListener('DOMContentLoaded', function() {
             // Simulate login process
             loginBtn.classList.add('loading');
             loginBtn.querySelector('.btn-text').textContent = 'Signing in...';
-            
-            // Simulate API call
-            setTimeout(() => {
-                // Success state
-                loginBtn.classList.remove('loading');
-                loginBtn.classList.add('success');
-                
-                // Animate success checkmark
-                gsap.fromTo(loginBtn.querySelector('.btn-spinner'), 
-                    { scale: 0.8 },
-                    { scale: 1, duration: 0.3 }
-                );
-                
-                showNotification('Login successful! Redirecting...', 'success');
-                
-                // Pulse animation on card
-                gsap.to('.login-card', {
-                    scale: 1.02,
-                    duration: 0.3,
-                    yoyo: true,
-                    repeat: 1,
-                    ease: 'power2.out'
-                });
-                
-                setTimeout(() => {
-                    // Page transition
-                    if (pageOverlay) {
-                        pageOverlay.classList.add('active');
-                        
-                        setTimeout(() => {
-                            // Store remember me preference
+
+            // Call the real auth API. The static login.html is reached via the
+            // Next.js dev server (which proxies /api/*) or a plain static host
+            // — in the latter case the fetch will fail and we surface a clear
+            // message instead of pretending success.
+            fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            })
+                .then(async (res) => {
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        throw new Error(data.error || 'Login failed');
+                    }
+                    return data;
+                })
+                .then(() => {
+                    // Success state
+                    loginBtn.classList.remove('loading');
+                    loginBtn.classList.add('success');
+
+                    // Animate success checkmark
+                    gsap.fromTo(loginBtn.querySelector('.btn-spinner'),
+                        { scale: 0.8 },
+                        { scale: 1, duration: 0.3 }
+                    );
+
+                    showNotification('Login successful! Redirecting...', 'success');
+
+                    // Pulse animation on card
+                    gsap.to('.login-card', {
+                        scale: 1.02,
+                        duration: 0.3,
+                        yoyo: true,
+                        repeat: 1,
+                        ease: 'power2.out'
+                    });
+
+                    setTimeout(() => {
+                        // Page transition
+                        if (pageOverlay) {
+                            pageOverlay.classList.add('active');
+
+                            setTimeout(() => {
+                                // Store remember me preference
+                                if (rememberMe) {
+                                    localStorage.setItem('rememberedEmail', email);
+                                } else {
+                                    localStorage.removeItem('rememberedEmail');
+                                }
+
+                                // Redirect to profile page
+                                window.location.href = 'profile.html';
+                            }, 600);
+                        } else {
+                            // Fallback without overlay
                             if (rememberMe) {
                                 localStorage.setItem('rememberedEmail', email);
                             } else {
                                 localStorage.removeItem('rememberedEmail');
                             }
-                            
-                            // Redirect to profile page
                             window.location.href = 'profile.html';
-                        }, 600);
-                    } else {
-                        // Fallback without overlay
-                        if (rememberMe) {
-                            localStorage.setItem('rememberedEmail', email);
-                        } else {
-                            localStorage.removeItem('rememberedEmail');
                         }
-                        window.location.href = 'profile.html';
-                    }
-                }, 1500);
-            }, 1500);
+                    }, 1200);
+                })
+                .catch((err) => {
+                    loginBtn.classList.remove('loading');
+                    loginBtn.querySelector('.btn-text').textContent = 'Sign In';
+                    const msg = err && err.message
+                        ? err.message
+                        : 'Unable to reach the login server. Run `npm run dev` (Next.js) and reload.';
+                    showNotification(msg, 'error');
+                    shakeCard();
+                    emailGroup.classList.add('invalid');
+                    passwordGroup.classList.add('invalid');
+                });
         });
     }
     

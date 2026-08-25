@@ -1,0 +1,825 @@
+@import "tailwindcss";
+
+/* ============================================
+   DESIGN TOKENS (Tailwind v4 @theme directive)
+   Mapped from css/styles.css :root variables
+   ============================================ */
+@theme {
+  /* Brand colors */
+  --color-hunter-green: #2C5F4B;
+  --color-hunter-green-dark: #1e4234;
+  --color-hunter-green-light: #3d7a63;
+  --color-paprika: #E85D04;
+  --color-paprika-hover: #ff7b1f;
+  /* Aliases mirroring the static profile.html palette. */
+  --color-spicy-paprika: #E85D04;
+  --color-teal: #5F9EA0;
+  --color-teal-light: #7ab5b7;
+  --color-muted-teal: #458B74;
+  --color-brown: #8B4513;
+  --color-graphite: #3A3A3A;
+  --color-graphite-light: #4a4a4a;
+
+  /* Neutrals */
+  --color-white: #ffffff;
+  --color-off-white: #f8f9fa;
+  --color-light-gray: #e9ecef;
+  --color-medium-gray: #adb5bd;
+  --color-dark-gray: #6c757d;
+
+  /* Typography */
+  --font-sans: var(--font-inter), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-serif: var(--font-playfair), 'Playfair Display', Georgia, serif;
+
+  /* Container */
+  --container-base: 1200px;
+
+  /* Box shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.15);
+
+  /* Custom timing function (Vero-style) */
+  --ease-vero: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Keyframes (used by animation utilities) */
+  --animate-kenburns: kenburns 20s ease-in-out infinite;
+  --animate-bounce-arrow: bounce 2s ease-in-out infinite;
+  --animate-fade-in-up: fadeInUp 1s var(--ease-vero) forwards;
+  --animate-gradient-shift: gradientShift 15s ease infinite;
+  --animate-float-particle: floatParticle linear infinite;
+  --animate-shake-input: shakeInput 0.4s ease-in-out;
+  --animate-success-pulse: successPulse 0.6s ease-out;
+  --animate-spin: spin 0.8s linear infinite;
+  --animate-draw-check: drawCheck 0.6s ease-out forwards;
+  --animate-check-bounce: checkBounce 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  --animate-border-glow: borderGlow 8s linear infinite;
+  --animate-page-fade-in: pageFadeIn 0.6s ease-out forwards;
+}
+
+@keyframes kenburns {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.15) translate(-2%, -1%); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes floatParticle {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes shakeInput {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+@keyframes successPulse {
+  0% { box-shadow: 0 0 0 0 rgba(44, 95, 75, 0.4); }
+  100% { box-shadow: 0 0 0 16px rgba(44, 95, 75, 0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes drawCheck {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes checkBounce {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes borderGlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: scaleY(0); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
+/* ============================================
+   BASE LAYER
+   ============================================ */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    /* Only anchor/programmatic scrolls smooth — wheel scroll stays instant. */
+    scroll-behavior: auto;
+    scroll-padding-top: 80px;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-graphite);
+    background-color: var(--color-white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    color: var(--color-hunter-green);
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
+
+  button {
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+@layer utilities {
+  .container-base {
+    width: 100%;
+    max-width: var(--container-base);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .section-padding {
+    padding-top: 100px;
+    padding-bottom: 100px;
+  }
+
+  @media (max-width: 768px) {
+    .section-padding {
+      padding-top: 60px;
+      padding-bottom: 60px;
+    }
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+/* ============================================
+   LOGIN PAGE (ported from login.html)
+   ============================================ */
+@layer components {
+  .login-section {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(
+      135deg,
+      #1a3d3a 0%,
+      #2C5F4B 25%,
+      #3d7a63 50%,
+      #1e4234 75%,
+      #2C5F4B 100%
+    );
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+    overflow: hidden;
+  }
+
+  .login-background {
+    position: absolute;
+    inset: 0;
+    background-image: url('https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?q=80&w=3840&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.15;
+    z-index: 0;
+  }
+
+  .particles-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(2px);
+    animation: floatParticle linear infinite;
+  }
+
+  .cursor-glow {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(95, 158, 160, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.3s ease;
+  }
+
+  .login-wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    padding: 20px;
+  }
+
+  .login-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 24px;
+    padding: 50px 40px;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+      0 16px 48px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .login-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent, rgba(44, 95, 75, 0.03), transparent 30%);
+    animation: borderGlow 8s linear infinite;
+    pointer-events: none;
+  }
+
+  .login-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.4) 0%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.2) 100%
+    );
+    pointer-events: none;
+  }
+
+  .login-card-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .login-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .login-logo svg {
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .login-logo:hover svg {
+    transform: scale(1.1) rotate(10deg);
+    filter: drop-shadow(0 4px 8px rgba(232, 93, 4, 0.3));
+  }
+
+  .login-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .login-title {
+    font-size: 2rem;
+    color: var(--color-hunter-green);
+    margin-bottom: 8px;
+  }
+
+  .login-subtitle {
+    color: var(--color-dark-gray);
+    font-size: 1rem;
+  }
+
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .form-group {
+    position: relative;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 14px 16px 14px 44px;
+    font-size: 1rem;
+    border: 2px solid var(--color-light-gray);
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--color-off-white);
+    position: relative;
+    z-index: 1;
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--color-hunter-green);
+    background-color: var(--color-white);
+    transform: scale(1.02);
+    box-shadow:
+      0 0 0 4px rgba(44, 95, 75, 0.1),
+      0 4px 12px rgba(44, 95, 75, 0.15);
+  }
+
+  .form-group.valid input {
+    border-color: var(--color-hunter-green);
+    box-shadow: 0 0 0 4px rgba(44, 95, 75, 0.1);
+  }
+
+  .form-group.invalid input {
+    animation: shakeInput 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    border-color: var(--color-paprika);
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-dark-gray);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .form-group input:focus + .floating-label,
+  .form-group input:not(:placeholder-shown) + .floating-label,
+  .form-group.focused .floating-label {
+    top: 0;
+    left: 44px;
+    padding: 0 6px;
+    margin-top: -10px;
+    font-size: 0.75rem;
+    color: var(--color-hunter-green);
+    background: var(--color-white);
+    border-radius: 4px;
+  }
+
+  .form-group input:focus ~ .input-icon,
+  .form-group.focused .input-icon {
+    color: var(--color-hunter-green);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .floating-label {
+    position: absolute;
+    left: 44px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-dark-gray);
+    font-size: 1rem;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+    padding: 0 4px;
+    z-index: 2;
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--color-dark-gray);
+    z-index: 10;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .toggle-password:hover {
+    transform: translateY(-50%) scale(1.1);
+    color: var(--color-hunter-green);
+  }
+
+  .toggle-password svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .checkbox-label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 28px;
+    font-size: 0.875rem;
+    color: var(--color-dark-gray);
+    cursor: pointer;
+  }
+
+  .checkbox-label input[type='checkbox'] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    width: auto;
+    padding: 0;
+  }
+
+  .checkbox-custom {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--color-light-gray);
+    border-radius: 4px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .checkbox-label:hover .checkbox-custom {
+    border-color: var(--color-hunter-green);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .checkbox-label input[type='checkbox']:checked ~ .checkbox-custom {
+    background: var(--color-hunter-green);
+    border-color: var(--color-hunter-green);
+    animation: checkBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .checkbox-custom::after {
+    content: '';
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  .checkbox-label input[type='checkbox']:checked ~ .checkbox-custom::after {
+    display: block;
+  }
+
+  .forgot-link {
+    font-size: 0.875rem;
+    color: var(--color-paprika);
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .forgot-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--color-paprika);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .forgot-link:hover::after {
+    width: 100%;
+  }
+
+  .login-btn {
+    position: relative;
+    overflow: hidden;
+    margin-top: 8px;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: white;
+    background: var(--color-paprika);
+    border: none;
+    border-radius: 9999px;
+    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .login-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+  }
+
+  .login-btn:hover:not(:disabled)::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  .login-btn:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow:
+      0 8px 24px rgba(232, 93, 4, 0.3),
+      0 0 0 4px rgba(232, 93, 4, 0.1);
+  }
+
+  .login-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .login-btn.loading {
+    pointer-events: none;
+  }
+
+  .login-btn.success {
+    background: var(--color-hunter-green);
+    animation: successPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .btn-spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .login-btn.loading .btn-spinner {
+    display: inline-block;
+  }
+
+  .page-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--color-hunter-green);
+    z-index: 9999;
+    transform: scaleY(0);
+    transform-origin: bottom;
+    pointer-events: none;
+  }
+
+  .page-overlay.active {
+    transform: scaleY(1);
+    transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+
+  @media (max-width: 768px) {
+    .cursor-glow {
+      display: none;
+    }
+
+    .particle {
+      animation-duration: 20s;
+    }
+
+    .login-card {
+      padding: 40px 30px;
+    }
+
+    .login-card::before {
+      display: none;
+    }
+
+    .login-wrapper {
+      max-width: 420px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .login-wrapper {
+      padding: 15px;
+    }
+
+    .login-card {
+      padding: 30px 20px;
+      border-radius: 16px;
+    }
+
+    .login-title {
+      font-size: 1.5rem;
+    }
+
+    .form-options {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+}
+
+/* ============================================
+   PROFILE PAGE
+   Bespoke rules that don't fit Tailwind utilities.
+   ============================================ */
+@layer components {
+  .profile-section-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--color-hunter-green), var(--color-teal));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--color-white);
+  }
+
+  .profile-section-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .stat-tile-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-hunter-green);
+  }
+
+  .stat-tile-label {
+    font-size: 0.75rem;
+    color: var(--color-dark-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Skill bar gradient sheen (drawn over the fill). */
+  .skill-bar-fill {
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0) 50%,
+      rgba(255, 255, 255, 0.1) 100%
+    );
+  }
+
+  .skill-bar-details {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s ease-out, opacity 0.3s ease;
+  }
+
+  .skill-bar-details[data-open='true'] {
+    max-height: 500px;
+    opacity: 1;
+  }
+
+  /* Match result indicator (funmatch scorecards). */
+  .match-result-indicator {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+
+  .match-result-indicator.win {
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    color: #2e7d32;
+    border: 1px solid rgba(46, 125, 50, 0.2);
+  }
+
+  .match-result-indicator.loss {
+    background: linear-gradient(135deg, #ffebee, #ffcdd2);
+    color: #c62828;
+    border: 1px solid rgba(198, 40, 40, 0.2);
+  }
+
+  .match-result-indicator.draw {
+    background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+    color: #616161;
+    border: 1px solid rgba(97, 97, 97, 0.2);
+  }
+
+  /* Event history type accent (left border). */
+  .event-history-item.tournament {
+    border-left: 4px solid var(--color-hunter-green);
+  }
+
+  .event-history-item.championship {
+    border-left: 4px solid var(--color-teal);
+  }
+
+  .event-history-item.funmatch {
+    border-left: 4px solid #6B5B95;
+  }
+
+  .event-history-item.open {
+    border-left: 4px solid #ff6b6b;
+  }
+
+  .event-history-item.training {
+    border-left: 4px solid #4ecdc4;
+  }
+
+  /* Achievement badge hover gradient. */
+  .achievement-badge:hover {
+    background: linear-gradient(135deg, var(--color-hunter-green), var(--color-teal));
+    transform: scale(1.05);
+  }
+
+  .achievement-badge:hover .achievement-icon,
+  .achievement-badge:hover .achievement-label {
+    color: var(--color-white);
+  }
+
+  /* Gallery card hover overlay. */
+  .gallery-item:hover .gallery-image {
+    transform: scale(1.05);
+  }
+
+  .gallery-item:hover .gallery-overlay {
+    opacity: 1;
+  }
+
+  /* Lightbox animations. */
+  @keyframes lightbox-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
