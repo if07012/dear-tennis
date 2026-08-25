@@ -8,12 +8,18 @@ import { Testimonials } from '@/components/sections/Testimonials';
 import { Statistics } from '@/components/sections/Statistics';
 import { FAQ } from '@/components/sections/FAQ';
 import { CTA } from '@/components/sections/CTA';
+import { getHeroContent } from '@/lib/hero-store';
+import { getOurStoryContent } from '@/lib/our-story-store';
 
-export default function Home() {
+export default async function Home() {
+  const [hero, ourStory] = await Promise.all([
+    getHeroContent(),
+    getOurStoryContent(),
+  ]);
   return (
     <>
-      <Hero />
-      <About />
+      <Hero content={hero} />
+      <About content={ourStory} />
       <WhyJoin />
       <Activities />
       <Events />

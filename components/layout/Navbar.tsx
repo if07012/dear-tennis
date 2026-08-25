@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { LinkButton } from '@/components/ui/Button';
 import { scrollToSection, throttle } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { isAdminEmail } from '@/lib/admin';
 
 const NAV_LINKS = [
   { href: '/#about', label: 'About' },
@@ -23,7 +24,8 @@ export function Navbar() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, hydrated, logout } = useAuth();
+  const { user, isAuthenticated, hydrated, logout } = useAuth();
+  const isAdmin = isAdminEmail(user?.email);
 
   // Scroll effect (throttled to once per 100ms)
   useEffect(() => {
@@ -167,6 +169,16 @@ export function Navbar() {
                     Dashboard
                   </Link>
                 </li>
+                {isAdmin && (
+                  <li>
+                    <Link
+                      href="/admin/hero"
+                      className="text-sm font-medium text-paprika hover:text-paprika-hover transition-colors"
+                    >
+                      Admin
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <button
                     type="button"
@@ -241,6 +253,17 @@ export function Navbar() {
                     Dashboard
                   </Link>
                 </li>
+                {isAdmin && (
+                  <li className="px-6 pb-4">
+                    <Link
+                      href="/admin/hero"
+                      onClick={() => setMenuOpen(false)}
+                      className="block py-3 text-center border-2 border-paprika text-paprika rounded-full font-medium hover:bg-paprika hover:text-white transition-colors"
+                    >
+                      Admin Panel
+                    </Link>
+                  </li>
+                )}
                 <li className="px-6 pb-6">
                   <button
                     type="button"
