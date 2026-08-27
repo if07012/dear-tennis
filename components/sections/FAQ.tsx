@@ -5,18 +5,47 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Reveal } from '@/components/ui/Reveal';
 import { ChevronDown } from '@/components/ui/Icons';
-import { faqs } from '@/data/faqs';
+import { faqs as fallbackFaqs } from '@/data/faqs';
+import type { FAQContent } from '@/data/faq-types';
 
-export function FAQ() {
+// Local fallback that mirrors lib/faq-store.ts defaults but avoids importing
+// the store from this client component. The store transitively pulls in
+// google-auth-library (Node-only: fs, net, http), which breaks the browser
+// bundle. The home page always passes a real `content` prop, so this branch
+// is only a defensive last resort.
+const FALLBACK_CONTENT: FAQContent = {
+  settings: {
+    id: 'current',
+    tag: 'Questions',
+    title: 'Frequently Asked Questions',
+    subtitle: '',
+    updatedAt: '',
+  },
+  items: fallbackFaqs.map((f, idx) => ({
+    id: f.id,
+    question: f.question,
+    answer: f.answer,
+    order: idx,
+  })),
+};
+
+export function FAQ({ content }: { content?: FAQContent } = {}) {
+  const source = content ?? FALLBACK_CONTENT;
+  const { settings, items } = source;
   const [openId, setOpenId] = useState<string | null>(null);
 
   return (
     <section id="faq" className="section-padding bg-off-white">
       <div className="container-base max-w-3xl">
-        <SectionHeader tag="Questions" title="Frequently Asked Questions" center />
+        <SectionHeader
+          tag={settings.tag}
+          title={settings.title}
+          subtitle={settings.subtitle || undefined}
+          center
+        />
 
         <div className="space-y-3">
-          {faqs.map((faq, i) => {
+          {items.map((faq, i) => {
             const isOpen = openId === faq.id;
             return (
               <Reveal key={faq.id} direction="up" delay={i % 5} className="w-full">

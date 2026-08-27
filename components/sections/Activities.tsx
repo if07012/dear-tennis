@@ -3,10 +3,17 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { activities, type ActivityCategory } from '@/data/activities';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { Reveal } from '@/components/ui/Reveal';
-import { ClockSmallIcon, UsersSmallIcon } from '@/components/ui/Icons';
+import {
+  ClockSmallIcon,
+  MapPinIcon,
+  UsersSmallIcon,
+} from '@/components/ui/Icons';
+import type {
+  ActivityCategory,
+  ActivityItem,
+  ActivitiesSettings,
+} from '@/data/activities-types';
 
 type Filter = ActivityCategory | 'all';
 
@@ -23,18 +30,26 @@ const TAG_STYLES: Record<ActivityCategory, string> = {
   competitive: 'bg-paprika/10 text-paprika',
 };
 
-export function Activities() {
+type Props = {
+  settings: ActivitiesSettings;
+  activities: ActivityItem[];
+  limit?: number;
+};
+
+export function Activities({ settings, activities, limit = 6 }: Props) {
   const [active, setActive] = useState<Filter>('all');
 
-  const visible = active === 'all' ? activities : activities.filter((a) => a.category === active);
+  const filtered =
+    active === 'all' ? activities : activities.filter((a) => a.category === active);
+  const visible = filtered.slice(0, limit);
 
   return (
     <section id="activities" className="section-padding bg-white">
       <div className="container-base">
         <SectionHeader
-          tag="What We Do"
-          title="Activities & Programs"
-          subtitle="Something for everyone, from beginners to advanced players"
+          tag={settings.tag || 'What We Do'}
+          title={settings.title || 'Activities & Programs'}
+          subtitle={settings.subtitle || undefined}
           center
         />
 
@@ -69,13 +84,19 @@ export function Activities() {
                 className="bg-white rounded-2xl overflow-hidden border border-light-gray hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
               >
                 <div className="relative h-52 overflow-hidden">
-                  <Image
-                    src={activity.image}
-                    alt={activity.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
+                  {activity.image ? (
+                    <Image
+                      src={activity.image}
+                      alt={activity.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-off-white text-sm text-dark-gray">
+                      No image
+                    </div>
+                  )}
                   <span
                     className={[
                       'absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider',
@@ -92,15 +113,31 @@ export function Activities() {
                   <p className="text-dark-gray text-sm leading-relaxed mb-4 text-pretty">
                     {activity.description}
                   </p>
-                  <div className="flex items-center gap-4 text-xs text-dark-gray">
-                    <span className="flex items-center gap-1.5">
-                      <ClockSmallIcon />
-                      {activity.duration}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <UsersSmallIcon />
-                      {activity.groupSize}
-                    </span>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-dark-gray">
+                    {activity.duration && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <ClockSmallIcon />
+                        {activity.duration}
+                      </span>
+                    )}
+                    {activity.time && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <ClockSmallIcon />
+                        {activity.time}
+                      </span>
+                    )}
+                    {activity.location && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPinIcon />
+                        {activity.location}
+                      </span>
+                    )}
+                    {activity.groupSize && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <UsersSmallIcon />
+                        {activity.groupSize}
+                      </span>
+                    )}
                   </div>
                 </div>
               </motion.article>

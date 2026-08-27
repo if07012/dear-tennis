@@ -242,9 +242,21 @@ function invalidateRowsCache(spreadsheetId: string, sheetName: string) {
   bumpSheetGeneration(spreadsheetId, sheetName);
   cacheDeleteByPrefix(`read:${spreadsheetId}:`);
   cacheDeleteByPrefix(`rows:${spreadsheetId}:${sheetName}`);
+  cacheDeleteByPrefix(`rows_paged:${spreadsheetId}:${sheetName}`);
+  cacheDeleteByPrefix(`row_count:${spreadsheetId}:${sheetName}`);
   cacheDeleteMatching((k) => k.startsWith(`read:${spreadsheetId}:`) && k.endsWith(':promise'));
   cacheDeleteMatching(
     (k) => k.startsWith(`rows:${spreadsheetId}:${sheetName}`) && k.endsWith(':promise')
+  );
+  cacheDeleteMatching(
+    (k) =>
+      k.startsWith(`rows_paged:${spreadsheetId}:${sheetName}`) &&
+      k.endsWith(':promise'),
+  );
+  cacheDeleteMatching(
+    (k) =>
+      k.startsWith(`row_count:${spreadsheetId}:${sheetName}`) &&
+      k.endsWith(':promise'),
   );
 }
 
@@ -315,12 +327,149 @@ export async function listRowsBySheet(
   }
 }
 
+/**
+ * Result of a paginated row fetch. `total` is the total number of populated
+ * data rows (excluding the header) actually present in the sheet.
+ */
+export type PagedRows = {
+  rows: Record<string, unknown>[];
+  total: number;
+  offset: number;
+  limit: number;
+};
+
+/**
+ * Counts the number of populated data rows in a sheet by scanning column A
+ * (which holds the `id` for every sheet in this project). Returns 0 if the
+ * sheet doesn't exist.
+ *
+ * `sheet.rowCount` is the sheet's *grid* size — Google Sheets pads new sheets
+ * to ~1000 rows by default, so it doesn't reflect real data and would
+ * inflate `total` in pagination responses.
+ *
+ * Scanning column A is cheap (one column, no parsing) and is cached
+ * separately per (sheet, generation) so subsequent paginated reads don't
+ * repeat the work.
+ */
+async function countPopulatedRows(
+  spreadsheetId: string,
+  sheetName: string,
+): Promise<number> {
+  const cacheKey = `row_count:${spreadsheetId}:${sheetName}`;
+  const genAtStart = getSheetGeneration(spreadsheetId, sheetName);
+  const cached = cacheGet<number>(cacheKey);
+  if (cached !== null && cached !== undefined) return cached;
+
+  const inflightKey = `${cacheKey}:promise`;
+  const inflight = cacheGet<InflightRowsRequest>(inflightKey);
+  if (inflight && inflight.gen === genAtStart) {
+    return inflight.promise as unknown as Promise<number>;
+  }
+
+  const p = (async (): Promise<number> => {
+    const doc = await getGoogleSheet(spreadsheetId);
+    const sheet = doc.sheetsByTitle[sheetName];
+    if (!sheet) return 0;
+    // A2:A covers the data range (A1 is the header). Trailing empty rows in
+    // the grid are returned as undefined values, so a simple filter on
+    // truthiness gives us the real row count.
+    const values = await sheet.getCellsInRange('A2:A');
+    if (!Array.isArray(values)) return 0;
+    let count = 0;
+    for (const row of values) {
+      if (Array.isArray(row) && row.some((cell) => cell !== '' && cell != null)) {
+        count++;
+      }
+    }
+    return count;
+  })();
+  cacheSet(inflightKey, { gen: genAtStart, promise: p }, 30_000);
+  try {
+    const result = await p;
+    if (getSheetGeneration(spreadsheetId, sheetName) === genAtStart) {
+      cacheSet(cacheKey, result);
+    }
+    return result;
+  } finally {
+    const store = getCacheStore();
+    store.delete(inflightKey);
+  }
+}
+
+/**
+ * Fetches a single page of rows from a named sheet. Unlike `listRowsBySheet`,
+ * this does NOT pull the entire sheet into memory — it asks Google Sheets for
+ * only the requested window via the `offset` + `limit` options on `getRows`.
+ *
+ * `total` is the count of populated data rows (excluding the header) so the
+ * caller can compute `totalPages = Math.ceil(total / limit)`.
+ *
+ * Note: `getRows` slices by Google Sheets row index. The header row is row 1,
+ * data starts at row 2 — so `offset: 0` here means "first data row".
+ */
+export async function listRowsBySheetPaged(
+  spreadsheetId: string,
+  sheetName: string,
+  options: { offset?: number; limit: number } & { ttlMs?: number } = { limit: 50 }
+): Promise<PagedRows> {
+  const { offset = 0, limit } = options;
+  const ttlMs = options.ttlMs ?? CACHE_TTL_MS;
+
+  if (!Number.isInteger(limit) || limit <= 0) {
+    throw new Error('listRowsBySheetPaged: limit must be a positive integer');
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new Error('listRowsBySheetPaged: offset must be a non-negative integer');
+  }
+
+  const cacheKey = `rows_paged:${spreadsheetId}:${sheetName}:${offset}:${limit}`;
+  const genAtStart = getSheetGeneration(spreadsheetId, sheetName);
+  const cached = cacheGet<PagedRows>(cacheKey);
+  if (cached) return cached;
+
+  const inflightKey = `${cacheKey}:promise`;
+  const inflight = cacheGet<InflightRowsRequest>(inflightKey);
+  if (inflight && inflight.gen === genAtStart) {
+    return inflight.promise as unknown as Promise<PagedRows>;
+  }
+
+  const p = (async (): Promise<PagedRows> => {
+    const doc = await getGoogleSheet(spreadsheetId);
+    const sheet = doc.sheetsByTitle[sheetName];
+    if (!sheet) return { rows: [], total: 0, offset, limit };
+    // Count actual populated rows (not the grid size — Google Sheets pads
+    // empty sheets to ~1000 rows by default).
+    const total = await countPopulatedRows(spreadsheetId, sheetName);
+    if (offset >= total) {
+      return { rows: [], total, offset, limit };
+    }
+    const rows = await sheet.getRows({ offset, limit });
+    const out = rows.map((r) => r.toObject());
+    const result: PagedRows = { rows: out, total, offset, limit };
+    if (getSheetGeneration(spreadsheetId, sheetName) === genAtStart) {
+      cacheSet(cacheKey, result, ttlMs);
+    }
+    return result;
+  })();
+  cacheSet(inflightKey, { gen: genAtStart, promise: p }, 30_000);
+  try {
+    return await p;
+  } finally {
+    const store = getCacheStore();
+    store.delete(inflightKey);
+  }
+}
+
 export async function createRowWithId(
   spreadsheetId: string,
   sheetName: string,
   data: Record<string, unknown>
 ) {
-  const id = crypto.randomUUID();
+  // Honor a caller-supplied id when present; otherwise mint a UUID.
+  const id =
+    typeof data.id === 'string' && data.id.trim().length > 0
+      ? data.id.trim()
+      : crypto.randomUUID();
   const sheet = await ensureSheetWithHeaders(spreadsheetId, sheetName, ['id']);
   await sheet.addRow({ id, ...data });
   cacheDeleteByPrefix(`read:${spreadsheetId}:`);

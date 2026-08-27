@@ -623,6 +623,42 @@ export function ChevronUp({ className, size = 16, strokeWidth = 2 }: IconProps) 
   );
 }
 
+export function ChevronLeftIcon({ className, size = 16, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg
+      className={base(className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon({ className, size = 16, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg
+      className={base(className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
 export function PlusIcon({ className, size = 16, strokeWidth = 2 }: IconProps) {
   return (
     <svg
@@ -638,6 +674,44 @@ export function PlusIcon({ className, size = 16, strokeWidth = 2 }: IconProps) {
     >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
+
+export function TargetIcon({ className, size = 24, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg
+      className={base(className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
+  );
+}
+
+export function SparklesIcon({ className, size = 24, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg
+      className={base(className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
     </svg>
   );
 }

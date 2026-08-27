@@ -1,16 +1,26 @@
 import Image from 'next/image';
 import { Reveal } from '@/components/ui/Reveal';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { gallery } from '@/data/gallery';
+import type { GalleryContent } from '@/data/gallery-types';
 
-export function Gallery() {
+type Props = {
+  content: GalleryContent;
+};
+
+export function Gallery({ content }: Props) {
+  const { settings, items } = content;
   return (
     <section id="gallery" className="section-padding bg-white">
       <div className="container-base">
-        <SectionHeader tag="Moments" title="Captured Memories" center />
+        <SectionHeader
+          tag={settings.tag}
+          title={settings.title}
+          subtitle={settings.subtitle}
+          center
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[200px]">
-          {gallery.map((item, i) => (
+          {items.map((item, i) => (
             <Reveal
               key={item.id}
               direction="scale"

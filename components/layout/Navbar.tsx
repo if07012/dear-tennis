@@ -18,6 +18,22 @@ const NAV_LINKS = [
   { href: '/#faq', label: 'FAQ' },
 ];
 
+// Admin burger-menu items. The "Journey" entry maps to the Why-Join editor —
+// the why-join section is the user-journey CTA on the home page.
+const ADMIN_NAV_LINKS = [
+  { href: '/admin/activities', label: 'Manage Activities' },
+  { href: '/admin/activities-list', label: 'Activities List' },
+  { href: '/admin/calendar', label: 'Calendar' },
+  { href: '/admin/gallery', label: 'Gallery' },
+  { href: '/admin/hero', label: 'Hero' },
+  { href: '/admin/our-story', label: 'Our Story' },
+  { href: '/admin/testimonials', label: 'Testimonials' },
+  { href: '/admin/statistics', label: 'Statistics' },
+  { href: '/admin/faq', label: 'FAQ' },
+  { href: '/admin/invite', label: 'Invite Members' },
+  { href: '/admin/why-join', label: 'Journey' },
+];
+
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -26,6 +42,13 @@ export function Navbar() {
   const router = useRouter();
   const { user, isAuthenticated, hydrated, logout } = useAuth();
   const isAdmin = isAdminEmail(user?.email);
+
+  // Admin pages (and the logout page) get a stripped-down header: no public
+  // nav links, just a burger that opens the admin section list. This keeps
+  // editors focused on their work and works the same on desktop and mobile.
+  const isAdminRoute = pathname?.startsWith('/admin') ?? false;
+  const isLogoutRoute = pathname === '/logout';
+  const isAdminMode = isAdminRoute || isLogoutRoute;
 
   // Scroll effect (throttled to once per 100ms)
   useEffect(() => {
@@ -111,7 +134,11 @@ export function Navbar() {
           <button
             type="button"
             className={[
-              'md:hidden flex flex-col gap-1.5 p-2 z-50',
+              // Always show the burger in admin mode (mobile + desktop); on
+              // public pages keep the existing mobile-only behaviour.
+              isAdminMode
+                ? 'flex flex-col gap-1.5 p-2 z-50'
+                : 'md:hidden flex flex-col gap-1.5 p-2 z-50',
               menuOpen ? 'open' : '',
             ].join(' ')}
             onClick={() => setMenuOpen((v) => !v)}
@@ -138,84 +165,95 @@ export function Navbar() {
             />
           </button>
 
-          <ul className="hidden md:flex items-center gap-8 list-none m-0 p-0">
-            {NAV_LINKS.map((link) => {
-              const id = link.href.replace('/#', '');
-              const isActive = pathname === '/' && activeId === id;
-              return (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
-                    onClick={(e) => handleAnchorClick(e, link.href)}
-                    className={[
-                      'text-sm font-medium text-graphite hover:text-paprika transition-colors duration-200 relative',
-                      'after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-0.5 after:bg-paprika after:transition-all after:duration-300',
-                      'hover:after:w-full',
-                      isActive ? 'text-paprika after:w-full' : '',
-                    ].join(' ')}
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              );
-            })}
-            {hydrated && isAuthenticated ? (
-              <>
-                <li>
-                  <Link
-                    href="/profile"
-                    className="text-sm font-medium text-graphite hover:text-paprika transition-colors"
-                  >
-                    Dashboard
-                  </Link>
-                </li>
-                {isAdmin && (
-                  <li>
-                    <Link
-                      href="/admin/hero"
-                      className="text-sm font-medium text-paprika hover:text-paprika-hover transition-colors"
+          {isAdminMode ? (
+            // Admin pages: hide the public nav links and auth buttons. The
+            // burger button on the left above is the only entry point to the
+            // admin drawer; the drawer body lists every admin section.
+            <span className="sr-only" aria-live="polite">
+              Admin menu
+            </span>
+          ) : (
+            <ul className="hidden md:flex items-center gap-8 list-none m-0 p-0">
+              {NAV_LINKS.map((link) => {
+                const id = link.href.replace('/#', '');
+                const isActive = pathname === '/' && activeId === id;
+                return (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      onClick={(e) => handleAnchorClick(e, link.href)}
+                      className={[
+                        'text-sm font-medium text-graphite hover:text-paprika transition-colors duration-200 relative',
+                        'after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-0.5 after:bg-paprika after:transition-all after:duration-300',
+                        'hover:after:w-full',
+                        isActive ? 'text-paprika after:w-full' : '',
+                      ].join(' ')}
                     >
-                      Admin
-                    </Link>
+                      {link.label}
+                    </a>
                   </li>
-                )}
-                <li>
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="text-sm font-medium text-graphite hover:text-paprika transition-colors"
-                  >
-                    Logout
-                  </button>
-                </li>
-              </>
-            ) : (
-              hydrated && (
+                );
+              })}
+              {hydrated && isAuthenticated ? (
                 <>
                   <li>
-                    <LinkButton href="/#cta" size="sm">
-                      Join Now
-                    </LinkButton>
-                  </li>
-                  <li>
                     <Link
-                      href="/login"
+                      href="/profile"
                       className="text-sm font-medium text-graphite hover:text-paprika transition-colors"
                     >
-                      Login
+                      Dashboard
                     </Link>
                   </li>
+                  {isAdmin && (
+                    <li>
+                      <Link
+                        href="/admin/hero"
+                        className="text-sm font-medium text-paprika hover:text-paprika-hover transition-colors"
+                      >
+                        Admin
+                      </Link>
+                    </li>
+                  )}
+                  <li>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="text-sm font-medium text-graphite hover:text-paprika transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </li>
                 </>
-              )
-            )}
-          </ul>
+              ) : (
+                hydrated && (
+                  <>
+                    <li>
+                      <LinkButton href="/#cta" size="sm">
+                        Join Now
+                      </LinkButton>
+                    </li>
+                    <li>
+                      <Link
+                        href="/login"
+                        className="text-sm font-medium text-graphite hover:text-paprika transition-colors"
+                      >
+                        Login
+                      </Link>
+                    </li>
+                  </>
+                )
+              )}
+            </ul>
+          )}
         </div>
       </nav>
 
-      {/* Mobile menu drawer */}
+      {/* Menu drawer — public links on the home page, admin sections on admin pages. */}
       <div
         className={[
-          'fixed inset-0 z-30 md:hidden transition-opacity duration-300',
+          'fixed inset-0 z-30 transition-opacity duration-300',
+          // Public drawer is mobile-only (md:hidden); admin drawer covers both.
+          isAdminMode ? '' : 'md:hidden',
           menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         ].join(' ')}
       >
@@ -230,41 +268,34 @@ export function Navbar() {
             menuOpen ? 'translate-y-0' : '-translate-y-full',
           ].join(' ')}
         >
-          <ul className="flex flex-col items-stretch py-6">
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={link.href}
-                  onClick={(e) => handleAnchorClick(e, link.href)}
-                  className="block px-6 py-4 text-base font-medium text-graphite hover:bg-off-white hover:text-paprika transition-colors"
-                >
-                  {link.label}
-                </a>
+          {isAdminMode ? (
+            <ul className="flex flex-col items-stretch py-6">
+              <li className="px-6 pb-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
+                  Admin Sections
+                </p>
               </li>
-            ))}
-            {hydrated && isAuthenticated ? (
-              <>
-                <li className="px-6 pt-2 pb-4">
-                  <Link
-                    href="/profile"
-                    className="block py-3 text-center bg-hunter-green text-white rounded-full font-medium hover:bg-hunter-green/90 transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                </li>
-                {isAdmin && (
-                  <li className="px-6 pb-4">
+              {ADMIN_NAV_LINKS.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <li key={link.href}>
                     <Link
-                      href="/admin/hero"
+                      href={link.href}
                       onClick={() => setMenuOpen(false)}
-                      className="block py-3 text-center border-2 border-paprika text-paprika rounded-full font-medium hover:bg-paprika hover:text-white transition-colors"
+                      className={[
+                        'block px-6 py-4 text-base font-medium transition-colors',
+                        isActive
+                          ? 'text-paprika bg-paprika/5 border-l-4 border-paprika'
+                          : 'text-graphite hover:bg-off-white hover:text-paprika',
+                      ].join(' ')}
                     >
-                      Admin Panel
+                      {link.label}
                     </Link>
                   </li>
-                )}
-                <li className="px-6 pb-6">
+                );
+              })}
+              {hydrated && isAuthenticated && (
+                <li className="px-6 pt-4 border-t border-light-gray mt-4">
                   <button
                     type="button"
                     onClick={handleLogout}
@@ -273,27 +304,74 @@ export function Navbar() {
                     Logout
                   </button>
                 </li>
-              </>
-            ) : (
-              hydrated && (
+              )}
+            </ul>
+          ) : (
+            <ul className="flex flex-col items-stretch py-6">
+              {NAV_LINKS.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    onClick={(e) => handleAnchorClick(e, link.href)}
+                    className="block px-6 py-4 text-base font-medium text-graphite hover:bg-off-white hover:text-paprika transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+              {hydrated && isAuthenticated ? (
                 <>
                   <li className="px-6 pt-2 pb-4">
-                    <LinkButton href="/#cta" size="full">
-                      Join Now
-                    </LinkButton>
-                  </li>
-                  <li className="px-6 pb-6">
                     <Link
-                      href="/login"
-                      className="block py-3 text-center border-2 border-hunter-green text-hunter-green rounded-full font-medium hover:bg-hunter-green hover:text-white transition-colors"
+                      href="/profile"
+                      className="block py-3 text-center bg-hunter-green text-white rounded-full font-medium hover:bg-hunter-green/90 transition-colors"
+                      onClick={() => setMenuOpen(false)}
                     >
-                      Login
+                      Dashboard
                     </Link>
                   </li>
+                  {isAdmin && (
+                    <li className="px-6 pb-4">
+                      <Link
+                        href="/admin/hero"
+                        onClick={() => setMenuOpen(false)}
+                        className="block py-3 text-center border-2 border-paprika text-paprika rounded-full font-medium hover:bg-paprika hover:text-white transition-colors"
+                      >
+                        Admin Panel
+                      </Link>
+                    </li>
+                  )}
+                  <li className="px-6 pb-6">
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="block w-full py-3 text-center border-2 border-hunter-green text-hunter-green rounded-full font-medium hover:bg-hunter-green hover:text-white transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </li>
                 </>
-              )
-            )}
-          </ul>
+              ) : (
+                hydrated && (
+                  <>
+                    <li className="px-6 pt-2 pb-4">
+                      <LinkButton href="/#cta" size="full">
+                        Join Now
+                      </LinkButton>
+                    </li>
+                    <li className="px-6 pb-6">
+                      <Link
+                        href="/login"
+                        className="block py-3 text-center border-2 border-hunter-green text-hunter-green rounded-full font-medium hover:bg-hunter-green hover:text-white transition-colors"
+                      >
+                        Login
+                      </Link>
+                    </li>
+                  </>
+                )
+              )}
+            </ul>
+          )}
         </div>
       </div>
     </>
