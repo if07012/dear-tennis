@@ -232,97 +232,126 @@ export function EventHistory({
           return (
             <article
               key={evt.id}
-              className={`event-history-item ${evt.type} relative flex items-stretch gap-4 rounded-xl border border-light-gray bg-off-white p-4`}
+              className={`event-history-item ${evt.type} flex flex-col gap-3 rounded-xl border border-light-gray bg-off-white p-4`}
             >
-              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-light-gray sm:h-28 sm:w-28">
-                {evt.photos && evt.photos.length > 0 ? (
-                  <img
-                    src={evt.photos[0]}
-                    alt={evt.title}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-3xl" aria-hidden="true">
-                    {evt.icon}
-                  </div>
-                )}
-              </div>
+              <div className="flex items-stretch gap-4">
+                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-light-gray sm:h-28 sm:w-28">
+                  {evt.photos && evt.photos.length > 0 ? (
+                    <img
+                      src={evt.photos[0]}
+                      alt={evt.title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-3xl" aria-hidden="true">
+                      {evt.icon}
+                    </div>
+                  )}
+                </div>
 
-              <div className="flex min-w-0 flex-1 flex-col">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-serif text-base font-semibold text-hunter-green">
-                    {evt.title}
-                  </h3>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="rounded-full bg-white px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider text-graphite border border-light-gray">
-                      {evt.category ? CATEGORY_LABEL[evt.category] : TYPE_LABEL[evt.type] ?? evt.type}
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-serif text-base font-semibold text-hunter-green">
+                      {evt.title}
+                    </h3>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="rounded-full bg-white px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider text-graphite border border-light-gray">
+                        {evt.category ? CATEGORY_LABEL[evt.category] : TYPE_LABEL[evt.type] ?? evt.type}
+                      </span>
+                      {points && evt.category !== 'competitive' && (
+                        <span className="rounded-full bg-hunter-green/10 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider text-hunter-green">
+                          {total} pts
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {evt.description && (
+                    <p
+                      className="mt-1 text-xs text-dark-gray"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {evt.description}
+                    </p>
+                  )}
+
+                  {points && evt.category !== 'competitive' && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {SKILL_DISPLAY_ORDER.map((key) => (
+                        <span
+                          key={key}
+                          className="rounded-md bg-white px-2 py-0.5 text-[0.65rem] font-semibold tabular-nums text-graphite border border-light-gray"
+                        >
+                          {SKILL_LABELS[key]} {points[key]}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 text-xs text-dark-gray">
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarIcon size={12} />
+                      {new Date(evt.date).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
                     </span>
-                    {points && (
-                      <span className="rounded-full bg-hunter-green/10 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider text-hunter-green">
-                        {total} pts
+                    <span className="inline-flex items-center gap-1">
+                      <MapPinIcon size={12} />
+                      {evt.location}
+                    </span>
+                    {typeof evt.eventRank === 'number' && (
+                      <span className="inline-flex items-center gap-1 font-semibold text-paprika">
+                        Rank #{evt.eventRank}
                       </span>
                     )}
                   </div>
                 </div>
-
-                {evt.description && (
-                  <p
-                    className="mt-1 text-xs text-dark-gray"
-                    style={{
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {evt.description}
-                  </p>
-                )}
-
-                {points && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {SKILL_DISPLAY_ORDER.map((key) => (
-                      <span
-                        key={key}
-                        className="rounded-md bg-white px-2 py-0.5 text-[0.65rem] font-semibold tabular-nums text-graphite border border-light-gray"
-                      >
-                        {SKILL_LABELS[key]} {points[key]}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 text-xs text-dark-gray">
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarIcon size={12} />
-                    {new Date(evt.date).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MapPinIcon size={12} />
-                    {evt.location}
-                  </span>
-                  {typeof evt.eventRank === 'number' && (
-                    <span className="inline-flex items-center gap-1 font-semibold text-paprika">
-                      Rank #{evt.eventRank}
-                    </span>
-                  )}
-                </div>
               </div>
 
               {evt.matches && evt.matches.length > 0 && (
-                <div className="mt-3 grid gap-2">
-                  <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-hunter-green">
-                    <UsersIcon size={14} />
-                    Matches ({evt.matches.length})
+                <div className="border-t border-light-gray pt-3">
+                  <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-dark-gray">
+                    <span className="inline-flex items-center gap-1.5 font-semibold uppercase tracking-wider text-hunter-green">
+                      <UsersIcon size={14} />
+                      Matches ({evt.matches.length})
+                    </span>
+                    {(() => {
+                      const tally = { win: 0, loss: 0, draw: 0 };
+                      for (const m of evt.matches) tally[m.result] += 1;
+                      return (
+                        <>
+                          <span className="font-semibold text-hunter-green">
+                            {tally.win}W
+                          </span>
+                          <span className="font-semibold text-paprika">
+                            {tally.loss}L
+                          </span>
+                          {tally.draw > 0 && (
+                            <span className="font-semibold text-dark-gray">
+                              {tally.draw}D
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
-                  {evt.matches.map((match, idx) => (
-                    <MatchScorecard key={idx} match={match} index={idx} />
-                  ))}
+                  <div className="grid gap-1.5 sm:grid-cols-2">
+                    {evt.matches.map((match, idx) => (
+                      <MatchScorecard
+                        key={idx}
+                        match={match}
+                        index={idx}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
             </article>

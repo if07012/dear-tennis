@@ -163,8 +163,8 @@ export function DateRangeFilter({ value, onChange, today }: Props) {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-2 rounded-lg border border-light-gray bg-white px-3 py-2 text-sm text-graphite focus-within:border-hunter-green">
+      <div className="grid grid-cols-1 sm:flex sm:flex-wrap sm:items-center gap-2">
+        <label className="flex w-full sm:w-auto items-center gap-2 rounded-lg border border-light-gray bg-white px-3 py-2 text-sm text-graphite focus-within:border-hunter-green">
           <span className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
             From
           </span>
@@ -173,10 +173,10 @@ export function DateRangeFilter({ value, onChange, today }: Props) {
             value={start}
             onChange={(e) => handleStart(e.target.value)}
             max={end || undefined}
-            className="border-0 bg-transparent text-sm focus:outline-none"
+            className="min-w-0 flex-1 border-0 bg-transparent text-sm focus:outline-none"
           />
         </label>
-        <label className="flex items-center gap-2 rounded-lg border border-light-gray bg-white px-3 py-2 text-sm text-graphite focus-within:border-hunter-green">
+        <label className="flex w-full sm:w-auto items-center gap-2 rounded-lg border border-light-gray bg-white px-3 py-2 text-sm text-graphite focus-within:border-hunter-green">
           <span className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
             To
           </span>
@@ -185,7 +185,7 @@ export function DateRangeFilter({ value, onChange, today }: Props) {
             value={end}
             onChange={(e) => handleEnd(e.target.value)}
             min={start || undefined}
-            className="border-0 bg-transparent text-sm focus:outline-none"
+            className="min-w-0 flex-1 border-0 bg-transparent text-sm focus:outline-none"
           />
         </label>
       </div>

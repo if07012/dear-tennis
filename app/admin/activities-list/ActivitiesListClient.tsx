@@ -8,7 +8,6 @@ import {
   ChevronRightIcon,
   ChevronUp,
   ClockSmallIcon,
-  CopyIcon,
   MapPinIcon,
   PlusIcon,
   UsersSmallIcon,
@@ -18,6 +17,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { ActivitySkillPointsDrawer } from './ActivitySkillPointsDrawer';
 import { ActivityPerformanceDrawer } from './ActivityPerformanceDrawer';
 import { ActivityMatchesDrawer } from './ActivityMatchesDrawer';
+import { ActivityStandingsDrawer } from './ActivityStandingsDrawer';
+import { RowActionMenu } from './RowActionMenu';
 import type {
   ActivityCategory,
   ActivityItem,
@@ -71,6 +72,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
   const [performanceActivity, setPerformanceActivity] =
     useState<ActivityItem | null>(null);
   const [matchesActivity, setMatchesActivity] = useState<ActivityItem | null>(null);
+  const [standingsActivity, setStandingsActivity] = useState<ActivityItem | null>(null);
   const [filter, setFilter] = useState<ActivityCategory | 'all'>('all');
   const [archiveFilter, setArchiveFilter] = useState<'active' | 'archived' | 'all'>(
     'active',
@@ -426,6 +428,8 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
             const realIndex = activities.findIndex((a) => a.id === activity.id);
             const canUp = realIndex > 0;
             const canDown = realIndex >= 0 && realIndex < activities.length - 1;
+            const isCompetitive = activity.category === 'competitive';
+            const isPersisted = isPersistedId(activity.id);
             return (
               <article
                 key={activity.id}
@@ -447,7 +451,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
                   )}
                 </div>
 
-                <div className="flex flex-1 flex-col gap-1 min-w-0">
+                <div className="flex flex-1 flex-col gap-2 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-serif text-base font-semibold text-hunter-green truncate">
                       {activity.title || '(tanpa judul)'}
@@ -470,52 +474,14 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
                         Archived
                       </span>
                     )}
-                    {isPersistedId(activity.id) && (
-                      <Link
-                        href={`/admin/activity-signups?activity=${encodeURIComponent(activity.id)}`}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-hunter-green/10 text-hunter-green transition-colors hover:bg-hunter-green/20"
-                        title="Lihat pendaftar activity ini"
-                      >
-                        <UsersSmallIcon size={10} />
-                        {signupCounts[activity.id] ?? 0} members
-                      </Link>
-                    )}
-                    {isPersistedId(activity.id) && (
-                      <button
-                        type="button"
-                        onClick={() => setPointsActivity(activity)}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-paprika/10 text-paprika transition-colors hover:bg-paprika/20"
-                        title="Set +/- skill points untuk member activity ini"
-                      >
-                        Set Points
-                      </button>
-                    )}
-                    {isPersistedId(activity.id) && (
-                      <button
-                        type="button"
-                        onClick={() => setPerformanceActivity(activity)}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-hunter-green/10 text-hunter-green transition-colors hover:bg-hunter-green/20"
-                        title="Set performance (target/kesalahan) per member per skill"
-                      >
-                        Set Performance
-                      </button>
-                    )}
-                    {isPersistedId(activity.id) && activity.category === 'competitive' && (
-                      <button
-                        type="button"
-                        onClick={() => setMatchesActivity(activity)}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-paprika/10 text-paprika transition-colors hover:bg-paprika/20"
-                        title="Generate or edit match results untuk activity competitive ini"
-                      >
-                        Matches
-                      </button>
-                    )}
                   </div>
+
                   {activity.description && (
                     <p className="text-xs text-dark-gray line-clamp-2 text-pretty">
                       {activity.description}
                     </p>
                   )}
+
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[0.7rem] text-dark-gray">
                     {activity.duration && (
                       <span className="inline-flex items-center gap-1">
@@ -542,15 +508,28 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
                       </span>
                     )}
                   </div>
+
+                  {isPersisted && (
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/admin/activity-signups?activity=${encodeURIComponent(activity.id)}`}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-hunter-green px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-white transition-colors hover:bg-hunter-green/90"
+                        title="Lihat pendaftar activity ini"
+                      >
+                        <UsersSmallIcon size={11} />
+                        {signupCounts[activity.id] ?? 0} members
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center justify-between self-stretch gap-1">
                   <button
                     type="button"
                     onClick={() => handleMove(activity.id, -1)}
                     disabled={!canUp}
                     aria-label="Move up"
-                    className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
+                    className="rounded-md p-1 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
                   >
                     <ChevronUp size={16} className="rotate-180" />
                   </button>
@@ -562,52 +541,73 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
                     onClick={() => handleMove(activity.id, 1)}
                     disabled={!canDown}
                     aria-label="Move down"
-                    className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
+                    className="rounded-md p-1 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
                   >
                     <ChevronUp size={16} />
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <button
-                    type="button"
-                    onClick={() => openEdit(activity)}
-                    className="rounded-md px-3 py-1 text-xs font-semibold text-hunter-green transition-colors hover:bg-hunter-green/10"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleClone(activity)}
-                    disabled={status.kind === 'saving'}
-                    className="inline-flex items-center justify-center gap-1 rounded-md px-3 py-1 text-xs font-semibold text-dark-gray transition-colors hover:bg-light-gray disabled:opacity-50"
-                    title="Duplikat activity ini"
-                  >
-                    <CopyIcon size={12} />
-                    Clone
-                  </button>
-                  {isPersistedId(activity.id) && (
+                <div className="flex flex-col items-end gap-1.5">
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => handleArchiveToggle(activity)}
-                      disabled={status.kind === 'saving'}
-                      className="rounded-md px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:bg-paprika/10 disabled:opacity-50"
-                      title={
-                        activity.archived
-                          ? 'Restore: tampilkan lagi di home page'
-                          : 'Archive: sembunyikan dari home page'
-                      }
+                      onClick={() => openEdit(activity)}
+                      className="inline-flex items-center justify-center rounded-full bg-hunter-green px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-hunter-green/90"
                     >
-                      {activity.archived ? 'Restore' : 'Archive'}
+                      Edit
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(activity.id)}
-                    className="rounded-md px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:bg-paprika/10"
-                  >
-                    Hapus
-                  </button>
+                    {isPersisted && (
+                      <RowActionMenu
+                        label={`More actions for ${activity.title}`}
+                        items={[
+                          {
+                            key: 'points',
+                            label: 'Set Points',
+                            onSelect: () => setPointsActivity(activity),
+                          },
+                          {
+                            key: 'performance',
+                            label: 'Set Performance',
+                            onSelect: () => setPerformanceActivity(activity),
+                          },
+                          ...(isCompetitive
+                            ? [
+                                {
+                                  key: 'matches',
+                                  label: 'Matches',
+                                  onSelect: () => setMatchesActivity(activity),
+                                },
+                                {
+                                  key: 'standings',
+                                  label: 'Standings',
+                                  onSelect: () => setStandingsActivity(activity),
+                                },
+                              ]
+                            : []),
+                          { kind: 'divider', key: 'sep-1' },
+                          {
+                            key: 'clone',
+                            label: 'Clone',
+                            onSelect: () => handleClone(activity),
+                            disabled: status.kind === 'saving',
+                          },
+                          {
+                            key: 'archive',
+                            label: activity.archived ? 'Restore' : 'Archive',
+                            onSelect: () => handleArchiveToggle(activity),
+                            disabled: status.kind === 'saving',
+                          },
+                          { kind: 'divider', key: 'sep-2' },
+                          {
+                            key: 'delete',
+                            label: 'Hapus',
+                            onSelect: () => handleDelete(activity.id),
+                            destructive: true,
+                          },
+                        ]}
+                      />
+                    )}
+                  </div>
                 </div>
               </article>
             );
@@ -685,6 +685,13 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
           onSaved={() => {
             setMatchesActivity(null);
           }}
+        />
+      )}
+      {standingsActivity && (
+        <ActivityStandingsDrawer
+          activityId={standingsActivity.id}
+          activityTitle={standingsActivity.title}
+          onClose={() => setStandingsActivity(null)}
         />
       )}
     </div>

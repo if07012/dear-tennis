@@ -305,28 +305,30 @@ export function PerformanceOverviewChart({
   const hasMoreActivities = joinedActivities.length > paginatedActivities.length;
 
   return (
-    <section className="bg-white rounded-2xl shadow-md p-6 lg:p-8">
-      <header className="mb-6 flex items-center gap-3">
-        <span className="profile-section-icon" aria-hidden="true">
-          <LineChartIcon />
-        </span>
-        <div className="flex-1">
-          <h2 className="font-serif text-xl font-semibold text-hunter-green">
-            Performance Overview
-          </h2>
-          <p className="text-sm text-dark-gray">
-            {isAllActivitiesSelected
-              ? 'Rata-rata target & kesalahan per skill dari semua activity'
-              : 'Target & kesalahan per skill untuk activity yang dipilih'}
-          </p>
+    <section className="relative bg-white rounded-2xl shadow-md p-6 lg:p-8">
+      <header className="mb-6">
+        <div className="flex items-center gap-3">
+          <span className="profile-section-icon" aria-hidden="true">
+            <LineChartIcon />
+          </span>
+          <div className="flex-1">
+            <h2 className="font-serif text-xl font-semibold text-hunter-green">
+              Performance Overview
+            </h2>
+            <p className="text-sm text-dark-gray">
+              {isAllActivitiesSelected
+                ? 'Rata-rata target & kesalahan per skill dari semua activity'
+                : 'Target & kesalahan per skill untuk activity yang dipilih'}
+            </p>
+          </div>
         </div>
 
-        {/* Activity Selector Dropdown */}
-        <div className="relative ml-auto">
+        {/* Activity Selector Dropdown — second row on mobile, right of title on sm+ */}
+        <div className="relative mt-3 sm:mt-0 sm:absolute sm:right-6 sm:top-6 sm:mt-0 sm:w-auto z-10">
           <button
             type="button"
             onClick={() => setIsActivityDropdownOpen(!isActivityDropdownOpen)}
-            className="flex items-center gap-2 rounded-lg border border-light-gray bg-white px-3 py-2 text-sm text-graphite transition-colors hover:border-hunter-green hover:bg-hunter-green/5 focus:outline-none focus:ring-2 focus:ring-hunter-green/20"
+            className="flex w-full sm:w-auto items-center justify-between gap-2 rounded-lg border border-light-gray bg-white px-3 py-2 text-sm text-graphite transition-colors hover:border-hunter-green hover:bg-hunter-green/5 focus:outline-none focus:ring-2 focus:ring-hunter-green/20"
             aria-haspopup="listbox"
             aria-expanded={isActivityDropdownOpen}
             aria-label="Pilih activity"
@@ -343,7 +345,7 @@ export function PerformanceOverviewChart({
           </button>
 
           {isActivityDropdownOpen && (
-            <div className="absolute right-0 top-full mt-1 z-50 min-w-[280px] max-w-[360px] rounded-lg border border-light-gray bg-white shadow-lg overflow-hidden">
+            <div className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-1 z-50 w-[calc(100vw-2rem)] sm:w-[320px] sm:max-w-[360px] max-h-[60vh] overflow-y-auto rounded-lg border border-light-gray bg-white shadow-lg">
               {/* Search input */}
               <div className="p-2 border-b border-light-gray">
                 <input

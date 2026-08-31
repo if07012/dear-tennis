@@ -77,7 +77,7 @@ export function AchievementsGrid({
             {isLoading
               ? 'Memuat badge…'
               : badges.length === 0
-                ? 'Belum ada badge. Admin dapat授予 badge dari halaman Manage User.'
+                ? 'Belum ada badge yang diberikan'
                 : `${badges.length} badge dikoleksi`}
           </p>
         </div>
@@ -93,7 +93,13 @@ export function AchievementsGrid({
               <AchievementSkeleton key={i} />
             ))
           : badges.length === 0
-            ? null
+            ? (
+              <div className="col-span-full rounded-xl border border-dashed border-light-gray bg-off-white p-8 text-center text-sm text-dark-gray">
+                Belum ada achievement. Admin dapat memberikan badge dari
+                halaman Manage User setelah member menyelesaikan target
+                atau kontribusi tertentu.
+              </div>
+            )
             : badges.map((badge) => (
                 <div
                   key={badge.key}

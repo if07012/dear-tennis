@@ -67,7 +67,11 @@ const CATEGORY_EMOJI: Record<ActivityCategory, string> = {
  * Returns null if the viewer isn't on either side (defensive — caller already
  * pre-filters, but this keeps the conversion self-contained).
  */
-function toFunmatchMatch(rec: MatchRecord, viewerEmail: string): FunmatchMatch | null {
+function toFunmatchMatch(
+  rec: MatchRecord,
+  viewerEmail: string,
+  nameOf: (email: string) => string,
+): FunmatchMatch | null {
   const viewer = viewerEmail.toLowerCase();
   const a = rec.sideA.split(',').map((s) => s.trim()).filter(Boolean);
   const b = rec.sideB.split(',').map((s) => s.trim()).filter(Boolean);
@@ -94,9 +98,56 @@ function toFunmatchMatch(rec: MatchRecord, viewerEmail: string): FunmatchMatch |
   return {
     score,
     isDoubles: rec.isDoubles,
-    partners: mySide.filter((e) => e !== viewer),
-    opponent: oppSide.join(' & '),
+    partners: mySide.filter((e) => e !== viewer).map(nameOf),
+    opponent: oppSide.map(nameOf).join(' & '),
     result,
+  };
+}
+
+const MANUAL_EMAIL_PREFIX = '__manual_';
+const MANUAL_EMAIL_DOMAIN = 'guest.local';
+
+function slugFromManualEmail(email: string): string | null {
+  if (!email.startsWith(MANUAL_EMAIL_PREFIX)) return null;
+  const local = email.slice(MANUAL_EMAIL_PREFIX.length).split('@')[0];
+  return local || null;
+}
+
+type SignupRow = Record<string, unknown>;
+
+/**
+ * Build a per-activity `nameOf` lookup. Approved signups contribute their
+ * user name; any side email that isn't in the signup list falls back to the
+ * slug of a manual placeholder email (admin-typed name), then to the email
+ * itself as a last resort so the renderer never prints `undefined`.
+ */
+function buildNameOf(
+  rows: SignupRow[],
+  activityId: string,
+  viewerEmail: string,
+): (email: string) => string {
+  const map = new Map<string, string>();
+  for (const raw of rows) {
+    const row = raw as Record<string, unknown>;
+    if (String(row.activityId ?? '').trim() !== activityId) continue;
+    if (String(row.status ?? '') !== 'approved') continue;
+    const email = String(row.userEmail ?? '').trim().toLowerCase();
+    const name = String(row.userName ?? '').trim();
+    if (email && name && !map.has(email)) map.set(email, name);
+  }
+  // The viewer is always a signup (route already proved that), but seed the
+  // map defensively so their partner row on a doubles card never falls back
+  // to the bare email.
+  return (email: string) => {
+    const key = email.toLowerCase();
+    const fromSignup = map.get(key);
+    if (fromSignup) return fromSignup;
+    if (key === viewerEmail.toLowerCase()) {
+      return map.get(key) ?? email;
+    }
+    const slug = slugFromManualEmail(key);
+    if (slug) return slug;
+    return email;
   };
 }
 
@@ -171,12 +222,15 @@ export async function GET(request: Request) {
 
       // Pull matches for this activity and project them to the viewer's
       // perspective. Missing sheet / errors fall back to no matches so the
-      // rest of the page still renders.
+      // rest of the page still renders. The `nameOf` map substitutes the
+      // admin-typed display name for each email so the public scorecard
+      // shows names only (no raw addresses).
       let matches: FunmatchMatch[] = [];
       try {
         const stored = await listMatchesForActivity(spreadsheetId, activityId);
+        const nameOf = buildNameOf(rows, activityId, lower);
         matches = stored
-          .map((m) => toFunmatchMatch(m, lower))
+          .map((m) => toFunmatchMatch(m, lower, nameOf))
           .filter((m): m is FunmatchMatch => m !== null);
       } catch {
         matches = [];
