@@ -28,10 +28,17 @@ export type FilterableEvent = {
   /** ISO date (YYYY-MM-DD). */
   date: string;
   type: EventType;
+  /** Admin "Edit activity" category. Mirrors `ActivityCategory` so the
+   *  profile filter can stay in sync with the catalog without remapping. */
+  category?: 'training' | 'social' | 'competitive';
   /** Emoji used in the date tile / gallery card. */
   icon: string;
   location: string;
+  /** Free-form duration copied from the activity catalog (e.g. "90 min", "2 hours"). */
+  duration?: string;
   photos: string[];
+  /** Optional short blurb shown under the title. */
+  description?: string;
   /** Only on funmatch-style events. */
   eventRank?: number;
   /** Only on funmatch-style events. */

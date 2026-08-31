@@ -74,7 +74,7 @@ export type InviteEmailInput = {
   to: string;
   name?: string;
   message?: string;
-  inviteId: string;
+  inviteToken: string;
 };
 
 /**
@@ -90,7 +90,7 @@ export async function sendInviteEmail(
     throw new Error('Brevo SMTP is not configured.');
   }
 
-  const inviteUrl = `${cfg.siteUrl}/invite/${input.inviteId}`;
+  const inviteUrl = `${cfg.siteUrl}/invite/${input.inviteToken}`;
   const greeting = input.name ? `Hi ${input.name},` : 'Hi,';
   const personalNote = input.message
     ? `<p style="margin:16px 0;padding:14px 18px;border-left:3px solid #E85D04;background:#FFF5EE;border-radius:6px;white-space:pre-wrap;">${escapeHtml(input.message)}</p>`

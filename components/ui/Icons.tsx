@@ -605,6 +605,24 @@ export function XIcon({ className, size = 32, strokeWidth = 2 }: IconProps) {
   );
 }
 
+export function CheckIcon({ className, size = 16, strokeWidth = 2.5 }: IconProps) {
+  return (
+    <svg
+      className={base(className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
 export function ChevronUp({ className, size = 16, strokeWidth = 2 }: IconProps) {
   return (
     <svg
@@ -712,6 +730,44 @@ export function SparklesIcon({ className, size = 24, strokeWidth = 2 }: IconProp
       strokeLinejoin="round"
     >
       <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+    </svg>
+  );
+}
+
+export function CopyIcon({ className, size = 16, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg
+      className={base(className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+    </svg>
+  );
+}
+
+export function PencilIcon({ className, size = 14, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg
+      className={base(className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
     </svg>
   );
 }

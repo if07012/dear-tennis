@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ensureSheetWithHeaders } from '@/app/lib/googleSheets';
+import { ensureSheetWithHeaders, invalidateRowsCache } from '@/app/lib/googleSheets';
 import { hashPassword } from '@/lib/auth';
 
 const USERS_HEADERS = ['id', 'email', 'name', 'passwordHash', 'salt', 'createdAt'];
@@ -61,6 +61,7 @@ export async function POST(request: Request) {
       salt,
       createdAt: new Date().toISOString(),
     });
+    invalidateRowsCache(spreadsheetId, 'users');
 
     return NextResponse.json({
       success: true,

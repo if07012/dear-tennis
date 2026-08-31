@@ -5,7 +5,23 @@ import { useCallback, useEffect, useState } from 'react';
 const AUTH_STORAGE_KEY = 'authUser';
 const AUTH_EVENT = 'dearTennis:authChange';
 
-export type AuthUser = { id: string; email: string; name: string };
+export type AuthUser = {
+  id: string;
+  email: string;
+  name: string;
+  /**
+   * Optional base64 data URL for the user's profile photo. Set via
+   * the profile photo editor; persisted on the users sheet by
+   * PATCH /api/profile and mirrored into localStorage so other tabs /
+   * components see the change without a full reload.
+   */
+  photo?: string;
+  /**
+   * Free-form rank label, e.g. "3.5 NTRP" or "Beginner". Set via the
+   * profile editor; persisted on the users sheet's `rank` column.
+   */
+  rank?: string;
+};
 
 function readUser(): AuthUser | null {
   if (typeof window === 'undefined') return null;

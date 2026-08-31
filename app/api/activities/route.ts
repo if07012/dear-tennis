@@ -81,6 +81,8 @@ type ActivityUpsertBody = {
     groupSize: string;
     location: string;
     time: string;
+    isFull?: boolean;
+    archived?: boolean;
   };
 };
 
@@ -147,6 +149,8 @@ export async function PUT(request: Request) {
           groupSize: String(activity.groupSize ?? '').trim(),
           location: String(activity.location ?? '').trim(),
           time: String(activity.time ?? '').trim(),
+          isFull: activity.isFull === true,
+          archived: activity.archived === true,
         };
 
         if (activity.id) {

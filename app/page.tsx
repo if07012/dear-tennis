@@ -48,7 +48,6 @@ export default async function Home() {
       <About content={ourStory} />
       <WhyJoin settings={whyJoin.settings} benefits={whyJoin.benefits} />
       <Activities settings={activities.settings} activities={activities.activities} />
-      <Events content={calendar} />
       <Gallery content={galleryContent} />
       <Testimonials content={testimonials} />
       <Statistics content={statistics} />

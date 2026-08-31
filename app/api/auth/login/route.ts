@@ -98,6 +98,7 @@ export async function POST(request: Request) {
         id: obj.id,
         email: obj.email,
         name: obj.name,
+        photo: obj.photo ? String(obj.photo) : undefined,
       },
     });
   } catch (error) {

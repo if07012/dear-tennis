@@ -176,8 +176,20 @@ export async function appendSheetData(
     // Invalidate cached reads for this spreadsheet.
     cacheDeleteByPrefix(`read:${spreadsheetId}:`);
     cacheDeleteByPrefix(`rows:${spreadsheetId}:`);
+    // Paged-read caches and row counts are keyed per-sheet; wipe them too so
+    // callers using listRowsBySheetPaged see fresh data after bulk adds.
+    cacheDeleteByPrefix(`rows_paged:${spreadsheetId}:`);
+    cacheDeleteByPrefix(`row_count:${spreadsheetId}:`);
     cacheDeleteMatching((k) => k.startsWith(`read:${spreadsheetId}:`) && k.endsWith(":promise"));
     cacheDeleteMatching((k) => k.startsWith(`rows:${spreadsheetId}:`) && k.endsWith(":promise"));
+    cacheDeleteMatching(
+      (k) =>
+        k.startsWith(`rows_paged:${spreadsheetId}:`) && k.endsWith(':promise'),
+    );
+    cacheDeleteMatching(
+      (k) =>
+        k.startsWith(`row_count:${spreadsheetId}:`) && k.endsWith(':promise'),
+    );
     return { success: true, message: 'Data added successfully' };
   } catch (error) {
     console.error('Error writing to Google Sheet:', error);
@@ -238,7 +250,7 @@ function bumpSheetGeneration(spreadsheetId: string, sheetName: string) {
   sheetGenerations.set(key, (sheetGenerations.get(key) ?? 0) + 1);
 }
 
-function invalidateRowsCache(spreadsheetId: string, sheetName: string) {
+export function invalidateRowsCache(spreadsheetId: string, sheetName: string) {
   bumpSheetGeneration(spreadsheetId, sheetName);
   cacheDeleteByPrefix(`read:${spreadsheetId}:`);
   cacheDeleteByPrefix(`rows:${spreadsheetId}:${sheetName}`);

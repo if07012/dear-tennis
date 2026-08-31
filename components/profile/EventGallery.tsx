@@ -1,7 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { eventHistory, chipEmojis, chipPalette } from '@/data/profile';
+import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { eventHistory as staticHistory, chipEmojis, chipPalette } from '@/data/profile';
+import type { FilterableEvent } from '@/data/profile-types';
 import { ImageIcon } from '@/components/ui/Icons';
 import { Lightbox } from './Lightbox';
 
@@ -13,23 +15,60 @@ type PhotoRef = {
 
 const PAGE_SIZE = 8;
 
-export function EventGallery() {
+export function EventGallery({
+  viewingEmail,
+}: {
+  viewingEmail: string | null;
+}) {
+  const { user } = useAuth();
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [lightbox, setLightbox] = useState<{
     photos: string[];
     index: number;
     title: string;
   } | null>(null);
+  const [joinedEvents, setJoinedEvents] = useState<FilterableEvent[] | null>(null);
+
+  // When admin is viewing another user, fetch their joined activities so
+  // the gallery reflects that user's events. For the default view we keep
+  // the static `eventHistory` so the original visual is preserved.
+  useEffect(() => {
+    if (!user?.email) return;
+    if (!viewingEmail || viewingEmail === user.email) {
+      setJoinedEvents(null);
+      return;
+    }
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/profile/joined-activities?user=${encodeURIComponent(viewingEmail)}`,
+          { headers: { 'x-auth-email': user.email }, signal: controller.signal },
+        );
+        if (!res.ok) {
+          setJoinedEvents([]);
+          return;
+        }
+        const body = (await res.json()) as { events?: FilterableEvent[] };
+        setJoinedEvents(body.events ?? []);
+      } catch {
+        setJoinedEvents([]);
+      }
+    })();
+    return () => controller.abort();
+  }, [user?.email, viewingEmail]);
+
+  const eventsToShow = joinedEvents ?? staticHistory;
 
   const allPhotos = useMemo<PhotoRef[]>(() => {
     const photos: PhotoRef[] = [];
-    for (const evt of eventHistory) {
+    for (const evt of eventsToShow) {
       for (const url of evt.photos) {
         photos.push({ eventId: evt.id, eventTitle: evt.title, url });
       }
     }
     return photos;
-  }, []);
+  }, [eventsToShow]);
 
   const shown = allPhotos.slice(0, visible);
   const hasMore = allPhotos.length > visible;
@@ -59,9 +98,7 @@ export function EventGallery() {
               key={`${photo.eventId}-${idx}`}
               type="button"
               onClick={() => {
-                // Build the per-event photos array so prev/next stays within
-                // the originating event's photos.
-                const event = eventHistory.find((e) => e.id === photo.eventId);
+                const event = eventsToShow.find((e) => e.id === photo.eventId);
                 if (!event) return;
                 const eventIndex = event.photos.indexOf(photo.url);
                 setLightbox({
@@ -72,12 +109,18 @@ export function EventGallery() {
               }}
               className="gallery-item group relative aspect-square overflow-hidden rounded-xl border border-light-gray bg-off-white text-left transition-shadow hover:shadow-md"
             >
-              <img
-                src={photo.url}
-                alt={`${photo.eventTitle} photo ${idx + 1}`}
-                className="gallery-image h-full w-full object-cover transition-transform duration-500"
-                loading="lazy"
-              />
+              {photo.url ? (
+                <img
+                  src={photo.url}
+                  alt={`${photo.eventTitle} photo ${idx + 1}`}
+                  className="gallery-image h-full w-full object-cover transition-transform duration-500"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-3xl text-dark-gray">
+                  📷
+                </div>
+              )}
               <div className="gallery-overlay absolute inset-0 flex flex-col items-start justify-end bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-300">
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider ${palette?.bg ?? 'bg-white/20'} ${palette?.text ?? 'text-white'} backdrop-blur`}

@@ -14,6 +14,8 @@
 import {
   ensureSheetWithHeaders,
   listRowsBySheet,
+  readRowById,
+  updateRowById,
 } from '@/app/lib/googleSheets';
 import {
   INVITE_ITEM_HEADERS,
@@ -51,6 +53,7 @@ function coerceItem(r: Record<string, unknown>, idx: number): Invite {
     status: coerceStatus(r.status),
     invitedAt: String(r.invitedAt ?? ''),
     createdBy: String(r.createdBy ?? ''),
+    token: r.token ? String(r.token).trim() || undefined : undefined,
   };
 }
 
@@ -144,3 +147,75 @@ export async function ensureInviteSheets(spreadsheetId: string) {
 export { ITEMS_SHEET };
 export type { Invite };
 export { INVITE_ITEM_HEADERS };
+
+/**
+ * Find an invite by its public token. Returns null when the token doesn't
+ * match any row. Email and message are scrubbed from the public result so
+ * a leaked URL doesn't expose the admin's note.
+ */
+export type PublicInvite = {
+  email: string;
+  name?: string;
+  status: Invite['status'];
+};
+
+export async function getInviteByTokenForPublic(
+  spreadsheetId: string,
+  token: string,
+): Promise<PublicInvite | null> {
+  const rows = await listRowsBySheet(spreadsheetId, ITEMS_SHEET);
+  const target = token.trim().toLowerCase();
+  const found = rows.find((r) => {
+    const raw = r.token;
+    return typeof raw === 'string' && raw.trim().toLowerCase() === target;
+  });
+  if (!found) return null;
+  return coercePublic(found);
+}
+
+/**
+ * Internal variant: returns the full invite (including the row id needed for
+ * updates) without exposing it off the server. Used by the accept endpoint.
+ */
+export async function getInviteByToken(
+  spreadsheetId: string,
+  token: string,
+): Promise<Invite | null> {
+  const rows = await listRowsBySheet(spreadsheetId, ITEMS_SHEET);
+  const target = token.trim().toLowerCase();
+  const found = rows.find((r) => {
+    const raw = r.token;
+    return typeof raw === 'string' && raw.trim().toLowerCase() === target;
+  });
+  if (!found) return null;
+  return coerceItem(found, 0);
+}
+
+function coercePublic(r: Record<string, unknown>): PublicInvite {
+  const status = coerceStatus(r.status);
+  return {
+    email: String(r.email ?? '').trim(),
+    name: r.name ? String(r.name) : undefined,
+    status,
+  };
+}
+
+export async function markInviteAccepted(
+  spreadsheetId: string,
+  id: string,
+): Promise<void> {
+  await updateRowById(spreadsheetId, ITEMS_SHEET, id, { status: 'accepted' });
+}
+
+/**
+ * Reads the user-facing view of an invite by its row id. Used by admin
+ * pages that need to surface token / status without exposing it elsewhere.
+ */
+export async function getInviteById(
+  spreadsheetId: string,
+  id: string,
+): Promise<Invite | null> {
+  const row = await readRowById(spreadsheetId, ITEMS_SHEET, id);
+  if (!row) return null;
+  return coerceItem(row, 0);
+}

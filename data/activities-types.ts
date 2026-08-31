@@ -26,6 +26,19 @@ export type ActivityItem = {
   time: string;
   order: number;
   createdAt?: string;
+  /**
+   * Admin-only flag: when true, the home-page Join button is replaced by a
+   * disabled "Full Book" button. Existing approved signups still apply —
+   * flipping the flag back to false re-opens registration. Optional so
+   * older rows that pre-date the column read as false.
+   */
+  isFull?: boolean;
+  /**
+   * Admin-only flag: when true, the activity is hidden from the home page
+   * (and the public 6-card list) but remains in the admin editor for
+   * reference and reactivation. Optional so older rows read as false.
+   */
+  archived?: boolean;
 };
 
 export type ActivitiesContent = {
@@ -53,6 +66,8 @@ export const ACTIVITY_HEADERS = [
   'time',
   'order',
   'createdAt',
+  'isFull',
+  'archived',
 ] as const;
 
 export const ALL_CATEGORIES: ActivityCategory[] = ['training', 'social', 'competitive'];

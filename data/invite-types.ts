@@ -5,7 +5,10 @@
 // a single Google Sheet.
 //
 // Sheet schema (created on first save):
-//   invites: id,email,name,message,status,invitedAt,createdBy
+//   invites: id,email,name,message,status,invitedAt,createdBy,token
+//
+// `token` is a public random string used in the accept-invitation URL. It is
+// separate from `id` so admins can rotate it without changing the row id.
 //
 // `status` is one of: 'pending' | 'sent' | 'accepted' | 'cancelled'.
 
@@ -19,6 +22,8 @@ export type Invite = {
   status: InviteStatus;
   invitedAt: string;
   createdBy: string; // admin email who created the invite
+  /** Public random token used in the accept-invitation URL. */
+  token?: string;
 };
 
 export type InviteContent = {
@@ -33,6 +38,7 @@ export const INVITE_ITEM_HEADERS = [
   'status',
   'invitedAt',
   'createdBy',
+  'token',
 ] as const;
 
 export const INVITE_STATUSES: InviteStatus[] = [

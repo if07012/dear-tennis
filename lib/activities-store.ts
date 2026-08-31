@@ -77,6 +77,7 @@ export function getDefaultActivitiesContent(): ActivitiesContent {
       location: '',
       time: '',
       order: idx,
+      isFull: false,
     })),
   };
 }
@@ -102,6 +103,18 @@ function coerceItem(r: Record<string, unknown>, idx: number): ActivityItem {
     category === 'training' || category === 'social' || category === 'competitive'
       ? category
       : 'training';
+  // Sheets serialise booleans as strings ("TRUE"/"FALSE"). Normalise so
+  // downstream code can treat `isFull`/`archived` as real booleans
+  // regardless of whether the row was edited via the API or by hand in
+  // the sheet UI.
+  const toBool = (raw: unknown) =>
+    raw === true ||
+    raw === 'TRUE' ||
+    raw === 'true' ||
+    raw === 1 ||
+    raw === '1';
+  const isFull = toBool(r.isFull);
+  const archived = toBool(r.archived);
   return {
     id: String(r.id ?? '').trim() || `fallback-${idx}`,
     category: validCategory,
@@ -114,6 +127,8 @@ function coerceItem(r: Record<string, unknown>, idx: number): ActivityItem {
     time: String(r.time ?? ''),
     order: Number(r.order ?? idx),
     createdAt: r.createdAt ? String(r.createdAt) : undefined,
+    isFull,
+    archived,
   };
 }
 

@@ -2,28 +2,67 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from '@/components/ui/Icons';
-import type { SkillBreakdownItem } from '@/data/profile-types';
+import type {
+  SkillBreakdownItem,
+  SkillDetailStat,
+  SkillLevel,
+} from '@/data/profile-types';
 
 type Props = {
   item: SkillBreakdownItem;
   /** Allows the parent (SkillBreakdown) to override the primary value used in the bar. */
   valueOverride?: number;
+  /**
+   * Replaces `item.details` for the expanded sub-stat row. Used by the
+   * profile "Skill Breakdown" panel to surface admin-assigned per-(user,
+   * activity) sub-stat values when they exist; otherwise the static
+   * `item.details` from `skillBreakdownDefaults` renders unchanged.
+   */
+  detailsOverride?: SkillDetailStat[];
+  /**
+   * When provided, overrides `item.level` so the badge reflects the
+   * actual numeric value (0-100) instead of the static defaults. The
+   * breakdown client computes the level via `levelFromValue`.
+   */
+  levelOverride?: SkillLevel;
 };
 
 /**
- * Single skill bar with internal expand/collapse state for the details row.
- * Pure UI — all values come from the `item` prop (and `valueOverride` if provided).
+ * Map a 0-100 value to a skill level using the agreed thresholds:
+ *   < 25        → Beginner
+ *   < 50        → Intermediate
+ *   < 75        → Advanced
+ *   ≥ 75        → Expert
  */
-export function SkillProgressBar({ item, valueOverride }: Props) {
+export function levelFromValue(value: number): SkillLevel {
+  if (value < 25) return 'Beginner';
+  if (value < 50) return 'Intermediate';
+  if (value < 75) return 'Advanced';
+  return 'Expert';
+}
+
+/**
+ * Single skill bar with internal expand/collapse state for the details row.
+ * Pure UI — all values come from the `item` prop (and `valueOverride` /
+ * `detailsOverride` / `levelOverride` if provided).
+ */
+export function SkillProgressBar({
+  item,
+  valueOverride,
+  detailsOverride,
+  levelOverride,
+}: Props) {
   const [open, setOpen] = useState(false);
   const value = typeof valueOverride === 'number' ? valueOverride : item.details[0]?.value ?? 0;
   const clamped = Math.max(0, Math.min(100, value));
+  const level = levelOverride ?? item.level;
+  const details = detailsOverride ?? item.details;
   const levelColor =
-    item.level === 'Expert'
+    level === 'Expert'
       ? 'text-emerald-600 bg-emerald-100'
-      : item.level === 'Advanced'
+      : level === 'Advanced'
         ? 'text-sky-700 bg-sky-100'
-        : item.level === 'Intermediate'
+        : level === 'Intermediate'
           ? 'text-amber-700 bg-amber-100'
           : 'text-rose-700 bg-rose-100';
 
@@ -34,7 +73,7 @@ export function SkillProgressBar({ item, valueOverride }: Props) {
           <span
             className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider ${levelColor}`}
           >
-            {item.level}
+            {level}
           </span>
           <h3 className="font-serif text-lg font-semibold text-hunter-green">
             {item.skill}
@@ -68,7 +107,7 @@ export function SkillProgressBar({ item, valueOverride }: Props) {
 
       <div className="skill-bar-details" data-open={open ? 'true' : 'false'}>
         <div className="mt-3 grid grid-cols-3 gap-2 border-t border-light-gray pt-3">
-          {item.details.map((detail) => (
+          {details.map((detail) => (
             <div
               key={detail.label}
               className="rounded-lg bg-off-white px-3 py-2 text-center"

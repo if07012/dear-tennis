@@ -31,6 +31,8 @@ const ADMIN_NAV_LINKS = [
   { href: '/admin/statistics', label: 'Statistics' },
   { href: '/admin/faq', label: 'FAQ' },
   { href: '/admin/invite', label: 'Invite Members' },
+  { href: '/admin/users', label: 'Manage Users' },
+  { href: '/admin/activity-signups', label: 'Activity Signups' },
   { href: '/admin/why-join', label: 'Journey' },
 ];
 

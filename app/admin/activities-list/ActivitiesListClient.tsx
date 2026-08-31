@@ -2,18 +2,22 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronUp,
   ClockSmallIcon,
+  CopyIcon,
   MapPinIcon,
   PlusIcon,
   UsersSmallIcon,
   XIcon,
 } from '@/components/ui/Icons';
 import { useAuth } from '@/hooks/useAuth';
+import { ActivitySkillPointsDrawer } from './ActivitySkillPointsDrawer';
+import { ActivityPerformanceDrawer } from './ActivityPerformanceDrawer';
+import { ActivityMatchesDrawer } from './ActivityMatchesDrawer';
 import type {
   ActivityCategory,
   ActivityItem,
@@ -63,15 +67,45 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<SaveStatus>({ kind: 'idle' });
   const [editing, setEditing] = useState<DraftActivity | null>(null);
+  const [pointsActivity, setPointsActivity] = useState<ActivityItem | null>(null);
+  const [performanceActivity, setPerformanceActivity] =
+    useState<ActivityItem | null>(null);
+  const [matchesActivity, setMatchesActivity] = useState<ActivityItem | null>(null);
   const [filter, setFilter] = useState<ActivityCategory | 'all'>('all');
-
-  const filtered = useMemo(
-    () =>
-      filter === 'all'
-        ? activities
-        : activities.filter((a) => a.category === filter),
-    [activities, filter],
+  const [archiveFilter, setArchiveFilter] = useState<'active' | 'archived' | 'all'>(
+    'active',
   );
+  const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
+
+  const refreshSignupCounts = useCallback(async () => {
+    try {
+      const res = await fetch('/api/activity-signups/counts', {
+        cache: 'no-store',
+      });
+      if (!res.ok) return;
+      const body = (await res.json()) as { counts?: Record<string, number> };
+      setSignupCounts(body.counts ?? {});
+    } catch {
+      // Non-fatal — admin list still works without counts.
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshSignupCounts();
+  }, [refreshSignupCounts]);
+
+  const filtered = useMemo(() => {
+    let out = activities;
+    if (archiveFilter === 'active') {
+      out = out.filter((a) => a.archived !== true);
+    } else if (archiveFilter === 'archived') {
+      out = out.filter((a) => a.archived === true);
+    }
+    if (filter !== 'all') {
+      out = out.filter((a) => a.category === filter);
+    }
+    return out;
+  }, [activities, filter, archiveFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -113,6 +147,8 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
         groupSize: draft.groupSize,
         location: draft.location,
         time: draft.time,
+        isFull: draft.isFull === true,
+        archived: draft.archived === true,
       };
 
       if (!isPersistedId(draft.id)) {
@@ -132,10 +168,83 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
 
       setEditing(null);
       setStatus({ kind: 'saved', at: Date.now() });
+      refreshSignupCounts();
     } catch (e) {
       setStatus({
         kind: 'error',
         message: e instanceof Error ? e.message : 'Failed to save',
+      });
+    }
+  };
+
+  const handleClone = async (item: ActivityItem) => {
+    setStatus({ kind: 'saving' });
+    try {
+      const payload = {
+        category: item.category,
+        title: `${item.title} (copy)`,
+        description: item.description,
+        image: item.image,
+        duration: item.duration,
+        groupSize: item.groupSize,
+        location: item.location,
+        time: item.time,
+        isFull: false,
+        archived: false,
+      };
+      const result = await apiFetch('activity', { activity: payload });
+      const persisted = (result as { activity?: ActivityItem }).activity;
+      if (persisted) {
+        setActivities((prev) => [...prev, persisted]);
+        // Pop the edit drawer on the freshly persisted clone so the admin
+        // can tweak the title and any other field before moving on.
+        setEditing({ ...persisted });
+      }
+      setStatus({ kind: 'saved', at: Date.now() });
+      refreshSignupCounts();
+    } catch (e) {
+      setStatus({
+        kind: 'error',
+        message: e instanceof Error ? e.message : 'Failed to clone',
+      });
+    }
+  };
+
+  // Per-row archive/restore. The full update body is required by the API
+  // (we spread the existing row and only flip `archived`) so the row's
+  // other fields aren't wiped to empty strings on the sheet.
+  const handleArchiveToggle = async (item: ActivityItem) => {
+    const nextArchived = !(item.archived === true);
+    const confirmMsg = nextArchived
+      ? `Archive activity "${item.title}"? Activity ini tidak akan tampil di home page.`
+      : `Restore activity "${item.title}"? Activity ini akan tampil lagi di home page.`;
+    if (!window.confirm(confirmMsg)) return;
+    setStatus({ kind: 'saving' });
+    try {
+      await apiFetch('activity', {
+        activity: {
+          id: item.id,
+          category: item.category,
+          title: item.title,
+          description: item.description,
+          image: item.image,
+          duration: item.duration,
+          groupSize: item.groupSize,
+          location: item.location,
+          time: item.time,
+          isFull: item.isFull === true,
+          archived: nextArchived,
+        },
+      });
+      setActivities((prev) =>
+        prev.map((a) => (a.id === item.id ? { ...a, archived: nextArchived } : a)),
+      );
+      setStatus({ kind: 'saved', at: Date.now() });
+    } catch (e) {
+      setStatus({
+        kind: 'error',
+        message:
+          e instanceof Error ? e.message : 'Failed to update archive state',
       });
     }
   };
@@ -157,6 +266,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
         await apiFetch('reorder', { ids });
       }
       setStatus({ kind: 'saved', at: Date.now() });
+      refreshSignupCounts();
     } catch (e) {
       setStatus({
         kind: 'error',
@@ -199,6 +309,8 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
       groupSize: '',
       location: '',
       time: '',
+      isFull: false,
+      archived: false,
     });
   };
 
@@ -244,6 +356,36 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
       </header>
 
       <section className="rounded-2xl border border-light-gray bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-light-gray px-5 py-3">
+          <div className="flex flex-wrap gap-2">
+            {(['active', 'archived', 'all'] as const).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  setArchiveFilter(key);
+                  setPage(1);
+                }}
+                className={[
+                  'rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors',
+                  archiveFilter === key
+                    ? 'bg-paprika text-white'
+                    : 'bg-off-white text-dark-gray hover:bg-light-gray',
+                ].join(' ')}
+              >
+                {key === 'active'
+                  ? `Active (${
+                      activities.filter((a) => a.archived !== true).length
+                    })`
+                  : key === 'archived'
+                    ? `Archived (${
+                        activities.filter((a) => a.archived === true).length
+                      })`
+                    : `All (${activities.length})`}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-light-gray px-5 py-3">
           <div className="flex flex-wrap gap-2">
             {(['all', 'training', 'social', 'competitive'] as const).map((key) => (
@@ -318,6 +460,56 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
                     >
                       {activity.category}
                     </span>
+                    {activity.isFull && (
+                      <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-light-gray text-dark-gray">
+                        Full
+                      </span>
+                    )}
+                    {activity.archived && (
+                      <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-paprika/10 text-paprika">
+                        Archived
+                      </span>
+                    )}
+                    {isPersistedId(activity.id) && (
+                      <Link
+                        href={`/admin/activity-signups?activity=${encodeURIComponent(activity.id)}`}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-hunter-green/10 text-hunter-green transition-colors hover:bg-hunter-green/20"
+                        title="Lihat pendaftar activity ini"
+                      >
+                        <UsersSmallIcon size={10} />
+                        {signupCounts[activity.id] ?? 0} members
+                      </Link>
+                    )}
+                    {isPersistedId(activity.id) && (
+                      <button
+                        type="button"
+                        onClick={() => setPointsActivity(activity)}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-paprika/10 text-paprika transition-colors hover:bg-paprika/20"
+                        title="Set +/- skill points untuk member activity ini"
+                      >
+                        Set Points
+                      </button>
+                    )}
+                    {isPersistedId(activity.id) && (
+                      <button
+                        type="button"
+                        onClick={() => setPerformanceActivity(activity)}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-hunter-green/10 text-hunter-green transition-colors hover:bg-hunter-green/20"
+                        title="Set performance (target/kesalahan) per member per skill"
+                      >
+                        Set Performance
+                      </button>
+                    )}
+                    {isPersistedId(activity.id) && activity.category === 'competitive' && (
+                      <button
+                        type="button"
+                        onClick={() => setMatchesActivity(activity)}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-paprika/10 text-paprika transition-colors hover:bg-paprika/20"
+                        title="Generate or edit match results untuk activity competitive ini"
+                      >
+                        Matches
+                      </button>
+                    )}
                   </div>
                   {activity.description && (
                     <p className="text-xs text-dark-gray line-clamp-2 text-pretty">
@@ -386,6 +578,31 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
                   </button>
                   <button
                     type="button"
+                    onClick={() => handleClone(activity)}
+                    disabled={status.kind === 'saving'}
+                    className="inline-flex items-center justify-center gap-1 rounded-md px-3 py-1 text-xs font-semibold text-dark-gray transition-colors hover:bg-light-gray disabled:opacity-50"
+                    title="Duplikat activity ini"
+                  >
+                    <CopyIcon size={12} />
+                    Clone
+                  </button>
+                  {isPersistedId(activity.id) && (
+                    <button
+                      type="button"
+                      onClick={() => handleArchiveToggle(activity)}
+                      disabled={status.kind === 'saving'}
+                      className="rounded-md px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:bg-paprika/10 disabled:opacity-50"
+                      title={
+                        activity.archived
+                          ? 'Restore: tampilkan lagi di home page'
+                          : 'Archive: sembunyikan dari home page'
+                      }
+                    >
+                      {activity.archived ? 'Restore' : 'Archive'}
+                    </button>
+                  )}
+                  <button
+                    type="button"
                     onClick={() => handleDelete(activity.id)}
                     className="rounded-md px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:bg-paprika/10"
                   >
@@ -443,6 +660,31 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
           draft={editing}
           onCancel={() => setEditing(null)}
           onSave={handleSave}
+        />
+      )}
+
+      {pointsActivity && (
+        <ActivitySkillPointsDrawer
+          activityId={pointsActivity.id}
+          activityTitle={pointsActivity.title}
+          onClose={() => setPointsActivity(null)}
+        />
+      )}
+      {performanceActivity && (
+        <ActivityPerformanceDrawer
+          activityId={performanceActivity.id}
+          activityTitle={performanceActivity.title}
+          onClose={() => setPerformanceActivity(null)}
+        />
+      )}
+      {matchesActivity && (
+        <ActivityMatchesDrawer
+          activityId={matchesActivity.id}
+          activityTitle={matchesActivity.title}
+          onClose={() => setMatchesActivity(null)}
+          onSaved={() => {
+            setMatchesActivity(null);
+          }}
         />
       )}
     </div>
@@ -593,6 +835,40 @@ function EditDrawer({ draft, onCancel, onSave }: EditDrawerProps) {
               />
             </label>
           </div>
+
+          <label className="mt-1 flex items-center gap-3 rounded-lg border border-light-gray bg-off-white px-3 py-2.5">
+            <input
+              type="checkbox"
+              checked={state.isFull === true}
+              onChange={(e) => update('isFull', e.target.checked)}
+              className="h-4 w-4 cursor-pointer rounded border-light-gray text-paprika focus:ring-paprika"
+            />
+            <span className="flex flex-col">
+              <span className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
+                Tandai Full Book
+              </span>
+              <span className="text-[0.7rem] text-dark-gray">
+                Tombol Join di home page berubah menjadi &quot;Full Book&quot; (abu-abu, tidak bisa diklik).
+              </span>
+            </span>
+          </label>
+
+          <label className="mt-1 flex items-center gap-3 rounded-lg border border-light-gray bg-off-white px-3 py-2.5">
+            <input
+              type="checkbox"
+              checked={state.archived === true}
+              onChange={(e) => update('archived', e.target.checked)}
+              className="h-4 w-4 cursor-pointer rounded border-light-gray text-paprika focus:ring-paprika"
+            />
+            <span className="flex flex-col">
+              <span className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
+                Archive activity
+              </span>
+              <span className="text-[0.7rem] text-dark-gray">
+                Tidak tampil di home page. Bisa di-restore kapan saja dari halaman ini.
+              </span>
+            </span>
+          </label>
         </div>
 
         <div className="mt-6 flex items-center justify-end gap-3">

@@ -233,7 +233,7 @@ export function LoginPage() {
       const data = (await res.json().catch(() => ({}))) as {
         success?: boolean;
         error?: string;
-        user?: { id: string; email: string; name: string };
+        user?: { id: string; email: string; name: string; photo?: string };
       };
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Login failed');
@@ -244,6 +244,7 @@ export function LoginPage() {
           id: data.user.id,
           email: data.user.email,
           name: data.user.name,
+          photo: data.user.photo,
         });
       }
 

@@ -10,7 +10,17 @@ import { BarChartIcon } from '@/components/ui/Icons';
 type ChartHandle = { destroy(): void; update(): void };
 type ChartCtor = new (ctx: HTMLCanvasElement, config: unknown) => ChartHandle;
 
-export function SkillOverviewChart() {
+type Props = {
+  /**
+   * Per-user override values for the 6 radar skills in the same order as
+   * `skillRadar.labels`. When `undefined`, falls back to the static
+   * `skillRadar.values` constant. When `null`, the chart still renders with
+   * the fallback (treated as "no row yet" for the signed-in user).
+   */
+  values?: number[] | null;
+};
+
+export function SkillOverviewChart({ values }: Props = {}) {
   const Chart = useChartReady() as ChartCtor | null;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<ChartHandle | null>(null);
@@ -23,6 +33,11 @@ export function SkillOverviewChart() {
       chartRef.current = null;
     }
 
+    const dataValues =
+      Array.isArray(values) && values.length === skillRadar.values.length
+        ? values
+        : skillRadar.values;
+
     chartRef.current = new Chart(canvasRef.current, {
       type: 'radar',
       data: {
@@ -30,7 +45,7 @@ export function SkillOverviewChart() {
         datasets: [
           {
             label: 'Skill Level',
-            data: skillRadar.values,
+            data: dataValues,
             backgroundColor: 'rgba(44, 95, 75, 0.2)',
             borderColor: 'rgba(44, 95, 75, 1)',
             borderWidth: 2,
@@ -86,7 +101,7 @@ export function SkillOverviewChart() {
       chartRef.current?.destroy();
       chartRef.current = null;
     };
-  }, [Chart]);
+  }, [Chart, values]);
 
   return (
     <section className="bg-white rounded-2xl shadow-md p-6 lg:p-8">

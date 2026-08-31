@@ -112,6 +112,9 @@ export async function POST(request: Request) {
   try {
     await ensureInviteSheets(spreadsheetId);
     const id = crypto.randomUUID();
+    // 32-byte URL-safe token. Mints at create-time so the row is the single
+    // source of truth — the mailer reads the same token back from the sheet.
+    const token = crypto.randomBytes(32).toString('base64url');
     const invitedAt = new Date().toISOString();
     const row: Invite = {
       id,
@@ -121,6 +124,7 @@ export async function POST(request: Request) {
       status: 'pending',
       invitedAt,
       createdBy: email ?? '',
+      token,
     };
     await createRowWithId(spreadsheetId, ITEMS_SHEET, row);
 
@@ -145,7 +149,7 @@ export async function POST(request: Request) {
         to: invitedEmail,
         name,
         message,
-        inviteId: id,
+        inviteToken: token,
       });
       await updateRowById(spreadsheetId, ITEMS_SHEET, id, {
         status: 'sent',
