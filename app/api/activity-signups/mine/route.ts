@@ -8,7 +8,7 @@
 // state per card without firing N requests.
 
 import { NextResponse } from 'next/server';
-import { listRowsBySheet } from '@/app/lib/googleSheets';
+import { getSpreadsheetId, listRowsBySheet } from '@/app/lib/supabase';
 import { isSignupStatus } from '@/data/activity-signups-types';
 
 function unauthorized() {
@@ -24,17 +24,12 @@ function getRequesterEmail(request: Request): string | null {
   return header && header.trim().length > 0 ? header.trim().toLowerCase() : null;
 }
 
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID?.trim();
-  return id && id.length > 0 ? id : null;
-}
-
 export async function GET(request: Request) {
   const email = getRequesterEmail(request);
   if (!email) return unauthorized();
 
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   try {
     const rows = await listRowsBySheet(spreadsheetId, 'activity_signups');

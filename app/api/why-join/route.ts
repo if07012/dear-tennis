@@ -3,7 +3,7 @@
 // ============================================
 //
 // GET  → public. Returns { settings, benefits } from the Google Sheet (falls
-//        back to bundled defaults when HERO_SPREADSHEET_ID is unset).
+//        back to bundled defaults when Supabase is unset).
 //
 // PUT dispatches by a `kind` field in the JSON body:
 //   { kind: 'settings', settings: { tag, title, subtitle } }  → upsert the
@@ -20,9 +20,10 @@ import crypto from 'crypto';
 import {
   createRowWithId,
   deleteRowById,
+  getSpreadsheetId,
   readRowById,
   updateRowById,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import {
   clearWhyJoinContentCache,
   ensureWhyJoinSheets,
@@ -39,11 +40,6 @@ import type {
   BenefitItem,
   WhyJoinSettings,
 } from '@/data/why-join-types';
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID;
-  return id && id.trim().length > 0 ? id : null;
-}
 
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -125,7 +121,7 @@ export async function PUT(request: Request) {
   }
 
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   try {
     await ensureWhyJoinSheets(spreadsheetId);
@@ -253,7 +249,7 @@ export async function DELETE(request: Request) {
   const email = getRequesterEmail(request);
   if (!isAdminEmail(email)) return unauthorized();
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   let body: DeleteBody;
   try {

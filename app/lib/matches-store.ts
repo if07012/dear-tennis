@@ -14,7 +14,7 @@
 //
 // Types and constants live in `data/matches-types.ts` so client components
 // can import them without pulling this server-only module (and its
-// google-spreadsheet dependency chain) into the browser bundle.
+// supabase dependency chain) into the browser bundle.
 
 import {
   createRowWithId,
@@ -22,7 +22,7 @@ import {
   ensureSheetWithHeaders,
   listRowsBySheet,
   updateRowById,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import {
   isMatchFormat,
   isMatchRound,

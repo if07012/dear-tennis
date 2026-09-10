@@ -2,7 +2,7 @@
 // WHY JOIN (BENEFITS) DATA STORE
 // ============================================
 // Reads/writes the "Why Join" section (settings + benefit cards) from a
-// Google Sheet. Reuses the existing helpers in app/lib/googleSheets.ts.
+// Supabase. Reuses the existing helpers in app/lib/supabase.ts.
 //
 // Sheet schema (created on first save):
 //   why_join_settings: id,tag,title,subtitle,updatedAt
@@ -10,9 +10,9 @@
 
 import {
   ensureSheetWithHeaders,
-  getGoogleSheet,
+  getSpreadsheetId,
   listRowsBySheet,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import { benefits as fallbackBenefits } from '@/data/benefits';
 import {
   WHY_JOIN_SETTINGS_HEADERS,
@@ -58,11 +58,6 @@ function getCacheStore() {
 
 export function clearWhyJoinContentCache() {
   getCacheStore().clear();
-}
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID;
-  return id && id.trim().length > 0 ? id : null;
 }
 
 export function isAdminEmail(email: string | null | undefined): boolean {
@@ -175,14 +170,15 @@ export async function ensureWhyJoinSheets(spreadsheetId: string) {
 export async function getWhyJoinSettingsRowId(
   spreadsheetId: string,
 ): Promise<string | null> {
-  const doc = await getGoogleSheet(spreadsheetId);
-  const sheet = doc.sheetsByTitle[SETTINGS_SHEET];
-  if (!sheet) return null;
-  const rows = await sheet.getRows();
-  const found = rows.find(
-    (r) => String(r.toObject().id ?? '').trim() === SETTINGS_ROW_ID,
-  );
-  return found ? SETTINGS_ROW_ID : null;
+  try {
+    const rows = await listRowsBySheet(spreadsheetId, SETTINGS_SHEET);
+    const found = rows.some(
+      (r) => String(r.id ?? '').trim() === SETTINGS_ROW_ID,
+    );
+    return found ? SETTINGS_ROW_ID : null;
+  } catch {
+    return null;
+  }
 }
 
 export {

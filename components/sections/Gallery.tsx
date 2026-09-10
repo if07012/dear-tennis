@@ -24,7 +24,7 @@ export function Gallery({ content }: Props) {
             <Reveal
               key={item.id}
               direction="scale"
-              delay={i % 6}
+              delay={i % 6 * 0.1}
               className={[
                 'relative rounded-2xl overflow-hidden group cursor-pointer',
                 item.large ? 'sm:col-span-2 sm:row-span-2' : '',

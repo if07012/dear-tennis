@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getGoogleSheet } from '@/app/lib/googleSheets';
+import { getSpreadsheetId, listRowsBySheet } from '@/app/lib/supabase';
 import { verifyPassword } from '@/lib/auth';
 import { ensureAdminUser } from '@/lib/seedAdmin';
 
@@ -18,10 +18,6 @@ function checkRateLimit(key: string): boolean {
   }
   entry.count += 1;
   return entry.count <= RATE_LIMIT_MAX;
-}
-
-function getSpreadsheetId(): string | null {
-  return process.env.USERS_SPREADSHEET_ID || process.env.GOOGLE_SPREADSHEET_ID || null;
 }
 
 export async function POST(request: Request) {
@@ -45,14 +41,12 @@ export async function POST(request: Request) {
 
     const spreadsheetId = getSpreadsheetId();
     if (!spreadsheetId) {
-      console.error('USERS_SPREADSHEET_ID is not set');
+      console.error('Supabase is not configured');
       return NextResponse.json({ error: 'Server is not configured' }, { status: 500 });
     }
 
     // Bypass the read cache for auth — a freshly registered user must be
     // accepted immediately, not after the cache TTL.
-    const doc = await getGoogleSheet(spreadsheetId);
-
     // Self-heal: if the request is for the configured admin email and the
     // user doesn't exist yet, seed it now. Cheap when already present.
     const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
@@ -65,19 +59,13 @@ export async function POST(request: Request) {
       }
     }
 
-    const sheet = doc.sheetsByTitle['users'];
-    if (!sheet) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-    }
-    const rows = await sheet.getRows();
-    const user = rows.find((r) => {
-      const obj = r.toObject();
-      return String(obj.email ?? '').trim().toLowerCase() === email;
-    });
+    const rows = await listRowsBySheet(spreadsheetId, 'users');
+    const obj = rows.find(
+      (r) => String(r.email ?? '').trim().toLowerCase() === email,
+    );
 
     // Always run a hash comparison to keep timing roughly constant and
     // avoid leaking whether a user exists.
-    const obj = user ? user.toObject() : null;
     const ok = await verifyPassword(
       password,
       String(obj?.passwordHash ?? ''),

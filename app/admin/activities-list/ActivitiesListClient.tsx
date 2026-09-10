@@ -54,6 +54,7 @@ const NAV_LINK_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika';
 
 function isPersistedId(id: string) {
+  if (id.startsWith('draft-')) return false;
   return id.length > 24; // UUIDs from server
 }
 
@@ -69,6 +70,9 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
   const [status, setStatus] = useState<SaveStatus>({ kind: 'idle' });
   const [editing, setEditing] = useState<DraftActivity | null>(null);
   const [pointsActivity, setPointsActivity] = useState<ActivityItem | null>(null);
+  const [recurringActivity, setRecurringActivity] = useState<ActivityItem | null>(
+    null,
+  );
   const [performanceActivity, setPerformanceActivity] =
     useState<ActivityItem | null>(null);
   const [matchesActivity, setMatchesActivity] = useState<ActivityItem | null>(null);
@@ -300,6 +304,60 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
     }
   };
 
+  // Duplicate one activity N times, each copy exactly 1 week later than the
+  // previous — keeps weekday and time-of-day identical. Runs sequentially so
+  // the server's `order = existing.length` assigns distinct positions.
+  const handleDuplicateRecurring = async (
+    item: ActivityItem,
+    weeks: number,
+  ) => {
+    setRecurringActivity(null);
+    setStatus({ kind: 'saving' });
+    const created: ActivityItem[] = [];
+    try {
+      const base = new Date(item.time);
+      if (Number.isNaN(base.getTime())) {
+        throw new Error('Activity has no valid date — set the Time first');
+      }
+      for (let i = 1; i <= weeks; i++) {
+        const next = new Date(base.getTime() + i * 7 * 24 * 60 * 60 * 1000);
+        // datetime-local format: YYYY-MM-DDTHH:mm (no seconds/timezone)
+        const time = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}T${String(next.getHours()).padStart(2, '0')}:${String(next.getMinutes()).padStart(2, '0')}`;
+        const payload = {
+          category: item.category,
+          title: item.title,
+          description: item.description,
+          image: item.image,
+          duration: item.duration,
+          groupSize: item.groupSize,
+          location: item.location,
+          time,
+          isFull: false,
+          archived: false,
+        };
+        const result = await apiFetch('activity', { activity: payload });
+        const persisted = (result as { activity?: ActivityItem }).activity;
+        if (persisted) created.push(persisted);
+      }
+      if (created.length > 0) {
+        setActivities((prev) => [...prev, ...created]);
+      }
+      setStatus({ kind: 'saved', at: Date.now() });
+      refreshSignupCounts();
+    } catch (e) {
+      if (created.length > 0) {
+        setActivities((prev) => [...prev, ...created]);
+      }
+      setStatus({
+        kind: 'error',
+        message:
+          e instanceof Error
+            ? `${e.message} (${created.length}/${weeks} dibuat)`
+            : 'Failed to duplicate',
+      });
+    }
+  };
+
   const openCreate = () => {
     setEditing({
       id: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -316,8 +374,14 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
     });
   };
 
+  // datetime-local needs YYYY-MM-DDTHH:mm; legacy free-text values
+  // ("Saturdays 09:00") render as empty and would be silently wiped on
+  // save, so drop them only when editing that row.
+  const toDatetimeLocal = (raw: string) =>
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw) ? raw : '';
+
   const openEdit = (item: ActivityItem) => {
-    setEditing({ ...item });
+    setEditing({ ...item, time: toDatetimeLocal(item.time) });
   };
 
   return (
@@ -376,13 +440,11 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
                 ].join(' ')}
               >
                 {key === 'active'
-                  ? `Active (${
-                      activities.filter((a) => a.archived !== true).length
-                    })`
+                  ? `Active (${activities.filter((a) => a.archived !== true).length
+                  })`
                   : key === 'archived'
-                    ? `Archived (${
-                        activities.filter((a) => a.archived === true).length
-                      })`
+                    ? `Archived (${activities.filter((a) => a.archived === true).length
+                    })`
                     : `All (${activities.length})`}
               </button>
             ))}
@@ -407,9 +469,8 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
               >
                 {key === 'all'
                   ? `All (${activities.length})`
-                  : `${key} (${
-                      activities.filter((a) => a.category === key).length
-                    })`}
+                  : `${key} (${activities.filter((a) => a.category === key).length
+                  })`}
               </button>
             ))}
           </div>
@@ -560,29 +621,29 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
                       <RowActionMenu
                         label={`More actions for ${activity.title}`}
                         items={[
-                          {
+                         ...(!isCompetitive ? [{
                             key: 'points',
-                            label: 'Set Points',
+                            label: 'Set Skill Points',
                             onSelect: () => setPointsActivity(activity),
                           },
                           {
                             key: 'performance',
                             label: 'Set Performance',
                             onSelect: () => setPerformanceActivity(activity),
-                          },
+                          }] : []),
                           ...(isCompetitive
                             ? [
-                                {
-                                  key: 'matches',
-                                  label: 'Matches',
-                                  onSelect: () => setMatchesActivity(activity),
-                                },
-                                {
-                                  key: 'standings',
-                                  label: 'Standings',
-                                  onSelect: () => setStandingsActivity(activity),
-                                },
-                              ]
+                              {
+                                key: 'matches',
+                                label: 'Matches',
+                                onSelect: () => setMatchesActivity(activity),
+                              },
+                              {
+                                key: 'standings',
+                                label: 'Standings',
+                                onSelect: () => setStandingsActivity(activity),
+                              },
+                            ]
                             : []),
                           { kind: 'divider', key: 'sep-1' },
                           {
@@ -590,6 +651,14 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
                             label: 'Clone',
                             onSelect: () => handleClone(activity),
                             disabled: status.kind === 'saving',
+                          },
+                          {
+                            key: 'recurring',
+                            label: 'Duplicate weekly…',
+                            onSelect: () => setRecurringActivity(activity),
+                            disabled:
+                              status.kind === 'saving' ||
+                              Number.isNaN(new Date(activity.time).getTime()),
                           },
                           {
                             key: 'archive',
@@ -668,6 +737,15 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
           activityId={pointsActivity.id}
           activityTitle={pointsActivity.title}
           onClose={() => setPointsActivity(null)}
+        />
+      )}
+      {recurringActivity && (
+        <RecurringDuplicateDrawer
+          activity={recurringActivity}
+          onClose={() => setRecurringActivity(null)}
+          onSubmit={(weeks) =>
+            handleDuplicateRecurring(recurringActivity, weeks)
+          }
         />
       )}
       {performanceActivity && (
@@ -834,10 +912,9 @@ function EditDrawer({ draft, onCancel, onSave }: EditDrawerProps) {
             <label className="flex flex-col gap-1">
               <span className={FIELD_LABEL_CLS}>Time</span>
               <input
-                type="text"
+                type="datetime-local"
                 value={state.time}
                 onChange={(e) => update('time', e.target.value)}
-                placeholder="e.g. Saturdays 09:00"
                 className={INPUT_CLS}
               />
             </label>
@@ -892,6 +969,144 @@ function EditDrawer({ draft, onCancel, onSave }: EditDrawerProps) {
             className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-50"
           >
             {saving ? 'Menyimpan...' : 'Simpan'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function RecurringDuplicateDrawer({
+  activity,
+  onClose,
+  onSubmit,
+}: {
+  activity: ActivityItem;
+  onClose: () => void;
+  onSubmit: (weeks: number) => void;
+}) {
+  const [weeks, setWeeks] = useState(4);
+  const [confirming, setConfirming] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const base = new Date(activity.time);
+  const valid = !Number.isNaN(base.getTime());
+  const preview = valid
+    ? Array.from(
+        { length: Math.min(weeks, 8) },
+        (_, i) =>
+          new Date(base.getTime() + (i + 1) * 7 * 24 * 60 * 60 * 1000),
+      )
+    : [];
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    onSubmit(weeks);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-graphite/40 sm:items-center sm:p-6"
+      onClick={onClose}
+    >
+      <form
+        className="w-full max-w-md rounded-t-2xl bg-white p-6 shadow-2xl sm:rounded-2xl"
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={submit}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-serif text-xl font-semibold text-hunter-green">
+            Duplicate weekly
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-light-gray"
+          >
+            <XIcon size={20} />
+          </button>
+        </div>
+
+        <p className="mb-4 text-sm text-dark-gray">
+          Membuat <strong>{weeks}</strong> salinan &quot;{activity.title}&quot;
+          dengan tanggal sama setiap minggu (hari &amp; jam identik).
+        </p>
+
+        <label className="mb-4 flex flex-col gap-1">
+          <span className={FIELD_LABEL_CLS}>Jumlah minggu</span>
+          <input
+            type="number"
+            min={1}
+            max={52}
+            value={weeks}
+            onChange={(e) => {
+              setWeeks(Math.max(1, Math.min(52, Number(e.target.value) || 1)));
+              setConfirming(false);
+            }}
+            className={INPUT_CLS}
+            required
+          />
+        </label>
+
+        {preview.length > 0 && (
+          <div className="mb-4 rounded-lg border border-light-gray bg-off-white px-3 py-2">
+            <p className={FIELD_LABEL_CLS}>Contoh tanggal</p>
+            <ul className="mt-1 flex flex-col gap-0.5 text-xs text-dark-gray">
+              {preview.map((d) => (
+                <li key={d.toISOString()}>
+                  {d.toLocaleString('en-GB', {
+                    weekday: 'long',
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false,
+                  })}
+                  {weeks > 8 && d === preview[preview.length - 1]
+                    ? ' …'
+                    : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="flex items-center justify-end gap-3">
+          {confirming ? (
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray"
+            >
+              Batal
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray"
+            >
+              Batal
+            </button>
+          )}
+          <button
+            type="submit"
+            className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover"
+          >
+            {confirming ? `Ya, buat ${weeks} salinan` : 'Lanjut'}
           </button>
         </div>
       </form>

@@ -3,7 +3,7 @@
 // ============================================
 //
 // GET  → public. Returns { settings, slides } from the Google Sheet (falls back
-//        to bundled defaults when HERO_SPREADSHEET_ID is unset).
+//        to bundled defaults when Supabase is unset).
 //
 // Mutations are dispatched by a `kind` field in the JSON body:
 //
@@ -20,8 +20,9 @@ import { NextResponse } from 'next/server';
 import {
   createRowWithId,
   deleteRowById,
+  getSpreadsheetId,
   updateRowById,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import crypto from 'crypto';
 import {
   clearHeroContentCache,
@@ -35,11 +36,6 @@ import {
   SLIDES_SHEET,
 } from '@/lib/hero-store';
 import type { HeroSettings, HeroSlideData } from '@/data/hero-types';
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID;
-  return id && id.trim().length > 0 ? id : null;
-}
 
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -104,7 +100,7 @@ export async function PUT(request: Request) {
   }
 
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   try {
     await ensureHeroSheets(spreadsheetId);
@@ -214,7 +210,7 @@ export async function DELETE(request: Request) {
   const email = getRequesterEmail(request);
   if (!isAdminEmail(email)) return unauthorized();
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   let body: DeleteBody;
   try {

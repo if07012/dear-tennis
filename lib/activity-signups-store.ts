@@ -1,9 +1,8 @@
 // ============================================
 // ACTIVITY SIGNUPS STORE
 // ============================================
-// Reads/writes activity_signups rows from the activities spreadsheet (env
-// HERO_SPREADSHEET_ID) so the existing admin tooling and infra keep working
-// without a new spreadsheet env var.
+// Reads/writes activity_signups rows from Supabase (single data layer — see
+// app/lib/supabase.ts).
 //
 // Caching: this sheet is read by the public home page on every render so we
 // follow the activities/gallery pattern and cache the per-user lookup for a
@@ -12,13 +11,13 @@
 
 import {
   ensureSheetWithHeaders,
-  getGoogleSheet,
+  getSpreadsheetId,
   listRowsBySheet,
   readRowById,
   updateRowById,
   deleteRowById,
   createRowWithId,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import {
   SIGNUP_HEADERS,
   isSignupStatus,
@@ -61,11 +60,6 @@ function cacheSet(key: string, value: ActivitySignup[]) {
 
 function cacheClear() {
   getCacheStore().clear();
-}
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID?.trim();
-  return id && id.length > 0 ? id : null;
 }
 
 function coerceStatus(value: unknown): SignupStatus {
@@ -309,18 +303,18 @@ export async function listSignupsForAdmin(args?: {
 export async function getActivityTitles(
   spreadsheetId: string,
 ): Promise<Map<string, string>> {
-  const doc = await getGoogleSheet(spreadsheetId);
-  const sheet = doc.sheetsByTitle['activities_items'];
-  if (!sheet) return new Map();
-  const rows = await sheet.getRows();
-  const map = new Map<string, string>();
-  for (const row of rows) {
-    const obj = row.toObject();
-    const id = String(obj.id ?? '').trim();
-    const title = String(obj.title ?? '').trim();
-    if (id && title) map.set(id, title);
+  try {
+    const rows = await listRowsBySheet(spreadsheetId, 'activities_items');
+    const map = new Map<string, string>();
+    for (const row of rows) {
+      const id = String(row.id ?? '').trim();
+      const title = String(row.title ?? '').trim();
+      if (id && title) map.set(id, title);
+    }
+    return map;
+  } catch {
+    return new Map();
   }
-  return map;
 }
 
 /**

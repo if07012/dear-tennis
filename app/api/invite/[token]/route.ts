@@ -9,12 +9,8 @@
 // only and aren't relevant to the recipient filling in the form.
 
 import { NextResponse } from 'next/server';
+import { getSpreadsheetId } from '@/app/lib/supabase';
 import { ensureInviteSheets, getInviteByTokenForPublic } from '@/lib/invite-store';
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID?.trim();
-  return id && id.length > 0 ? id : null;
-}
 
 export async function GET(
   _request: Request,

@@ -2,7 +2,7 @@
 // CALENDAR (EVENTS) DATA STORE
 // ============================================
 // Reads/writes the "Calendar" section (settings + event cards) from a
-// Google Sheet. Reuses the existing helpers in app/lib/googleSheets.ts.
+// Supabase. Reuses the existing helpers in app/lib/supabase.ts.
 //
 // Sheet schema (created on first save):
 //   calendar_settings: id,tag,title,updatedAt
@@ -14,10 +14,10 @@
 
 import {
   ensureSheetWithHeaders,
-  getGoogleSheet,
+  getSpreadsheetId,
   listRowsBySheet,
   listRowsBySheetPaged,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import { events as fallbackEvents } from '@/data/events';
 import {
   CALENDAR_SETTINGS_HEADERS,
@@ -49,11 +49,6 @@ function getCacheStore() {
 
 export function clearCalendarContentCache() {
   getCacheStore().clear();
-}
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID;
-  return id && id.trim().length > 0 ? id : null;
 }
 
 export function isAdminEmail(email: string | null | undefined): boolean {
@@ -281,14 +276,15 @@ export async function ensureCalendarSheets(spreadsheetId: string) {
 export async function getCalendarSettingsRowId(
   spreadsheetId: string,
 ): Promise<string | null> {
-  const doc = await getGoogleSheet(spreadsheetId);
-  const sheet = doc.sheetsByTitle[SETTINGS_SHEET];
-  if (!sheet) return null;
-  const rows = await sheet.getRows();
-  const found = rows.find(
-    (r) => String(r.toObject().id ?? '').trim() === SETTINGS_ROW_ID,
-  );
-  return found ? SETTINGS_ROW_ID : null;
+  try {
+    const rows = await listRowsBySheet(spreadsheetId, SETTINGS_SHEET);
+    const found = rows.some(
+      (r) => String(r.id ?? '').trim() === SETTINGS_ROW_ID,
+    );
+    return found ? SETTINGS_ROW_ID : null;
+  } catch {
+    return null;
+  }
 }
 
 export { SETTINGS_SHEET, EVENTS_SHEET, SETTINGS_ROW_ID, HOME_EVENT_LIMIT };

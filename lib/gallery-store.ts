@@ -2,7 +2,7 @@
 // GALLERY DATA STORE
 // ============================================
 // Reads/writes the "Gallery" section (settings + image cards) from a
-// Google Sheet. Reuses the existing helpers in app/lib/googleSheets.ts.
+// Supabase. Reuses the existing helpers in app/lib/supabase.ts.
 //
 // Public reads return the full gallery for the home page; admin reads accept
 // explicit pagination args and return a paginated envelope.
@@ -13,9 +13,9 @@
 
 import {
   ensureSheetWithHeaders,
-  getGoogleSheet,
+  getSpreadsheetId,
   listRowsBySheet,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import { gallery as fallbackGallery } from '@/data/gallery';
 import {
   GALLERY_SETTINGS_HEADERS,
@@ -68,11 +68,6 @@ function writeGalleryCache(key: string, value: GalleryContent) {
 
 export function clearGalleryContentCache() {
   getCacheStore().clear();
-}
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID;
-  return id && id.trim().length > 0 ? id : null;
 }
 
 export function isAdminEmail(email: string | null | undefined): boolean {
@@ -289,14 +284,15 @@ export async function ensureGallerySheets(spreadsheetId: string) {
 export async function getGallerySettingsRowId(
   spreadsheetId: string,
 ): Promise<string | null> {
-  const doc = await getGoogleSheet(spreadsheetId);
-  const sheet = doc.sheetsByTitle[SETTINGS_SHEET];
-  if (!sheet) return null;
-  const rows = await sheet.getRows();
-  const found = rows.find(
-    (r) => String(r.toObject().id ?? '').trim() === SETTINGS_ROW_ID,
-  );
-  return found ? SETTINGS_ROW_ID : null;
+  try {
+    const rows = await listRowsBySheet(spreadsheetId, SETTINGS_SHEET);
+    const found = rows.some(
+      (r) => String(r.id ?? '').trim() === SETTINGS_ROW_ID,
+    );
+    return found ? SETTINGS_ROW_ID : null;
+  } catch {
+    return null;
+  }
 }
 
 export { SETTINGS_SHEET, ITEMS_SHEET, SETTINGS_ROW_ID };

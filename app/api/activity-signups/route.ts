@@ -11,7 +11,7 @@
 // requests are rejected so the signup is always attributable.
 
 import { NextResponse } from 'next/server';
-import { listRowsBySheet } from '@/app/lib/googleSheets';
+import { getSpreadsheetId, listRowsBySheet } from '@/app/lib/supabase';
 import { findSignup, requestSignup } from '@/lib/activity-signups-store';
 
 function badRequest(message: string) {
@@ -24,15 +24,6 @@ function unauthorized() {
 
 function serverError(message: string) {
   return NextResponse.json({ error: message }, { status: 500 });
-}
-
-function getSpreadsheetId(): string | null {
-  return process.env.USERS_SPREADSHEET_ID || process.env.GOOGLE_SPREADSHEET_ID || null;
-}
-
-function getActivitiesSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID?.trim();
-  return id && id.length > 0 ? id : null;
 }
 
 function getRequesterEmail(request: Request): string | null {
@@ -62,9 +53,8 @@ export async function POST(request: Request) {
   if (!email) return unauthorized();
 
   const usersSheetId = getSpreadsheetId();
-  if (!usersSheetId) return serverError('USERS_SPREADSHEET_ID is not set');
-  const activitiesSheetId = getActivitiesSpreadsheetId();
-  if (!activitiesSheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  if (!usersSheetId) return serverError('Supabase is not configured');
+  const activitiesSheetId = usersSheetId;
 
   let body: { activityId?: string; message?: string };
   try {

@@ -8,15 +8,13 @@
 
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { ensureSheetWithHeaders, invalidateRowsCache, listRowsBySheet } from '@/app/lib/googleSheets';
+import { createRowWithId, getSpreadsheetId, listRowsBySheet } from '@/app/lib/supabase';
 import { hashPassword } from '@/lib/auth';
 import {
-  ensureInviteSheets,
   getInviteByToken,
   markInviteAccepted,
 } from '@/lib/invite-store';
 
-const USERS_HEADERS = ['id', 'email', 'name', 'passwordHash', 'salt', 'createdAt', 'role', 'photo', 'rank'];
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function badRequest(message: string) {
@@ -39,15 +37,6 @@ function serverError(message: string) {
   return NextResponse.json({ error: message }, { status: 500 });
 }
 
-function getSpreadsheetId(): string | null {
-  return process.env.USERS_SPREADSHEET_ID || process.env.GOOGLE_SPREADSHEET_ID || null;
-}
-
-function getInviteSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID?.trim();
-  return id && id.length > 0 ? id : null;
-}
-
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ token: string }> },
@@ -58,9 +47,8 @@ export async function POST(
   }
 
   const usersSheetId = getSpreadsheetId();
-  if (!usersSheetId) return serverError('USERS_SPREADSHEET_ID is not set');
-  const invitesSheetId = getInviteSpreadsheetId();
-  if (!invitesSheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  if (!usersSheetId) return serverError('Supabase is not configured');
+  const invitesSheetId = usersSheetId;
 
   let body: { name?: string; password?: string };
   try {
@@ -77,7 +65,6 @@ export async function POST(
   }
 
   try {
-    await ensureInviteSheets(invitesSheetId);
     const invite = await getInviteByToken(invitesSheetId, token);
     if (!invite) return notFound();
     if (invite.status === 'cancelled') {
@@ -91,11 +78,6 @@ export async function POST(
       return badRequest('Invitation email is invalid');
     }
 
-    const sheet = await ensureSheetWithHeaders(
-      usersSheetId,
-      'users',
-      USERS_HEADERS,
-    );
     const rows = await listRowsBySheet(usersSheetId, 'users');
     const lowerEmail = invite.email.toLowerCase();
     const duplicate = rows.find((r) => {
@@ -115,7 +97,7 @@ export async function POST(
 
     const { hash, salt } = await hashPassword(password);
     const id = crypto.randomUUID();
-    await sheet.addRow({
+    await createRowWithId(usersSheetId, 'users', {
       id,
       email: invite.email,
       name,
@@ -123,7 +105,6 @@ export async function POST(
       salt,
       createdAt: new Date().toISOString(),
     });
-    invalidateRowsCache(usersSheetId, 'users');
     try {
       await markInviteAccepted(invitesSheetId, invite.id);
     } catch (acceptErr) {

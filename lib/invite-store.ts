@@ -3,7 +3,7 @@
 // ============================================
 // Reads/writes pending member invitations for the admin "Invite Members"
 // page from a Google Sheet. Reuses the existing helpers in
-// app/lib/googleSheets.ts.
+// app/lib/supabase.ts.
 //
 // All access goes through admin-only API routes — there's no public read
 // for this store, so we don't expose a public cache.
@@ -14,9 +14,10 @@
 import {
   ensureSheetWithHeaders,
   listRowsBySheet,
+  getSpreadsheetId,
   readRowById,
   updateRowById,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import {
   INVITE_ITEM_HEADERS,
   INVITE_STATUSES,
@@ -25,11 +26,6 @@ import {
 } from '@/data/invite-types';
 
 const ITEMS_SHEET = 'invites';
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID;
-  return id && id.trim().length > 0 ? id : null;
-}
 
 export function isAdminEmail(email: string | null | undefined): boolean {
   const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();

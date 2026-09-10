@@ -1,9 +1,8 @@
 // ============================================
 // ACHIEVEMENTS STORE
 // ============================================
-// Admin-curated badge catalog + per-user grants. Persists in two Google
-// Sheets on the users spreadsheet (USERS_SPREADSHEET_ID ->
-// GOOGLE_SPREADSHEET_ID): `badges` (catalog) and `user_badges` (grants).
+// Admin-curated badge catalog + per-user grants. Persists in two Supabase
+// tables: `badges` (catalog) and `user_badges` (grants).
 //
 // Caching mirrors lib/user-skill-points-store.ts: a 10s in-memory cache on
 // globalThis keyed by sheet so the profile page doesn't hit Sheets on every
@@ -11,11 +10,12 @@
 
 import {
   ensureSheetWithHeaders,
+  getSpreadsheetId,
   listRowsBySheet,
   createRowWithId,
   updateRowById,
   deleteRowById,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import crypto from 'crypto';
 import {
   BADGE_HEADERS,
@@ -58,14 +58,6 @@ function cacheSet<T>(key: string, value: T) {
 
 function cacheClear() {
   getCacheStore().clear();
-}
-
-function getSpreadsheetId(): string | null {
-  const id =
-    process.env.USERS_SPREADSHEET_ID?.trim() ||
-    process.env.GOOGLE_SPREADSHEET_ID?.trim() ||
-    null;
-  return id && id.length > 0 ? id : null;
 }
 
 function newId(): string {

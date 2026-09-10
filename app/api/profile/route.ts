@@ -13,7 +13,7 @@
 // are plain strings (rank optional / clearable).
 
 import { NextResponse } from 'next/server';
-import { listRowsBySheet, updateRowById } from '@/app/lib/googleSheets';
+import { getSpreadsheetId, listRowsBySheet, updateRowById } from '@/app/lib/supabase';
 import { isAdminEmail } from '@/lib/activities-store';
 import { USERS_HEADERS } from '@/lib/users-store';
 
@@ -29,14 +29,6 @@ function unauthorized() {
 }
 function serverError(message: string) {
   return NextResponse.json({ error: message }, { status: 500 });
-}
-
-function getSpreadsheetId(): string | null {
-  return (
-    process.env.USERS_SPREADSHEET_ID ||
-    process.env.GOOGLE_SPREADSHEET_ID ||
-    null
-  );
 }
 
 function getRequesterEmail(request: Request): string | null {
@@ -62,7 +54,7 @@ export async function PATCH(request: Request) {
   }
 
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('USERS_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   let body: PatchBody;
   try {
@@ -127,7 +119,7 @@ export async function PATCH(request: Request) {
 
     // Make sure the sheet has the new columns before writing — older sheets
     // won't have them and `updateRowById` silently drops unknown keys.
-    const { ensureSheetWithHeaders } = await import('@/app/lib/googleSheets');
+    const { ensureSheetWithHeaders } = await import('@/app/lib/supabase');
     await ensureSheetWithHeaders(spreadsheetId, 'users', [...USERS_HEADERS]);
 
     await updateRowById(spreadsheetId, 'users', userId, patch);

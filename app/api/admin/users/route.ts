@@ -16,6 +16,7 @@ import {
   type UserRole,
 } from '@/lib/users-store';
 import { isAdminEmail } from '@/lib/admin';
+import { getSpreadsheetId } from '@/app/lib/supabase';
 
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -32,12 +33,6 @@ function serverError(message: string) {
 function getRequesterEmail(request: Request): string | null {
   const header = request.headers.get('x-auth-email');
   return header && header.trim().length > 0 ? header.trim().toLowerCase() : null;
-}
-
-function getSpreadsheetId(): string | null {
-  const id =
-    process.env.USERS_SPREADSHEET_ID || process.env.GOOGLE_SPREADSHEET_ID || null;
-  return id && id.trim().length > 0 ? id.trim() : null;
 }
 
 function parsePositiveInt(value: string | null): number | undefined {
@@ -76,7 +71,7 @@ export async function PATCH(request: Request) {
   if (!isAdminEmail(email)) return unauthorized();
 
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('USERS_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   let body: PatchBody;
   try {
@@ -122,7 +117,7 @@ export async function DELETE(request: Request) {
   if (!isAdminEmail(email)) return unauthorized();
 
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('USERS_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   let body: DeleteBody;
   try {

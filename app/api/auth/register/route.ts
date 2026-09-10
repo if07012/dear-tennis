@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server';
-import { ensureSheetWithHeaders, invalidateRowsCache } from '@/app/lib/googleSheets';
+import { createRowWithId, getSpreadsheetId, listRowsBySheet } from '@/app/lib/supabase';
 import { hashPassword } from '@/lib/auth';
-
-const USERS_HEADERS = ['id', 'email', 'name', 'passwordHash', 'salt', 'createdAt'];
-
-function getSpreadsheetId(): string | null {
-  return process.env.USERS_SPREADSHEET_ID || process.env.GOOGLE_SPREADSHEET_ID || null;
-}
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -35,17 +29,14 @@ export async function POST(request: Request) {
 
     const spreadsheetId = getSpreadsheetId();
     if (!spreadsheetId) {
-      console.error('USERS_SPREADSHEET_ID is not set');
+      console.error('Supabase is not configured');
       return NextResponse.json({ error: 'Server is not configured' }, { status: 500 });
     }
 
-    const sheet = await ensureSheetWithHeaders(spreadsheetId, 'users', USERS_HEADERS);
-
     // Reject duplicate emails.
-    const rows = await sheet.getRows();
+    const rows = await listRowsBySheet(spreadsheetId, 'users');
     const existing = rows.find((r) => {
-      const obj = r.toObject();
-      return String(obj.email ?? '').trim().toLowerCase() === email;
+      return String(r.email ?? '').trim().toLowerCase() === email;
     });
     if (existing) {
       return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
@@ -53,7 +44,7 @@ export async function POST(request: Request) {
 
     const { hash, salt } = await hashPassword(password);
     const id = crypto.randomUUID();
-    await sheet.addRow({
+    await createRowWithId(spreadsheetId, 'users', {
       id,
       email,
       name,
@@ -61,7 +52,6 @@ export async function POST(request: Request) {
       salt,
       createdAt: new Date().toISOString(),
     });
-    invalidateRowsCache(spreadsheetId, 'users');
 
     return NextResponse.json({
       success: true,

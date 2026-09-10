@@ -2,7 +2,7 @@
 // HERO DATA STORE
 // ============================================
 // Reads/writes the hero content (settings + slides) from a Google Sheet.
-// All I/O goes through the existing helpers in app/lib/googleSheets.ts so we
+// All I/O goes through the existing helpers in app/lib/supabase.ts so we
 // inherit the in-memory doc/row cache + invalidation.
 //
 // Public reads via getHeroContent() are additionally cached in-memory until
@@ -15,9 +15,9 @@
 
 import {
   ensureSheetWithHeaders,
-  getGoogleSheet,
+  getSpreadsheetId,
   listRowsBySheet,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import { heroSlides as fallbackSlides } from '@/data/hero-slides';
 import {
   HERO_SETTINGS_HEADERS,
@@ -46,11 +46,6 @@ function getHeroContentCacheStore() {
 /** Clears the cached public hero payload (call after admin writes). */
 export function clearHeroContentCache() {
   getHeroContentCacheStore().clear();
-}
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID;
-  return id && id.trim().length > 0 ? id : null;
 }
 
 export function isAdminEmail(email: string | null | undefined): boolean {
@@ -184,12 +179,13 @@ export async function ensureHeroSheets(spreadsheetId: string) {
 }
 
 export async function getSettingsRowId(spreadsheetId: string): Promise<string | null> {
-  const doc = await getGoogleSheet(spreadsheetId);
-  const sheet = doc.sheetsByTitle[SETTINGS_SHEET];
-  if (!sheet) return null;
-  const rows = await sheet.getRows();
-  const found = rows.find(
-    (r) => String(r.toObject().id ?? '').trim() === SETTINGS_ROW_ID,
-  );
-  return found ? SETTINGS_ROW_ID : null;
+  try {
+    const rows = await listRowsBySheet(spreadsheetId, SETTINGS_SHEET);
+    const found = rows.some(
+      (r) => String(r.id ?? '').trim() === SETTINGS_ROW_ID,
+    );
+    return found ? SETTINGS_ROW_ID : null;
+  } catch {
+    return null;
+  }
 }

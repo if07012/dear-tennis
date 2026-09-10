@@ -17,9 +17,10 @@ import crypto from 'crypto';
 import {
   createRowWithId,
   deleteRowById,
+  getSpreadsheetId,
   readRowById,
   updateRowById,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import {
   clearActivitiesContentCache,
   ensureActivitiesSheets,
@@ -108,13 +109,11 @@ export async function PUT(request: Request) {
   } catch {
     return badRequest('Invalid JSON');
   }
-
-  const spreadsheetId = process.env.HERO_SPREADSHEET_ID?.trim();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  const spreadsheetId = getSpreadsheetId();
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   try {
     await ensureActivitiesSheets(spreadsheetId);
-
     switch (body.kind) {
       case 'settings': {
         const next: ActivitiesSettings = {
@@ -126,6 +125,7 @@ export async function PUT(request: Request) {
         };
 
         const existingId = await getActivitiesSettingsRowId(spreadsheetId);
+        console.log('PUT /api/activities settings, existingId:', existingId, 'next:', next);
         if (existingId) {
           await updateRowById(spreadsheetId, SETTINGS_SHEET, SETTINGS_ROW_ID, next);
         } else {
@@ -152,8 +152,9 @@ export async function PUT(request: Request) {
           isFull: activity.isFull === true,
           archived: activity.archived === true,
         };
-
-        if (activity.id) {
+        // Draft ids (client-minted "draft-*") must never take the update path —
+        // update on a nonexistent row "succeeds" silently and the create is lost.
+        if (activity.id && !activity.id.startsWith('draft-')) {
           const existing = await getActivitiesContentForAdmin();
           const order =
             existing.activities.find((a) => a.id === activity.id)?.order ??
@@ -224,8 +225,8 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const email = getRequesterEmail(request);
   if (!isAdminEmail(email)) return unauthorized();
-  const spreadsheetId = process.env.HERO_SPREADSHEET_ID?.trim();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  const spreadsheetId = getSpreadsheetId();
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   let body: DeleteBody;
   try {

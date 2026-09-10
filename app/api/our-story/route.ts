@@ -3,15 +3,16 @@
 // ============================================
 //
 // GET → public. Returns the OurStorySettings from the Google Sheet (falls back
-//       to bundled defaults when HERO_SPREADSHEET_ID is unset).
+//       to bundled defaults when Supabase is unset).
 // PUT → admin. Upserts the single settings row. Caller email must match
 //       ADMIN_EMAIL; checked server-side from the `x-auth-email` header.
 
 import { NextResponse } from 'next/server';
 import {
   createRowWithId,
+  getSpreadsheetId,
   updateRowById,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import {
   clearOurStoryContentCache,
   ensureOurStorySheets,
@@ -21,11 +22,6 @@ import {
   SETTINGS_ROW_ID,
 } from '@/lib/our-story-store';
 import type { OurStorySettings } from '@/data/our-story-types';
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID;
-  return id && id.trim().length > 0 ? id : null;
-}
 
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -75,7 +71,7 @@ export async function PUT(request: Request) {
   }
 
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   try {
     await ensureOurStorySheets(spreadsheetId);

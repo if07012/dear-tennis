@@ -3,7 +3,7 @@
 // ============================================
 // Reads/writes the "Statistics" strip (the 4 big-number tiles under the
 // gallery) from a Google Sheet. Reuses the existing helpers in
-// app/lib/googleSheets.ts.
+// app/lib/supabase.ts.
 //
 // Public reads return the full list for the home page; admin reads accept
 // explicit pagination args and return a paginated envelope.
@@ -13,8 +13,9 @@
 
 import {
   ensureSheetWithHeaders,
+  getSpreadsheetId,
   listRowsBySheet,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import { statistics as fallbackStatistics } from '@/data/statistics';
 import {
   STATISTICS_ITEM_HEADERS,
@@ -62,11 +63,6 @@ function writeCache(key: string, value: StatisticsContent) {
 
 export function clearStatisticsContentCache() {
   getCacheStore().clear();
-}
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID;
-  return id && id.trim().length > 0 ? id : null;
 }
 
 export function isAdminEmail(email: string | null | undefined): boolean {

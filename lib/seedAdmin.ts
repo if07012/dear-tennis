@@ -6,12 +6,8 @@
 // already exists.
 
 import crypto from 'crypto';
-import { ensureSheetWithHeaders } from '@/app/lib/googleSheets';
+import { createRowWithId, listRowsBySheet } from '@/app/lib/supabase';
 import { hashPassword } from '@/lib/auth';
-
-const USERS_HEADERS = ['id', 'email', 'name', 'passwordHash', 'salt', 'createdAt'];
-
-type SheetRow = { toObject(): Record<string, unknown> };
 
 function isAdminConfigured(): { email: string; name: string; password: string } | null {
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
@@ -25,16 +21,14 @@ export async function ensureAdminUser(spreadsheetId: string): Promise<{ seeded: 
   const cfg = isAdminConfigured();
   if (!cfg) return { seeded: false };
 
-  const sheet = await ensureSheetWithHeaders(spreadsheetId, 'users', USERS_HEADERS);
-  const rows = (await sheet.getRows()) as unknown as SheetRow[];
-  const existing = rows.find((r) => {
-    const obj = r.toObject();
-    return String(obj.email ?? '').trim().toLowerCase() === cfg.email;
-  });
+  const rows = await listRowsBySheet(spreadsheetId, 'users');
+  const existing = rows.find(
+    (r) => String(r.email ?? '').trim().toLowerCase() === cfg.email,
+  );
   if (existing) return { seeded: false };
 
   const { hash, salt } = await hashPassword(cfg.password);
-  await sheet.addRow({
+  await createRowWithId(spreadsheetId, 'users', {
     id: crypto.randomUUID(),
     email: cfg.email,
     name: cfg.name,

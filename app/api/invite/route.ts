@@ -18,9 +18,10 @@ import crypto from 'crypto';
 import {
   createRowWithId,
   deleteRowById,
+  getSpreadsheetId,
   readRowById,
   updateRowById,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import {
   ensureInviteSheets,
   getInviteContentForAdmin,
@@ -106,8 +107,8 @@ export async function POST(request: Request) {
     ? String(body.message).trim() || undefined
     : undefined;
 
-  const spreadsheetId = process.env.HERO_SPREADSHEET_ID?.trim();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  const spreadsheetId = getSpreadsheetId();
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   try {
     await ensureInviteSheets(spreadsheetId);
@@ -192,8 +193,8 @@ export async function PATCH(request: Request) {
     return badRequest('status must be one of: pending|sent|accepted|cancelled');
   }
 
-  const spreadsheetId = process.env.HERO_SPREADSHEET_ID?.trim();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  const spreadsheetId = getSpreadsheetId();
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   try {
     await ensureInviteSheets(spreadsheetId);
@@ -227,8 +228,8 @@ export async function DELETE(request: Request) {
   }
   if (!body.id) return badRequest('id is required');
 
-  const spreadsheetId = process.env.HERO_SPREADSHEET_ID?.trim();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  const spreadsheetId = getSpreadsheetId();
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   try {
     await ensureInviteSheets(spreadsheetId);

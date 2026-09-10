@@ -14,11 +14,12 @@
 
 import {
   ensureSheetWithHeaders,
+  getSpreadsheetId,
   listRowsBySheet,
   readRowById,
   updateRowById,
   deleteRowById,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 
 const USERS_SHEET = 'users';
 
@@ -66,12 +67,6 @@ export type PagedUsers = {
   pageSize: number;
   totalPages: number;
 };
-
-function getSpreadsheetId(): string | null {
-  const id =
-    process.env.USERS_SPREADSHEET_ID || process.env.GOOGLE_SPREADSHEET_ID || null;
-  return id && id.trim().length > 0 ? id.trim() : null;
-}
 
 function configuredAdminEmail(): string {
   return process.env.ADMIN_EMAIL?.trim().toLowerCase() || '';

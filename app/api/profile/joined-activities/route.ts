@@ -24,7 +24,7 @@
 // signups are intentionally hidden — the user hasn't actually joined yet.
 
 import { NextResponse } from 'next/server';
-import { listRowsBySheet } from '@/app/lib/googleSheets';
+import { getSpreadsheetId, listRowsBySheet } from '@/app/lib/supabase';
 import { isSignupStatus } from '@/data/activity-signups-types';
 import { getActivitiesContent } from '@/lib/activities-store';
 import { isAdminEmail } from '@/lib/admin';
@@ -43,11 +43,6 @@ function serverError(message: string) {
 function getRequesterEmail(request: Request): string | null {
   const header = request.headers.get('x-auth-email');
   return header && header.trim().length > 0 ? header.trim().toLowerCase() : null;
-}
-
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID?.trim();
-  return id && id.length > 0 ? id : null;
 }
 
 const CATEGORY_TO_EVENT_TYPE: Record<ActivityCategory, EventType> = {
@@ -176,7 +171,7 @@ export async function GET(request: Request) {
   if (!email) return unauthorized();
 
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   const { searchParams } = new URL(request.url);
   const search = searchParams.get('search')?.trim().toLowerCase() || '';

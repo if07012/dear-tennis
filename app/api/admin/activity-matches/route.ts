@@ -17,6 +17,7 @@
 // Both endpoints require `x-auth-email` matching ADMIN_EMAIL.
 
 import { NextResponse } from 'next/server';
+import { getSpreadsheetId } from '@/app/lib/supabase';
 import { isAdminEmail } from '@/lib/admin';
 import { listSignupsForAdmin } from '@/lib/activity-signups-store';
 import {
@@ -44,11 +45,6 @@ function getRequesterEmail(request: Request): string | null {
   const header = request.headers.get('x-auth-email');
   return header && header.trim().length > 0 ? header.trim().toLowerCase() : null;
 }
-function getSpreadsheetId(): string | null {
-  const id = process.env.HERO_SPREADSHEET_ID?.trim();
-  return id && id.length > 0 ? id : null;
-}
-
 function coerceInt(raw: unknown): number {
   const n = parseInt(String(raw ?? ''), 10);
   return Number.isFinite(n) ? n : 0;
@@ -101,7 +97,7 @@ export async function GET(request: Request) {
   if (!activityId) return badRequest('activity query param is required');
 
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   try {
     const signupsPage = await listSignupsForAdmin({
@@ -157,7 +153,7 @@ export async function POST(request: Request) {
   if (!isAdminEmail(email)) return unauthorized();
 
   const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   let body: PostBody;
   try {

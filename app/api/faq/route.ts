@@ -21,9 +21,10 @@ import crypto from 'crypto';
 import {
   createRowWithId,
   deleteRowById,
+  getSpreadsheetId,
   readRowById,
   updateRowById,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import {
   clearFAQContentCache,
   ensureFAQSheets,
@@ -117,8 +118,8 @@ export async function PUT(request: Request) {
     return badRequest('Invalid JSON');
   }
 
-  const spreadsheetId = process.env.HERO_SPREADSHEET_ID?.trim();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  const spreadsheetId = getSpreadsheetId();
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   try {
     await ensureFAQSheets(spreadsheetId);
@@ -244,8 +245,8 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const email = getRequesterEmail(request);
   if (!isAdminEmail(email)) return unauthorized();
-  const spreadsheetId = process.env.HERO_SPREADSHEET_ID?.trim();
-  if (!spreadsheetId) return serverError('HERO_SPREADSHEET_ID is not set');
+  const spreadsheetId = getSpreadsheetId();
+  if (!spreadsheetId) return serverError('Supabase is not configured');
 
   let body: DeleteBody;
   try {

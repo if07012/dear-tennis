@@ -13,11 +13,12 @@
 
 import {
   ensureSheetWithHeaders,
+  getSpreadsheetId,
   listRowsBySheet,
   readRowById,
   createRowWithId,
   updateRowById,
-} from '@/app/lib/googleSheets';
+} from '@/app/lib/supabase';
 import {
   SKILL_KEYS,
   SKILL_SUB_STATS,
@@ -64,14 +65,6 @@ export type UserSkillPointRecord = {
   updatedAt?: string;
   updatedBy?: string;
 };
-
-function getSpreadsheetId(): string | null {
-  const id =
-    process.env.USERS_SPREADSHEET_ID?.trim() ||
-    process.env.HERO_SPREADSHEET_ID?.trim() ||
-    null;
-  return id && id.length > 0 ? id : null;
-}
 
 function coerceInt(value: unknown): number {
   if (typeof value === 'number' && Number.isFinite(value)) {
