@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -10,9 +10,9 @@ import {
 } from '@/components/ui/Icons';
 import { useAuth } from '@/hooks/useAuth';
 import { formatActivityTime } from '@/lib/activity-utils';
-import { JoinConfirmDialog } from '@/components/ui/JoinConfirmDialog';
+import { JoinConfirmDialog, type JoinCouponOption } from '@/components/ui/JoinConfirmDialog';
+import { parsePriceToAmount, type SignupStatus } from '@/data/activity-signups-types';
 import type { ActivityItem } from '@/data/activities-types';
-import type { SignupStatus } from '@/data/activity-signups-types';
 import type { MatchRecord } from '@/data/matches-types';
 
 const TAG_STYLES: Record<string, string> = {
@@ -23,24 +23,33 @@ const TAG_STYLES: Record<string, string> = {
 
 const ROUND_LABEL: Record<string, string> = {
   RR: 'Round Robin',
-  R1: 'Round 1',
-  QF: 'Quarter Final',
-  SF: 'Semi Final',
-  F: 'Final',
-  manual: 'Match',
 };
 
-export type ActivityMemberView = {
+type ActivityMemberView = {
   email: string;
   name: string;
-  photo: string | null;
+  photo?: string | null;
   rank: string | null;
+};
+
+type MySignup = {
+  id: string;
+  activityId: string;
+  status: SignupStatus;
+  couponCode: string;
+  discountPct: number;
+  originalAmount: number;
+  finalAmount: number;
+  rejectionReason?: string;
+  expiresAt?: string;
+  paymentProofUrl?: string;
 };
 
 type Props = {
   activity: ActivityItem | null;
   members: ActivityMemberView[];
   matches: MatchRecord[];
+  capacity: number;
 };
 
 function initialsOf(name: string): string {
@@ -65,12 +74,11 @@ function avatarBgFor(name: string): string {
 
 function setScore(m: MatchRecord): string {
   const sets = [
-    [m.set1A, m.set1B],
-    [m.set2A, m.set2B],
-    [m.set3A, m.set3B],
-  ].filter(([x, y]) => x > 0 || y > 0);
-  if (sets.length === 0) return '-';
-  return sets.map(([x, y]) => `${x}-${y}`).join(', ');
+    m.set1A !== undefined || m.set1B !== undefined ? `${m.set1A}-${m.set1B}` : '',
+    m.set2A !== undefined || m.set2B !== undefined ? `${m.set2A}-${m.set2B}` : '',
+    m.set3A !== undefined || m.set3B !== undefined ? `${m.set3A}-${m.set3B}` : '',
+  ].filter(Boolean);
+  return sets.join(', ') || '-';
 }
 
 function MatchRow({ m, nameOf }: { m: MatchRecord; nameOf: (email: string) => string }) {
@@ -79,9 +87,9 @@ function MatchRow({ m, nameOf }: { m: MatchRecord; nameOf: (email: string) => st
   const aWon = m.winner === 'A';
   const bWon = m.winner === 'B';
   return (
-    <li className="flex flex-col gap-1 rounded-md border border-light-gray bg-off-white px-3 py-2 text-sm">
-      <div className="flex items-center gap-2 text-xs font-semibold text-dark-gray">
-        <span className="rounded-full bg-white px-2 py-0.5 uppercase tracking-wider text-[0.65rem]">
+    <li className="flex flex-col gap-1 rounded-xl border border-light-gray bg-white px-4 py-3">
+      <div className="flex items-center gap-2">
+        <span className="rounded-full bg-hunter-green/10 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-hunter-green">
           {ROUND_LABEL[m.round] ?? m.round}
         </span>
         {m.isDoubles && (
@@ -111,18 +119,49 @@ function MatchRow({ m, nameOf }: { m: MatchRecord; nameOf: (email: string) => st
   );
 }
 
-export function ActivityDetailClient({ activity, members, matches }: Props) {
+function formatRupiah(amount: number): string {
+  return `Rp${amount.toLocaleString('id-ID')}`;
+}
+
+function formatDateTime(iso?: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+const PROOF_MAX_BYTES = 2 * 1024 * 1024;
+const PROOF_MIME = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+
+export function ActivityDetailClient({ activity, members, matches, capacity }: Props) {
   const { user, isAuthenticated } = useAuth();
   const [status, setStatus] = useState<SignupStatus | null>(null);
+  const [mySignup, setMySignup] = useState<MySignup | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [coupons, setCoupons] = useState<JoinCouponOption[] | undefined>(undefined);
+  const [uploading, setUploading] = useState(false);
+  const [uploadDone, setUploadDone] = useState(false);
+  // Proof-upload modal (PRD §9): note + file + preview, submitted in one go.
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadNote, setUploadNote] = useState('');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   // Preload the current user's signup state for this activity.
   useEffect(() => {
     if (!activity) return;
     if (!isAuthenticated || !user?.email) {
       setStatus(null);
+      setMySignup(null);
       return;
     }
     let cancelled = false;
@@ -134,10 +173,12 @@ export function ActivityDetailClient({ activity, members, matches }: Props) {
         });
         if (!res.ok) return;
         const body = (await res.json()) as {
-          signups: Array<{ activityId: string; status: SignupStatus }>;
+          signups: MySignup[];
         };
         if (cancelled) return;
-        const found = body.signups.find((s) => s.activityId === activity.id);
+        const found =
+          body.signups.filter((s) => s.activityId === activity.id).at(-1) ?? null;
+        setMySignup(found);
         setStatus(found ? found.status : null);
       } catch {
         // Silent — Join button still works; status just won't preload.
@@ -148,34 +189,162 @@ export function ActivityDetailClient({ activity, members, matches }: Props) {
     };
   }, [activity, isAuthenticated, user?.email]);
 
-  const join = useCallback(async () => {
+  const refreshSignup = useCallback(async () => {
     if (!activity || !user?.email) return;
-    setPending(true);
-    setError(null);
     try {
-      const res = await fetch('/api/activity-signups', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-auth-email': user.email,
-        },
-        body: JSON.stringify({ activityId: activity.id }),
+      const res = await fetch('/api/activity-signups/mine', {
+        headers: { 'x-auth-email': user.email },
+        cache: 'no-store',
       });
-      const body = (await res.json().catch(() => ({}))) as {
-        ok?: boolean;
-        signup?: { status: SignupStatus };
-        error?: string;
-      };
-      if (!res.ok || !body.ok || !body.signup) {
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      setStatus(body.signup.status);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Gagal mendaftar');
-    } finally {
-      setPending(false);
+      if (!res.ok) return;
+      const body = (await res.json()) as { signups: MySignup[] };
+      const found =
+        body.signups.filter((s) => s.activityId === activity.id).at(-1) ?? null;
+      setMySignup(found);
+      setStatus(found ? found.status : null);
+    } catch {
+      // keep previous state
     }
   }, [activity, user?.email]);
+
+  const join = useCallback(
+    async (couponCode?: string) => {
+      if (!activity || !user?.email) return;
+      setPending(true);
+      setError(null);
+      try {
+        const res = await fetch('/api/activity-signups', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-auth-email': user.email,
+          },
+          body: JSON.stringify({ activityId: activity.id, couponCode }),
+        });
+        const body = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          signup?: { status: SignupStatus };
+          error?: string;
+        };
+        if (!res.ok || !body.ok || !body.signup) {
+          throw new Error(body.error ?? `HTTP ${res.status}`);
+        }
+        setStatus(body.signup.status);
+        await refreshSignup();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Gagal mendaftar');
+      } finally {
+        setPending(false);
+      }
+    },
+    [activity, user?.email, refreshSignup],
+  );
+
+  // Coupon choices load when the confirm dialog opens for a priced activity.
+  useEffect(() => {
+    if (!confirming || !activity || !user?.email) return;
+    if (parsePriceToAmount(activity.price) <= 0) return;
+    let cancelled = false;
+    setCoupons(undefined);
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/coupons/eligible?activityId=${encodeURIComponent(activity.id)}`,
+          { headers: { 'x-auth-email': user.email }, cache: 'no-store' },
+        );
+        if (!res.ok) return;
+        const body = (await res.json()) as { coupons?: JoinCouponOption[] };
+        if (!cancelled) setCoupons(body.coupons ?? []);
+      } catch {
+        if (!cancelled) setCoupons([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [confirming, activity, user?.email]);
+
+  const resetUploadModal = useCallback(() => {
+    setUploadOpen(false);
+    setUploadFile(null);
+    setUploadPreview(null);
+    setUploadNote('');
+  }, []);
+
+  // File chosen in the modal — validate immediately so the member sees the
+  // problem before submitting, then build a preview (images only; PDFs have
+  // no inline preview).
+  const pickUploadFile = useCallback((file: File | null) => {
+    setError(null);
+    if (!file) {
+      setUploadFile(null);
+      setUploadPreview(null);
+      return;
+    }
+    if (!PROOF_MIME.includes(file.type)) {
+      setError('Format harus JPG, PNG, atau PDF');
+      return;
+    }
+    if (file.size > PROOF_MAX_BYTES) {
+      setError('Ukuran maksimal 2MB');
+      return;
+    }
+    setUploadFile(file);
+    if (file.type === 'application/pdf') {
+      setUploadPreview(null);
+    } else {
+      const reader = new FileReader();
+      reader.onload = () => setUploadPreview(String(reader.result));
+      reader.readAsDataURL(file);
+    }
+  }, []);
+
+  const uploadProof = useCallback(async () => {
+    if (!mySignup || !user?.email || !uploadFile) return;
+    setError(null);
+    setUploading(true);
+    setUploadDone(false);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error('Gagal membaca file'));
+        reader.readAsDataURL(uploadFile);
+      });
+      const res = await fetch(
+        `/api/activity-signups/${mySignup.id}/payment`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-auth-email': user.email,
+          },
+          body: JSON.stringify({ proofUrl: dataUrl, note: uploadNote || undefined }),
+        },
+      );
+      const body = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!res.ok || !body.ok) {
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      setUploadDone(true);
+      resetUploadModal();
+      await refreshSignup();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal mengunggah bukti');
+    } finally {
+      setUploading(false);
+    }
+  }, [mySignup, user?.email, uploadFile, uploadNote, refreshSignup, resetUploadModal]);
+
+  const occupied = useMemo(
+    () => members.length + (status === 'waiting_payment' || status === 'payment_submitted' ? 1 : 0),
+    [members.length, status],
+  );
+  const slotsRemaining =
+    capacity > 0 ? Math.max(0, capacity - occupied) : null;
 
   if (!activity) {
     return (
@@ -207,6 +376,9 @@ export function ActivityDetailClient({ activity, members, matches }: Props) {
     if (key.startsWith('__manual_')) return key.slice('__manual_'.length).split('@')[0];
     return key;
   };
+
+  const priceAmount = parsePriceToAmount(activity.price);
+  const canUpload = status === 'waiting_payment' && !!mySignup;
 
   return (
     <div className="bg-white">
@@ -348,7 +520,9 @@ export function ActivityDetailClient({ activity, members, matches }: Props) {
               {activity.groupSize && (
                 <span className="inline-flex items-center gap-2">
                   <UsersSmallIcon />
-                  {activity.groupSize}
+                  {slotsRemaining !== null
+                    ? `${slotsRemaining} slot tersisa dari ${activity.groupSize}`
+                    : activity.groupSize}
                 </span>
               )}
             </div>
@@ -380,7 +554,7 @@ export function ActivityDetailClient({ activity, members, matches }: Props) {
                 >
                   Login untuk Join
                 </Link>
-              ) : status === 'approved' ? (
+              ) : status === 'joined' ? (
                 <button
                   type="button"
                   disabled
@@ -388,7 +562,7 @@ export function ActivityDetailClient({ activity, members, matches }: Props) {
                 >
                   ✓ Kamu sudah terdaftar
                 </button>
-              ) : status === 'pending' ? (
+              ) : status === 'pending_approval' ? (
                 <button
                   type="button"
                   disabled
@@ -396,14 +570,29 @@ export function ActivityDetailClient({ activity, members, matches }: Props) {
                 >
                   Menunggu persetujuan admin
                 </button>
-              ) : status === 'rejected' ? (
+              ) : status === 'waiting_payment' || status === 'payment_submitted' ? (
+                <PaymentPanel
+                  signup={mySignup}
+                  status={status}
+                  priceAmount={priceAmount}
+                  priceLabel={activity.price}
+                  uploadDone={uploadDone}
+                  canUpload={canUpload}
+                  onOpenUpload={() => {
+                    setError(null);
+                    setUploadOpen(true);
+                  }}
+                />
+              ) : status === 'rejected' || status === 'cancelled' || status === 'expired' ? (
                 <div className="flex flex-col gap-2">
                   <button
                     type="button"
                     disabled
                     className="w-full rounded-full bg-paprika/10 px-4 py-2.5 text-sm font-semibold text-paprika"
                   >
-                    ✗ Pendaftaran ditolak
+                    {status === 'expired'
+                      ? '⏰ Batas pembayaran habis'
+                      : '✗ Pendaftaran ditolak'}
                   </button>
                   <button
                     type="button"
@@ -435,6 +624,116 @@ export function ActivityDetailClient({ activity, members, matches }: Props) {
         </div>
       </div>
 
+      {/* Hidden input reused by the upload modal's pick button. */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/jpg,image/png,application/pdf"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          pickUploadFile(file ?? null);
+        }}
+      />
+
+      {/* Proof-upload modal (PRD §9): note + file + preview in one popup. */}
+      {uploadOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-graphite/70 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Upload bukti pembayaran"
+          onClick={() => {
+            if (!uploading) resetUploadModal();
+          }}
+        >
+          <div
+            className="flex max-h-[90vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-2xl bg-white p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+              <h3 className="font-serif text-xl font-semibold text-hunter-green">
+                Upload Bukti Pembayaran
+              </h3>
+              <p className="mt-1 text-xs text-dark-gray">
+                Bayar {formatRupiah(mySignup?.finalAmount || priceAmount)}
+                {mySignup?.expiresAt && ` — batas ${formatDateTime(mySignup.expiresAt)}`}
+              </p>
+            </div>
+
+            {mySignup?.rejectionReason && (
+              <div className="rounded-lg border border-paprika/30 bg-paprika/10 px-3 py-2 text-xs text-paprika">
+                Pembayaran ditolak: {mySignup.rejectionReason}. Silakan unggah
+                bukti baru.
+              </div>
+            )}
+
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
+                Catatan untuk admin (opsional)
+              </span>
+              <textarea
+                value={uploadNote}
+                onChange={(e) => setUploadNote(e.target.value)}
+                maxLength={300}
+                rows={2}
+                placeholder="Mis. transfer dari BCA a/n ..., jam 14.30"
+                className="w-full rounded-lg border border-light-gray px-3 py-2 text-sm focus:border-hunter-green focus:outline-none"
+              />
+            </label>
+
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="w-full rounded-full border border-hunter-green px-4 py-2 text-sm font-semibold text-hunter-green transition-colors hover:bg-hunter-green hover:text-white"
+              >
+                {uploadFile ? 'Ganti File' : 'Pilih File'}
+              </button>
+              <p className="text-center text-[0.7rem] text-dark-gray">
+                JPG, PNG, atau PDF — maks 2MB
+              </p>
+              {uploadFile && (
+                <p className="truncate text-center text-xs text-hunter-green">
+                  {uploadFile.type === 'application/pdf' ? 'PDF' : 'Gambar'}: {uploadFile.name}
+                </p>
+              )}
+            </div>
+
+            {uploadPreview && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={uploadPreview}
+                alt="Pratinjau bukti pembayaran"
+                className="mx-auto max-h-56 w-auto rounded-lg border border-light-gray"
+              />
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!uploading) resetUploadModal();
+                }}
+                disabled={uploading}
+                className="flex-1 rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-paprika hover:text-paprika disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => void uploadProof()}
+                disabled={uploading || !uploadFile}
+                className="flex-1 rounded-full bg-paprika px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-paprika-hover disabled:opacity-50"
+              >
+                {uploading ? 'Mengirim...' : 'Kirim Bukti'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <JoinConfirmDialog
         activity={
           confirming
@@ -446,13 +745,102 @@ export function ActivityDetailClient({ activity, members, matches }: Props) {
               }
             : null
         }
+        coupons={confirming ? coupons : undefined}
         pending={pending}
-        onConfirm={() => {
+        onConfirm={(couponCode) => {
           setConfirming(false);
-          join();
+          void join(couponCode);
         }}
         onClose={() => setConfirming(false)}
       />
+    </div>
+  );
+}
+
+/**
+ * Registration-status panel for waiting_payment / payment_submitted
+ * (PRD §8–§9, §12, §14): amount breakdown, deadline, and the button that
+ * opens the proof-upload modal. Uploads are only allowed while
+ * waiting_payment.
+ */
+function PaymentPanel({
+  signup,
+  status,
+  priceAmount,
+  priceLabel,
+  uploadDone,
+  canUpload,
+  onOpenUpload,
+}: {
+  signup: MySignup | null;
+  status: SignupStatus;
+  priceAmount: number;
+  priceLabel?: string;
+  uploadDone: boolean;
+  canUpload: boolean;
+  onOpenUpload: () => void;
+}) {
+  const amount = signup?.finalAmount || priceAmount;
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm font-semibold text-sky-800">
+        {status === 'waiting_payment'
+          ? 'Pendaftaran disetujui — selesaikan pembayaran'
+          : 'Bukti pembayaran sedang diverifikasi admin'}
+      </p>
+      <div className="flex flex-col gap-1 rounded-lg border border-light-gray bg-off-white px-4 py-3 text-sm">
+        {signup && priceAmount > 0 && (
+          <>
+            <span className="flex justify-between text-dark-gray">
+              <span>Harga</span>
+              <span>{formatRupiah(signup.originalAmount || priceAmount)}</span>
+            </span>
+            {signup.couponCode && (
+              <span className="flex justify-between text-teal">
+                <span>Kupon {signup.couponCode}</span>
+                <span>−{signup.discountPct}%</span>
+              </span>
+            )}
+            <span className="flex justify-between font-semibold text-hunter-green">
+              <span>Bayar</span>
+              <span>{formatRupiah(amount)}</span>
+            </span>
+          </>
+        )}
+        {signup?.expiresAt && status === 'waiting_payment' && (
+          <span className="text-xs text-paprika">
+            Batas bayar: {formatDateTime(signup.expiresAt)}
+          </span>
+        )}
+        {priceLabel && priceAmount === 0 && (
+          <span className="text-dark-gray">{priceLabel}</span>
+        )}
+      </div>
+      {signup?.rejectionReason && status === 'waiting_payment' && (
+        <div className="rounded-lg border border-paprika/30 bg-paprika/10 px-3 py-2 text-xs text-paprika">
+          Pembayaran ditolak: {signup.rejectionReason}. Silakan unggah bukti
+          baru.
+        </div>
+      )}
+      {canUpload && (
+        <>
+          <button
+            type="button"
+            onClick={onOpenUpload}
+            className="w-full rounded-full bg-paprika px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-paprika-hover hover:shadow-md"
+          >
+            Upload Bukti Pembayaran
+          </button>
+          <p className="text-center text-[0.7rem] text-dark-gray">
+            JPG, PNG, atau PDF — maks 2MB
+          </p>
+        </>
+      )}
+      {uploadDone && (
+        <p className="text-center text-xs font-semibold text-hunter-green">
+          Bukti terkirim. Menunggu verifikasi admin.
+        </p>
+      )}
     </div>
   );
 }

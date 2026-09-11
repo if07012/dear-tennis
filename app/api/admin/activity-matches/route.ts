@@ -103,7 +103,7 @@ export async function GET(request: Request) {
     const signupsPage = await listSignupsForAdmin({
       page: 1,
       pageSize: 100,
-      status: 'approved',
+      status: 'joined',
       activityId,
     });
     const seen = new Set<string>();
@@ -172,7 +172,7 @@ export async function POST(request: Request) {
   const signupsPage = await listSignupsForAdmin({
     page: 1,
     pageSize: 100,
-    status: 'approved',
+    status: 'joined',
     activityId,
   });
   const memberEmails = new Set(signupsPage.items.map((s) => s.userEmail.toLowerCase()));

@@ -12,17 +12,30 @@ const INPUT_CLS =
   'w-full rounded-lg border border-light-gray bg-white px-3 py-2 text-sm focus:border-hunter-green focus:outline-none';
 
 const STATUS_OPTIONS: { id: SignupStatus | 'all'; label: string }[] = [
-  { id: 'pending', label: 'Pending' },
-  { id: 'approved', label: 'Approved' },
+  { id: 'pending_approval', label: 'Pending Approval' },
+  { id: 'waiting_payment', label: 'Waiting Payment' },
+  { id: 'payment_submitted', label: 'Payment Submitted' },
+  { id: 'joined', label: 'Joined' },
   { id: 'rejected', label: 'Rejected' },
+  { id: 'cancelled', label: 'Cancelled' },
+  { id: 'expired', label: 'Expired' },
   { id: 'all', label: 'All' },
 ];
 
 const STATUS_BADGE: Record<SignupStatus, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  approved: 'bg-hunter-green/10 text-hunter-green',
+  pending_approval: 'bg-amber-100 text-amber-800',
+  waiting_payment: 'bg-sky-100 text-sky-800',
+  payment_submitted: 'bg-teal/10 text-teal',
+  joined: 'bg-hunter-green/10 text-hunter-green',
   rejected: 'bg-paprika/10 text-paprika',
+  cancelled: 'bg-dark-gray/10 text-dark-gray',
+  expired: 'bg-dark-gray/10 text-dark-gray',
 };
+
+function formatRupiah(amount: number): string {
+  if (!amount) return '—';
+  return `Rp${amount.toLocaleString('id-ID')}`;
+}
 
 type Row = ActivitySignup & { activityTitle?: string };
 
@@ -51,6 +64,12 @@ function formatDate(iso?: string): string {
   });
 }
 
+type PatchAction =
+  | 'approve'
+  | 'reject'
+  | 'approve-payment'
+  | 'reject-payment';
+
 export function ActivitySignupsClient({
   initial,
   initialStatus,
@@ -59,6 +78,9 @@ export function ActivitySignupsClient({
 }: Props) {
   const { user } = useAuth();
   const [items, setItems] = useState<Row[]>(initial.items);
+  const [countsByStatus, setCountsByStatus] = useState<
+    Record<string, number> | undefined
+  >(undefined);
   const [total, setTotal] = useState(initial.total);
   const [page, setPage] = useState(initial.page);
   const [totalPages, setTotalPages] = useState(initial.totalPages);
@@ -66,6 +88,15 @@ export function ActivitySignupsClient({
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast>({ kind: 'idle' });
+  // Payment reject flow: which row's reason prompt is open + its draft text.
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  // Payment proof viewer: data URL or remote URL, rendered full-size, with
+  // the member's note and upload time.
+  const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [proofIsPdf, setProofIsPdf] = useState(false);
+  const [proofNote, setProofNote] = useState<string | undefined>(undefined);
+  const [proofUploadedAt, setProofUploadedAt] = useState<string | undefined>(undefined);
 
   const fetchPage = useCallback(
     async (targetPage: number, targetStatus: SignupStatus | 'all') => {
@@ -85,8 +116,12 @@ export function ActivitySignupsClient({
           const body = (await res.json().catch(() => ({}))) as { error?: string };
           throw new Error(body.error ?? `HTTP ${res.status}`);
         }
-        const body = (await res.json()) as PagedSignups & { items: Row[] };
+        const body = (await res.json()) as PagedSignups & {
+          items: Row[];
+          countsByStatus?: Record<string, number>;
+        };
         setItems(body.items);
+        setCountsByStatus(body.countsByStatus);
         setTotal(body.total);
         setPage(body.page);
         setTotalPages(body.totalPages);
@@ -112,8 +147,7 @@ export function ActivitySignupsClient({
     setPage(1);
   };
 
-  const decide = async (target: Row, decision: SignupStatus) => {
-    if (target.status === decision) return;
+  const decide = async (target: Row, action: PatchAction, reason?: string) => {
     setBusyId(target.id);
     setToast({ kind: 'idle' });
     try {
@@ -123,7 +157,7 @@ export function ActivitySignupsClient({
           'content-type': 'application/json',
           'x-auth-email': user?.email ?? '',
         },
-        body: JSON.stringify({ id: target.id, status: decision }),
+        body: JSON.stringify({ id: target.id, action, reason }),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -140,6 +174,8 @@ export function ActivitySignupsClient({
       });
     } finally {
       setBusyId(null);
+      setRejectingId(null);
+      setRejectReason('');
     }
   };
 
@@ -172,6 +208,14 @@ export function ActivitySignupsClient({
     }
   };
 
+  const openProof = (row: Row) => {
+    if (!row.paymentProofUrl) return;
+    setProofIsPdf(row.paymentProofUrl.startsWith('data:application/pdf'));
+    setProofUrl(row.paymentProofUrl);
+    setProofNote(row.paymentNote || undefined);
+    setProofUploadedAt(row.uploadedAt || undefined);
+  };
+
   const pageStart = (page - 1) * pageSize;
 
   return (
@@ -185,7 +229,7 @@ export function ActivitySignupsClient({
             Activity Signups
           </h1>
           <p className="mt-1 text-sm text-dark-gray">
-            Approve atau tolak permintaan pendaftaran activity dari member.
+            Approve pendaftaran, verifikasi bukti pembayaran, dan kelola slot.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -228,6 +272,20 @@ export function ActivitySignupsClient({
                   ].join(' ')}
                 >
                   {opt.label}
+                  {countsByStatus && (
+                    <span
+                      className={[
+                        'ml-1.5 inline-block rounded-full px-1.5 text-[0.65rem]',
+                        status === opt.id
+                          ? 'bg-white/25 text-white'
+                          : 'bg-light-gray text-dark-gray',
+                      ].join(' ')}
+                    >
+                      {opt.id === 'all'
+                        ? Object.values(countsByStatus).reduce((a, b) => a + b, 0)
+                        : countsByStatus[opt.id] ?? 0}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -248,7 +306,7 @@ export function ActivitySignupsClient({
               <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
                 <th className="py-3 pr-4">Aktivitas</th>
                 <th className="py-3 pr-4">Member</th>
-                <th className="py-3 pr-4">Pesan</th>
+                <th className="py-3 pr-4">Pembayaran</th>
                 <th className="py-3 pr-4">Status</th>
                 <th className="py-3 pr-4">Diajukan</th>
                 <th className="py-3 pr-4 text-right">Aksi</th>
@@ -280,18 +338,55 @@ export function ActivitySignupsClient({
                       <div className="mt-0.5 text-[0.65rem] uppercase tracking-wider text-dark-gray">
                         {row.activityId}
                       </div>
+                      <div className="mt-0.5 max-w-[240px] text-xs text-dark-gray">
+                        {row.message ? (
+                          <span className="line-clamp-2 whitespace-pre-wrap">
+                            {row.message}
+                          </span>
+                        ) : (
+                          <span className="italic">—</span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 pr-4">
                       <div className="font-medium text-graphite">{row.userName || row.userEmail}</div>
                       <div className="text-xs text-dark-gray">{row.userEmail}</div>
                     </td>
-                    <td className="py-3 pr-4 max-w-[260px] text-xs text-dark-gray">
-                      {row.message ? (
-                        <span className="whitespace-pre-wrap break-words">
-                          {row.message}
-                        </span>
+                    <td className="py-3 pr-4">
+                      {row.originalAmount > 0 ? (
+                        <div className="text-xs">
+                          <div className="text-dark-gray">
+                            Harga: {formatRupiah(row.originalAmount)}
+                          </div>
+                          {row.couponCode && (
+                            <div className="text-teal">
+                              Kupon {row.couponCode} (−{row.discountPct}%)
+                            </div>
+                          )}
+                          <div className="font-semibold text-hunter-green">
+                            Bayar: {formatRupiah(row.finalAmount)}
+                          </div>
+                          {row.paymentProofUrl ? (
+                            <button
+                              type="button"
+                              onClick={() => openProof(row)}
+                              className="mt-1 rounded-full border border-hunter-green px-2 py-0.5 text-[0.65rem] font-semibold text-hunter-green transition-colors hover:bg-hunter-green hover:text-white"
+                            >
+                              Lihat bukti
+                            </button>
+                          ) : (
+                            <div className="mt-1 italic text-dark-gray">
+                              belum ada bukti
+                            </div>
+                          )}
+                          {row.rejectionReason && (
+                            <div className="mt-1 max-w-[220px] text-[0.65rem] text-paprika">
+                              Ditolak: {row.rejectionReason}
+                            </div>
+                          )}
+                        </div>
                       ) : (
-                        <span className="italic">—</span>
+                        <span className="text-xs italic text-dark-gray">gratis</span>
                       )}
                     </td>
                     <td className="py-3 pr-4">
@@ -301,18 +396,23 @@ export function ActivitySignupsClient({
                           STATUS_BADGE[row.status],
                         ].join(' ')}
                       >
-                        {row.status}
+                        {row.status.replace(/_/g, ' ')}
                       </span>
+                      {row.expiresAt && row.status === 'waiting_payment' && (
+                        <div className="mt-1 text-[0.65rem] text-dark-gray">
+                          Deadline: {formatDate(row.expiresAt)}
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 pr-4 text-xs text-dark-gray">
                       {formatDate(row.requestedAt)}
                     </td>
                     <td className="py-3 pr-4">
-                      {row.status === 'pending' ? (
+                      {row.status === 'pending_approval' ? (
                         <div className="flex flex-wrap justify-end gap-2">
                           <button
                             type="button"
-                            onClick={() => decide(row, 'approved')}
+                            onClick={() => decide(row, 'approve')}
                             disabled={busyId === row.id}
                             className="rounded-full bg-hunter-green px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-hunter-green-dark disabled:opacity-50"
                           >
@@ -320,7 +420,7 @@ export function ActivitySignupsClient({
                           </button>
                           <button
                             type="button"
-                            onClick={() => decide(row, 'rejected')}
+                            onClick={() => decide(row, 'reject')}
                             disabled={busyId === row.id}
                             className="rounded-full border border-paprika px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:bg-paprika hover:text-white disabled:opacity-50"
                           >
@@ -335,10 +435,72 @@ export function ActivitySignupsClient({
                             Hapus
                           </button>
                         </div>
+                      ) : row.status === 'payment_submitted' ? (
+                        rejectingId === row.id ? (
+                          <div className="flex w-56 flex-col gap-2">
+                            <textarea
+                              value={rejectReason}
+                              onChange={(e) => setRejectReason(e.target.value)}
+                              placeholder="Alasan penolakan (wajib)"
+                              rows={2}
+                              maxLength={300}
+                              className={INPUT_CLS}
+                            />
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRejectingId(null);
+                                  setRejectReason('');
+                                }}
+                                className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-dark-gray"
+                              >
+                                Batal
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => decide(row, 'reject-payment', rejectReason)}
+                                disabled={busyId === row.id || !rejectReason.trim()}
+                                className="rounded-full bg-paprika px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                              >
+                                Tolak
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => decide(row, 'approve-payment')}
+                              disabled={busyId === row.id}
+                              className="rounded-full bg-hunter-green px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-hunter-green-dark disabled:opacity-50"
+                            >
+                              Approve Payment
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRejectingId(row.id);
+                                setRejectReason('');
+                              }}
+                              disabled={busyId === row.id}
+                              className="rounded-full border border-paprika px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:bg-paprika hover:text-white disabled:opacity-50"
+                            >
+                              Reject Payment
+                            </button>
+                          </div>
+                        )
                       ) : (
-                        <span className="block text-right text-[0.7rem] uppercase tracking-wider text-dark-gray">
-                          —
-                        </span>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => remove(row)}
+                            disabled={busyId === row.id}
+                            className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-dark-gray transition-colors hover:border-paprika hover:text-paprika disabled:opacity-50"
+                          >
+                            Hapus
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -372,6 +534,60 @@ export function ActivitySignupsClient({
           </div>
         </div>
       </section>
+
+      {proofUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-graphite/70 p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Bukti pembayaran"
+          onClick={() => setProofUrl(null)}
+        >
+          <div
+            className="flex max-h-full w-full max-w-2xl flex-col gap-3 rounded-2xl bg-white p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-lg font-semibold text-hunter-green">
+                Bukti Pembayaran
+              </h3>
+              <button
+                type="button"
+                onClick={() => setProofUrl(null)}
+                className="rounded-md px-2 py-1 text-sm text-dark-gray hover:bg-light-gray"
+              >
+                Tutup
+              </button>
+            </div>
+            <div className="rounded-lg border border-light-gray bg-off-white px-3 py-2 text-xs text-dark-gray">
+              {proofNote && (
+                <p>
+                  <span className="font-semibold text-graphite">Catatan member: </span>
+                  {proofNote}
+                </p>
+              )}
+              {proofUploadedAt && <p>Diunggah: {formatDate(proofUploadedAt)}</p>}
+              {!proofNote && !proofUploadedAt && <p className="italic">Tanpa catatan</p>}
+            </div>
+            <div className="overflow-auto rounded-lg border border-light-gray bg-off-white p-2">
+              {proofIsPdf ? (
+                <iframe
+                  src={proofUrl}
+                  title="Bukti pembayaran"
+                  className="h-[70vh] w-full"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={proofUrl}
+                  alt="Bukti pembayaran"
+                  className="mx-auto max-h-[70vh] w-auto"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -14,7 +14,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { activityPath } from '@/lib/slug';
 import { formatActivityTime } from '@/lib/activity-utils';
-import { JoinConfirmDialog, type JoinConfirmInfo } from '@/components/ui/JoinConfirmDialog';
+import { JoinConfirmDialog, type JoinConfirmInfo, type JoinCouponOption } from '@/components/ui/JoinConfirmDialog';
 import type {
   ActivityCategory,
   ActivityItem,
@@ -58,6 +58,7 @@ type ActivityStatusProps = {
   pending: boolean;
   onJoin: () => void;
   isFull?: boolean;
+  detailHref?: string;
 };
 
 export function Activities({ settings, activities, limit = 6 }: Props) {
@@ -67,6 +68,7 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
+  const [occupiedCounts, setOccupiedCounts] = useState<Record<string, number>>({});
   const [openActivityId, setOpenActivityId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
@@ -81,9 +83,13 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
           cache: 'no-store',
         });
         if (!res.ok) return;
-        const body = (await res.json()) as { counts?: Record<string, number> };
+        const body = (await res.json()) as {
+          counts?: Record<string, number>;
+          occupied?: Record<string, number>;
+        };
         if (cancelled) return;
         setSignupCounts(body.counts ?? {});
+        setOccupiedCounts(body.occupied ?? {});
       } catch {
         // Non-fatal — the count line just stays hidden.
       }
@@ -114,6 +120,7 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
         };
         if (cancelled) return;
         const next = new Map<string, SignupStatus>();
+        // Later rows win — re-join after reject/cancel overwrites old status.
         for (const s of body.signups) next.set(s.activityId, s.status);
         setSignups(next);
       } catch {
@@ -126,7 +133,7 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
   }, [isAuthenticated, user?.email]);
 
   const join = useCallback(
-    async (activityId: string) => {
+    async (activityId: string, couponCode?: string) => {
       if (!user?.email) return;
       setPendingId(activityId);
       setError(null);
@@ -137,7 +144,7 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
             'content-type': 'application/json',
             'x-auth-email': user.email,
           },
-          body: JSON.stringify({ activityId }),
+          body: JSON.stringify({ activityId, couponCode }),
         });
         const body = (await res.json().catch(() => ({}))) as {
           ok?: boolean;
@@ -201,6 +208,44 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
         price: confirmActivity.price || undefined,
       }
     : null;
+
+  // Coupon choices load when the confirm dialog opens (priced activities
+  // only); undefined = still loading / not applicable, [] = none available.
+  const [confirmCoupons, setConfirmCoupons] = useState<
+    JoinCouponOption[] | undefined
+  >(undefined);
+  useEffect(() => {
+    if (!confirmActivity || !user?.email) {
+      setConfirmCoupons(undefined);
+      return;
+    }
+    const priceAmount = Number(
+      (confirmActivity.price ?? '').replace(/[^\d]/g, ''),
+    );
+    if (!priceAmount) {
+      setConfirmCoupons(undefined);
+      return;
+    }
+    let cancelled = false;
+    setConfirmCoupons(undefined);
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/coupons/eligible?activityId=${encodeURIComponent(confirmActivity.id)}`,
+          { headers: { 'x-auth-email': user.email }, cache: 'no-store' },
+        );
+        if (!res.ok) return;
+        const body = (await res.json()) as { coupons?: JoinCouponOption[] };
+        if (!cancelled) setConfirmCoupons(body.coupons ?? []);
+      } catch {
+        if (!cancelled) setConfirmCoupons([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirmId, user?.email]);
 
   return (
     <section id="activities" className="section-padding bg-white">
@@ -335,6 +380,19 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
                       {signupCounts[activity.id]} terdaftar · lihat
                     </button>
                   )}
+                  {(() => {
+                    // Slots remaining = capacity − slot-occupying signups
+                    // (joined + waiting payment + payment submitted, PRD §15).
+                    const capMatch = (activity.groupSize ?? '').match(/\d+/);
+                    const cap = capMatch ? Number.parseInt(capMatch[0], 10) : 0;
+                    if (!cap) return null;
+                    const occupied = occupiedCounts[activity.id] ?? 0;
+                    return (
+                      <p className="mb-3 text-[0.7rem] font-semibold uppercase tracking-wider text-dark-gray">
+                        {Math.max(0, cap - occupied)} dari {cap} slot tersisa
+                      </p>
+                    );
+                  })()}
                   {isAuthenticated && visibleIds.has(activity.id) && (
                     <ActivityJoinButton
                       activityId={activity.id}
@@ -342,6 +400,7 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
                       pending={pendingId === activity.id}
                       onJoin={() => setConfirmId(activity.id)}
                       isFull={activity.isFull}
+                      detailHref={activityPath(activity.id, activity.title)}
                     />
                   )}
                 </div>
@@ -359,10 +418,11 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
 
       <JoinConfirmDialog
         activity={confirmInfo}
+        coupons={confirmCoupons}
         pending={confirmId !== null && pendingId === confirmId}
-        onConfirm={() => {
+        onConfirm={(couponCode) => {
           if (confirmId) {
-            join(confirmId);
+            void join(confirmId, couponCode);
             setConfirmId(null);
           }
         }}
@@ -377,6 +437,7 @@ function ActivityJoinButton({
   pending,
   onJoin,
   isFull = false,
+  detailHref,
 }: ActivityStatusProps) {
   if (isFull) {
     return (
@@ -389,7 +450,7 @@ function ActivityJoinButton({
       </button>
     );
   }
-  if (status === 'approved') {
+  if (status === 'joined') {
     return (
       <button
         type="button"
@@ -400,7 +461,7 @@ function ActivityJoinButton({
       </button>
     );
   }
-  if (status === 'pending') {
+  if (status === 'pending_approval') {
     return (
       <button
         type="button"
@@ -411,7 +472,29 @@ function ActivityJoinButton({
       </button>
     );
   }
-  if (status === 'rejected') {
+  if (status === 'waiting_payment') {
+    // Payment happens on the detail page — send the member there.
+    return (
+      <Link
+        href={detailHref ?? '#activities'}
+        className="inline-flex w-full items-center justify-center rounded-full bg-sky-100 px-4 py-2 text-xs font-semibold text-sky-800 transition-colors hover:bg-sky-200"
+      >
+        Lakukan pembayaran →
+      </Link>
+    );
+  }
+  if (status === 'payment_submitted') {
+    return (
+      <button
+        type="button"
+        disabled
+        className="inline-flex w-full items-center justify-center rounded-full bg-sky-100 px-4 py-2 text-xs font-semibold text-sky-800"
+      >
+        Menunggu Pembayaran diverifikasi
+      </button>
+    );
+  }
+  if (status === 'rejected' || status === 'cancelled' || status === 'expired') {
     return (
       <div className="flex flex-col gap-2">
         <button

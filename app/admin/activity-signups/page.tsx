@@ -1,6 +1,7 @@
 import { AdminAuthGate } from '../hero/AdminAuthGate';
 import { ActivitySignupsClient } from './ActivitySignupsClient';
 import { listSignupsForAdmin } from '@/lib/activity-signups-store';
+import { coerceLegacyStatus, isSignupStatus } from '@/data/activity-signups-types';
 
 export const metadata = {
   title: 'Admin · Activity Signups — Dear Tennis',
@@ -15,13 +16,14 @@ export default async function AdminActivitySignupsPage({
   searchParams: Promise<{ status?: string; page?: string; activity?: string }>;
 }) {
   const params = await searchParams;
+  // Accept legacy values (pending/approved) from old links/bookmarks.
+  const statusParam = params.status?.trim() ?? '';
   const status =
-    params.status === 'pending' ||
-    params.status === 'approved' ||
-    params.status === 'rejected' ||
-    params.status === 'all'
-      ? params.status
-      : 'pending';
+    statusParam === 'all'
+      ? 'all'
+      : isSignupStatus(statusParam)
+        ? statusParam
+        : coerceLegacyStatus(statusParam) ?? 'pending_approval';
   const page = Number.parseInt(params.page ?? '1', 10);
   const activityId = params.activity?.trim() || undefined;
   const initial = await listSignupsForAdmin({

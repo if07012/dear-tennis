@@ -20,12 +20,12 @@
 //     reconstructed from per-set scores in viewer-perspective order so
 //     `6-4, 3-6, 6-3` always means the viewer's number first.
 //
-// Only signups with status 'approved' are included. Pending / rejected
-// signups are intentionally hidden — the user hasn't actually joined yet.
+// Only signups with status 'joined' (legacy 'approved') are included.
+// Pending / un-paid / rejected signups are intentionally hidden — the user
+// hasn't actually joined yet.
 
 import { NextResponse } from 'next/server';
 import { getSpreadsheetId, listRowsBySheet } from '@/app/lib/supabase';
-import { isSignupStatus } from '@/data/activity-signups-types';
 import { getActivitiesContent } from '@/lib/activities-store';
 import { isAdminEmail } from '@/lib/admin';
 import type { EventType, FilterableEvent, FunmatchMatch, MatchResult } from '@/data/profile-types';
@@ -125,7 +125,8 @@ function buildNameOf(
   for (const raw of rows) {
     const row = raw as Record<string, unknown>;
     if (String(row.activityId ?? '').trim() !== activityId) continue;
-    if (String(row.status ?? '') !== 'approved') continue;
+    const st = String(row.status ?? '');
+    if (st !== 'joined' && st !== 'approved') continue;
     const email = String(row.userEmail ?? '').trim().toLowerCase();
     const name = String(row.userName ?? '').trim();
     if (email && name && !map.has(email)) map.set(email, name);
@@ -199,7 +200,8 @@ export async function GET(request: Request) {
       if (rowEmail !== lower) continue;
 
       const statusRaw = String(row.status ?? '');
-      if (!isSignupStatus(statusRaw) || statusRaw !== 'approved') continue;
+      // Post-payment-flow rows are 'joined'; legacy rows were 'approved'.
+      if (statusRaw !== 'joined' && statusRaw !== 'approved') continue;
 
       const activityId = String(row.activityId ?? '').trim();
       if (!activityId || seen.has(activityId)) continue;

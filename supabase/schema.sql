@@ -363,6 +363,31 @@ CREATE TABLE IF NOT EXISTS our_story_settings (
   "seq" bigint GENERATED ALWAYS AS IDENTITY
 );
 
+-- ============ REGISTRATION PAYMENT FLOW (2026-09) ============
+-- Migration 2026-09 (PRD: activity-registration-payment-coupon-prd.md).
+-- activity_signups gains coupon + payment columns; the old status values
+-- (pending/approved/rejected) are read as pending_approval/joined/rejected
+-- by the store's coerceStatus, so no data rewrite is needed.
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "couponCode" text NOT NULL DEFAULT '';
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "discountPct" integer NOT NULL DEFAULT 0;
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "originalAmount" bigint NOT NULL DEFAULT 0;
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "finalAmount" bigint NOT NULL DEFAULT 0;
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "paymentProofUrl" text;
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "paymentNote" text;
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "uploadedAt" text;
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "paymentReviewedAt" text;
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "paymentReviewedBy" text;
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "rejectionReason" text;
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "joinedAt" text;
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "expiresAt" text;
+-- Optional per-activity payment deadline: hours after registration approval
+-- ('' = no deadline). P1 in the PRD.
+ALTER TABLE activities_items ADD COLUMN IF NOT EXISTS "paymentDeadlineHours" integer NOT NULL DEFAULT 0;
+
+-- Optional payment-approval flow per activity: when true, admin approving a
+-- registration lands it in waiting_payment instead of joined directly.
+ALTER TABLE activities_items ADD COLUMN IF NOT EXISTS "paymentRequired" boolean NOT NULL DEFAULT true;
+
 -- ============ RLS (deny-all; service role bypasses) ============
 DO $$
 DECLARE t text;

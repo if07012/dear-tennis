@@ -69,5 +69,17 @@ export default async function ActivityDetailPage({ params }: Params) {
     }
   }
 
-  return <ActivityDetailClient activity={activity} members={members} matches={matches} />;
+  // Capacity = first number in the free-text groupSize ("20", "4-8 orang");
+  // 0/unparseable = unlimited.
+  const capacityMatch = (activity?.groupSize ?? '').match(/\d+/);
+  const capacity = capacityMatch ? Number.parseInt(capacityMatch[0], 10) : 0;
+
+  return (
+    <ActivityDetailClient
+      activity={activity}
+      members={members}
+      matches={matches}
+      capacity={capacity}
+    />
+  );
 }

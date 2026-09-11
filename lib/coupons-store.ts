@@ -145,6 +145,32 @@ export async function deleteCoupon(id: string): Promise<void> {
   await deleteRowById(db, COUPONS_SHEET, id);
 }
 
+/**
+ * Coupons a given member may still claim for a given activity (PRD §6):
+ * active, unexpired, matching the activity (or activity-agnostic),
+ * assigned to them (or unassigned), and not already claimed by them.
+ * Used by the Join dialog to list choices before creating the registration.
+ */
+export async function listEligibleCoupons(
+  userEmail: string,
+  activityId: string,
+): Promise<Coupon[]> {
+  const email = userEmail.trim().toLowerCase();
+  if (!email) return [];
+  const [coupons, claims] = await Promise.all([listCoupons(), listClaims()]);
+  const claimedCouponIds = new Set(
+    claims.filter((cl) => cl.userEmail === email).map((cl) => cl.couponId),
+  );
+  return coupons.filter(
+    (c) =>
+      c.active &&
+      !isExpired(c) &&
+      !claimedCouponIds.has(c.id) &&
+      (!c.activityId || c.activityId === activityId) &&
+      (!c.userEmail || c.userEmail === email),
+  );
+}
+
 // A member claims a code for a given activity. Records the discount they
 // got (snapshot) so later coupon edits don't rewrite history. Returns the
 // claimed coupon; throws with a user-facing message on any mismatch.

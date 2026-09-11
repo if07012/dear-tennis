@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ClockSmallIcon, MapPinIcon, XIcon } from '@/components/ui/Icons';
 import { formatActivityTime } from '@/lib/activity-utils';
+import { parsePriceToAmount } from '@/data/activity-signups-types';
 
 export type JoinConfirmInfo = {
   title: string;
@@ -11,20 +12,37 @@ export type JoinConfirmInfo = {
   price?: string;
 };
 
+export type JoinCouponOption = {
+  code: string;
+  discountPct: number;
+};
+
+function formatRupiah(amount: number): string {
+  return `Rp${amount.toLocaleString('id-ID')}`;
+}
+
 // Final "did you mean this one?" gate before a signup POST — shows the
 // activity name, date, and location so a mis-click can't join the wrong
-// session.
+// session. When the activity has a price, an optional coupon text box lets
+// the member type a code; it's checked against the server-fetched eligible
+// list (active, unexpired, right user, not yet claimed) and the final
+// amount updates live (PRD §5).
 export function JoinConfirmDialog({
   activity,
+  coupons,
   pending,
   onConfirm,
   onClose,
 }: {
   activity: JoinConfirmInfo | null;
+  /** Eligible coupons, fetched by the parent when opening the dialog. */
+  coupons?: JoinCouponOption[];
+  onConfirm: (couponCode?: string) => void;
   pending: boolean;
-  onConfirm: () => void;
   onClose: () => void;
 }) {
+  const [couponCode, setCouponCode] = useState('');
+
   useEffect(() => {
     if (!activity) return;
     const onKey = (e: KeyboardEvent) => {
@@ -34,7 +52,26 @@ export function JoinConfirmDialog({
     return () => window.removeEventListener('keydown', onKey);
   }, [activity, onClose]);
 
+  // Reset the coupon pick whenever a new dialog opens.
+  useEffect(() => {
+    if (activity) setCouponCode('');
+  }, [activity]);
+
   if (!activity) return null;
+
+  const originalAmount = parsePriceToAmount(activity.price);
+  const showCouponBox = originalAmount > 0;
+  const trimmed = couponCode.trim().toUpperCase();
+  const selected = coupons?.find((c) => c.code === trimmed);
+  // Typed code not in the eligible list (unknown, expired, not for this
+  // user/activity, or already claimed) — block confirm and say so. While the
+  // list is still loading (undefined) we stay neutral: the server re-checks
+  // the code on the signup POST either way.
+  const invalidCode =
+    trimmed.length > 0 && Array.isArray(coupons) && !selected;
+  const finalAmount = selected
+    ? Math.round(originalAmount * (1 - selected.discountPct / 100))
+    : originalAmount;
 
   return (
     <div
@@ -45,7 +82,7 @@ export function JoinConfirmDialog({
       aria-label="Konfirmasi pendaftaran"
     >
       <div
-        className="w-full max-w-md overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-light-gray px-5 py-4">
@@ -92,6 +129,49 @@ export function JoinConfirmDialog({
               <p className="text-xs text-dark-gray">—</p>
             )}
           </div>
+
+          {showCouponBox && (
+            <div className="mt-4">
+              <label
+                htmlFor="join-coupon-code"
+                className="mb-2 block text-xs font-semibold uppercase tracking-wider text-dark-gray"
+              >
+                Punya kode kupon? (opsional)
+              </label>
+              <input
+                id="join-coupon-code"
+                type="text"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                placeholder="KETIK KODE KUPON"
+                autoComplete="off"
+                className={[
+                  'w-full rounded-lg border px-3 py-2 font-mono text-sm uppercase focus:outline-none',
+                  invalidCode
+                    ? 'border-paprika'
+                    : selected
+                      ? 'border-hunter-green'
+                      : 'border-light-gray focus:border-hunter-green',
+                ].join(' ')}
+              />
+              {selected && (
+                <p className="mt-1 text-xs font-semibold text-teal">
+                  Kupon {selected.code} berlaku — diskon {selected.discountPct}%
+                </p>
+              )}
+              {invalidCode && (
+                <p className="mt-1 text-xs font-semibold text-paprika">
+                  Kupon tidak valid, kedaluwarsa, atau bukan untuk kamu.
+                </p>
+              )}
+              <div className="mt-3 flex items-center justify-between rounded-lg bg-off-white px-3 py-2 text-sm">
+                <span className="text-dark-gray">Total bayar</span>
+                <span className="font-semibold text-hunter-green">
+                  {finalAmount > 0 ? formatRupiah(finalAmount) : 'Gratis'}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3 border-t border-light-gray px-5 py-4">
@@ -105,8 +185,8 @@ export function JoinConfirmDialog({
           </button>
           <button
             type="button"
-            onClick={onConfirm}
-            disabled={pending}
+            onClick={() => onConfirm(selected?.code)}
+            disabled={pending || invalidCode}
             className="flex-1 rounded-full bg-paprika px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-paprika-hover hover:shadow-md disabled:opacity-60"
           >
             {pending ? 'Mengirim...' : 'Ya, Daftar'}
