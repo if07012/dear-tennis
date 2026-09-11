@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS activities_items (
   "createdAt" text NOT NULL DEFAULT '',
   "isFull" boolean NOT NULL DEFAULT false,
   "archived" boolean NOT NULL DEFAULT false,
+  "price" text NOT NULL DEFAULT '',
   "seq" bigint GENERATED ALWAYS AS IDENTITY
 );
 
@@ -128,7 +129,37 @@ CREATE TABLE IF NOT EXISTS activity_matches (
 );
 CREATE INDEX IF NOT EXISTS activity_matches_activity_idx ON activity_matches ("activityId");
 
--- ============ BADGES ============
+-- ============ COUPONS ============
+-- Admin-managed discount codes. activityId empty = applies to any activity.
+CREATE TABLE IF NOT EXISTS coupons (
+  "id" text PRIMARY KEY,
+  "code" text NOT NULL DEFAULT '',
+  "discountPct" integer NOT NULL DEFAULT 0,
+  "activityId" text NOT NULL DEFAULT '',
+  "active" boolean NOT NULL DEFAULT true,
+  "createdAt" text NOT NULL DEFAULT '',
+  "seq" bigint GENERATED ALWAYS AS IDENTITY
+);
+CREATE UNIQUE INDEX IF NOT EXISTS coupons_code_key ON coupons (upper("code"));
+CREATE INDEX IF NOT EXISTS coupons_activity_idx ON coupons ("activityId");
+-- Migration 2026-09: coupon expiry. '' = never expires.
+ALTER TABLE coupons ADD COLUMN IF NOT EXISTS "expiresAt" text NOT NULL DEFAULT '';
+-- Migration 2026-09: personal coupons. '' = anyone can claim.
+ALTER TABLE coupons ADD COLUMN IF NOT EXISTS "userEmail" text NOT NULL DEFAULT '';
+
+-- One row per user claiming a coupon: what discount they actually got.
+CREATE TABLE IF NOT EXISTS coupon_claims (
+  "id" text PRIMARY KEY,
+  "couponId" text NOT NULL DEFAULT '',
+  "code" text NOT NULL DEFAULT '',
+  "userEmail" text NOT NULL DEFAULT '',
+  "activityId" text NOT NULL DEFAULT '',
+  "discountPct" integer NOT NULL DEFAULT 0,
+  "claimedAt" text NOT NULL DEFAULT '',
+  "seq" bigint GENERATED ALWAYS AS IDENTITY
+);
+CREATE INDEX IF NOT EXISTS coupon_claims_email_idx ON coupon_claims ("userEmail");
+CREATE INDEX IF NOT EXISTS coupon_claims_coupon_idx ON coupon_claims ("couponId");
 CREATE TABLE IF NOT EXISTS badges (
   "id" text PRIMARY KEY,
   "key" text NOT NULL DEFAULT '',

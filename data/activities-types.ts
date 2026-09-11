@@ -39,6 +39,11 @@ export type ActivityItem = {
    * reference and reactivation. Optional so older rows read as false.
    */
   archived?: boolean;
+  /**
+   * Display price, free text ("Rp 50.000", "$10"). Optional — older rows
+   * have no price and the UI hides the line.
+   */
+  price?: string;
 };
 
 export type ActivitiesContent = {
@@ -68,6 +73,7 @@ export const ACTIVITY_HEADERS = [
   'createdAt',
   'isFull',
   'archived',
+  'price',
 ] as const;
 
 export const ALL_CATEGORIES: ActivityCategory[] = ['training', 'social', 'competitive'];

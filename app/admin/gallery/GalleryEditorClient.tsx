@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronLeftIcon,
@@ -61,9 +60,6 @@ const FIELD_LABEL_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray';
 const INPUT_CLS =
   'w-full rounded-lg border border-light-gray bg-white px-3 py-2 text-sm focus:border-hunter-green focus:outline-none';
-
-const NAV_LINK_CLS =
-  'text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika';
 
 type InitialPage = {
   settings: GallerySettings;
@@ -426,29 +422,6 @@ export function GalleryEditorClient({ initial }: { initial: InitialPage }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
-            <Link href="/admin/hero" className={NAV_LINK_CLS}>
-              Hero
-            </Link>
-            <Link href="/admin/our-story" className={NAV_LINK_CLS}>
-              Our Story
-            </Link>
-            <Link href="/admin/why-join" className={NAV_LINK_CLS}>
-              Why Join
-            </Link>
-            <Link href="/admin/activities" className={NAV_LINK_CLS}>
-              Activities
-            </Link>
-            <Link href="/admin/activities-list" className={NAV_LINK_CLS}>
-              Activities List
-            </Link>
-            <Link href="/admin/calendar" className={NAV_LINK_CLS}>
-              Calendar
-            </Link>
-            <Link href="/admin/testimonials" className={NAV_LINK_CLS}>
-              Stories
-            </Link>
-          </div>
           <SaveBadge status={status} />
           <button
             type="button"

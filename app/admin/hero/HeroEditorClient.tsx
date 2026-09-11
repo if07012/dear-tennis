@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { HeroEditorForm } from '@/components/admin/HeroEditorForm';
 import type { HeroContent, HeroSettings, HeroSlideData } from '@/data/hero-types';
@@ -256,26 +255,6 @@ export function HeroEditorClient({ initial }: { initial: HeroContent }) {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href="/admin/our-story"
-            className="text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika"
-          >
-            Our Story
-          </Link>
-          <span className="text-xs text-dark-gray">·</span>
-          <Link
-            href="/admin/why-join"
-            className="text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika"
-          >
-            Why Join
-          </Link>
-          <span className="text-xs text-dark-gray">·</span>
-          <Link
-            href="/admin/calendar"
-            className="text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika"
-          >
-            Calendar
-          </Link>
           <SaveBadge status={status} />
           <button
             type="button"

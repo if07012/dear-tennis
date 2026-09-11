@@ -6,9 +6,6 @@ import { useAuth } from '@/hooks/useAuth';
 import type { ActivitySignup, SignupStatus } from '@/data/activity-signups-types';
 import type { PagedSignups } from '@/lib/activity-signups-store';
 
-const NAV_LINK_CLS =
-  'text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika';
-
 const FIELD_LABEL_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray';
 const INPUT_CLS =
@@ -192,12 +189,6 @@ export function ActivitySignupsClient({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Link href="/admin/users" className={NAV_LINK_CLS}>
-            Manage Users
-          </Link>
-          <Link href="/admin/hero" className={NAV_LINK_CLS}>
-            ← Hero Editor
-          </Link>
           <ToastBadge toast={toast} />
         </div>
       </header>

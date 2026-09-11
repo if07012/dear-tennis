@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -11,6 +12,9 @@ import {
   XIcon,
 } from '@/components/ui/Icons';
 import { useAuth } from '@/hooks/useAuth';
+import { activityPath } from '@/lib/slug';
+import { formatActivityTime } from '@/lib/activity-utils';
+import { JoinConfirmDialog, type JoinConfirmInfo } from '@/components/ui/JoinConfirmDialog';
 import type {
   ActivityCategory,
   ActivityItem,
@@ -19,23 +23,6 @@ import type {
 import type { SignupStatus } from '@/data/activity-signups-types';
 
 type Filter = ActivityCategory | 'all';
-
-// `time` is stored as a datetime-local string (YYYY-MM-DDTHH:mm) from the
-// admin picker; older rows hold free text ("Saturdays 09:00") — pass those
-// through untouched.
-function formatActivityTime(raw: string): string {
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return raw;
-  return parsed.toLocaleString('en-GB', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-}
 
 // datetime-local strings sort naturally; free-text times don't parse and
 // get Infinity so undated legacy rows sink to the end, newest first.
@@ -81,7 +68,7 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
   const [openActivityId, setOpenActivityId] = useState<string | null>(null);
-  const [detailId, setDetailId] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   // Public, anonymous — show how many members have joined each card. We
   // fetch once on mount; the count only changes when the admin approves a
@@ -203,8 +190,16 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
   const openActivity = openActivityId
     ? activities.find((a) => a.id === openActivityId) ?? null
     : null;
-  const detailActivity = detailId
-    ? activities.find((a) => a.id === detailId) ?? null
+  const confirmActivity = confirmId
+    ? activities.find((a) => a.id === confirmId) ?? null
+    : null;
+  const confirmInfo: JoinConfirmInfo | null = confirmActivity
+    ? {
+        title: confirmActivity.title,
+        time: confirmActivity.time || undefined,
+        location: confirmActivity.location || undefined,
+        price: confirmActivity.price || undefined,
+      }
     : null;
 
   return (
@@ -281,21 +276,30 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
                 </div>
                 <div className="p-6 flex flex-col flex-1">
                   <h3 className="font-serif text-xl font-semibold text-hunter-green mb-2">
-                    {activity.title}
+                    <Link
+                      href={activityPath(activity.id, activity.title)}
+                      className="transition-colors hover:text-paprika"
+                    >
+                      {activity.title}
+                    </Link>
                   </h3>
                   <p className="text-dark-gray text-sm leading-relaxed mb-4 text-pretty line-clamp-3">
                     {activity.description}
                   </p>
                   {activity.description.length > 120 && (
-                    <button
-                      type="button"
-                      onClick={() => setDetailId(activity.id)}
+                    <Link
+                      href={activityPath(activity.id, activity.title)}
                       className="mb-4 self-start text-xs font-semibold text-paprika transition-colors hover:text-paprika-hover"
                     >
-                      Selengkapnya…
-                    </button>
+                      More Detail
+                    </Link>
                   )}
                   <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-4 text-xs text-dark-gray mb-4">
+                    {activity.price && (
+                      <span className="inline-flex items-center gap-1.5 font-semibold text-hunter-green">
+                        {activity.price}
+                      </span>
+                    )}
                     {activity.duration && (
                       <span className="inline-flex items-center gap-1.5">
                         <ClockSmallIcon />
@@ -336,7 +340,7 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
                       activityId={activity.id}
                       status={signups.get(activity.id) ?? null}
                       pending={pendingId === activity.id}
-                      onJoin={() => join(activity.id)}
+                      onJoin={() => setConfirmId(activity.id)}
                       isFull={activity.isFull}
                     />
                   )}
@@ -353,20 +357,16 @@ export function Activities({ settings, activities, limit = 6 }: Props) {
         onClose={() => setOpenActivityId(null)}
       />
 
-      <ActivityDetailModal
-        activity={detailActivity}
-        onClose={() => setDetailId(null)}
-        joinButton={
-          detailActivity && isAuthenticated ? (
-            <ActivityJoinButton
-              activityId={detailActivity.id}
-              status={signups.get(detailActivity.id) ?? null}
-              pending={pendingId === detailActivity.id}
-              onJoin={() => join(detailActivity.id)}
-              isFull={detailActivity.isFull}
-            />
-          ) : null
-        }
+      <JoinConfirmDialog
+        activity={confirmInfo}
+        pending={confirmId !== null && pendingId === confirmId}
+        onConfirm={() => {
+          if (confirmId) {
+            join(confirmId);
+            setConfirmId(null);
+          }
+        }}
+        onClose={() => setConfirmId(null)}
       />
     </section>
   );
@@ -441,119 +441,6 @@ function ActivityJoinButton({
     >
       {pending ? 'Mengirim...' : 'Join'}
     </button>
-  );
-}
-
-function ActivityDetailModal({
-  activity,
-  onClose,
-  joinButton,
-}: {
-  activity: ActivityItem | null;
-  onClose: () => void;
-  joinButton?: React.ReactNode;
-}) {
-  useEffect(() => {
-    if (!activity) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
-    };
-  }, [activity, onClose]);
-
-  if (!activity) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-graphite/50 sm:items-center sm:p-6"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Detail activity ${activity.title}`}
-    >
-      <div
-        className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative h-44 shrink-0 sm:h-56">
-          {activity.image ? (
-            <Image
-              src={activity.image}
-              alt={activity.title}
-              fill
-              sizes="(max-width: 640px) 100vw, 512px"
-              className="object-cover"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center bg-off-white text-sm text-dark-gray">
-              No image
-            </div>
-          )}
-          <span
-            className={[
-              'absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider',
-              TAG_STYLES[activity.category],
-            ].join(' ')}
-          >
-            {activity.category}
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="absolute top-3 right-3 rounded-full bg-white/90 p-1.5 text-dark-gray shadow-sm transition-colors hover:bg-white"
-          >
-            <XIcon size={20} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6 sm:py-5">
-          <h3 className="font-serif text-2xl font-semibold text-hunter-green mb-3">
-            {activity.title}
-          </h3>
-          <p className="text-dark-gray text-sm leading-relaxed text-pretty whitespace-pre-line">
-            {activity.description}
-          </p>
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-dark-gray">
-            {activity.duration && (
-              <span className="inline-flex items-center gap-1.5">
-                <ClockSmallIcon />
-                {activity.duration}
-              </span>
-            )}
-            {activity.time && (
-              <span className="inline-flex items-center gap-1.5">
-                <ClockSmallIcon />
-                {formatActivityTime(activity.time)}
-              </span>
-            )}
-            {activity.location && (
-              <span className="inline-flex items-center gap-1.5">
-                <MapPinIcon />
-                {activity.location}
-              </span>
-            )}
-            {activity.groupSize && (
-              <span className="inline-flex items-center gap-1.5">
-                <UsersSmallIcon />
-                {activity.groupSize}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {joinButton && (
-          <div className="shrink-0 border-t border-light-gray px-5 py-4 sm:px-6">
-            {joinButton}
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
 

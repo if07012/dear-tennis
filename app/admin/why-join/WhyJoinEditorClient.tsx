@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ChevronUp,
@@ -262,28 +261,6 @@ export function WhyJoinEditorClient({ initial }: { initial: WhyJoinContent }) {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex gap-2">
-            <Link
-              href="/admin/hero"
-              className="text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika"
-            >
-              Hero
-            </Link>
-            <span className="text-xs text-dark-gray">·</span>
-            <Link
-              href="/admin/our-story"
-              className="text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika"
-            >
-              Our Story
-            </Link>
-            <span className="text-xs text-dark-gray">·</span>
-            <Link
-              href="/admin/calendar"
-              className="text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika"
-            >
-              Calendar
-            </Link>
-          </div>
           <SaveBadge status={status} />
           <button
             type="button"

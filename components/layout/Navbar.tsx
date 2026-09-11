@@ -18,22 +18,40 @@ const NAV_LINKS = [
   { href: '/#faq', label: 'FAQ' },
 ];
 
-// Admin burger-menu items. The "Journey" entry maps to the Why-Join editor —
-// the why-join section is the user-journey CTA on the home page.
-const ADMIN_NAV_LINKS = [
-  { href: '/admin/activities', label: 'Manage Activities' },
-  { href: '/admin/activities-list', label: 'Activities List' },
-  { href: '/admin/calendar', label: 'Calendar' },
-  { href: '/admin/gallery', label: 'Gallery' },
-  { href: '/admin/hero', label: 'Hero' },
-  { href: '/admin/our-story', label: 'Our Story' },
-  { href: '/admin/testimonials', label: 'Testimonials' },
-  { href: '/admin/statistics', label: 'Statistics' },
-  { href: '/admin/faq', label: 'FAQ' },
-  { href: '/admin/invite', label: 'Invite Members' },
-  { href: '/admin/users', label: 'Manage Users' },
-  { href: '/admin/activity-signups', label: 'Activity Signups' },
-  { href: '/admin/why-join', label: 'Journey' },
+// Admin burger-menu items, grouped by category like a CMS. The "Journey"
+// entry maps to the Why-Join editor — the why-join section is the
+// user-journey CTA on the home page.
+const ADMIN_NAV_GROUPS: { label: string; items: { href: string; label: string }[] }[] = [
+  {
+    label: 'CMS',
+    items: [
+      { href: '/admin/hero', label: 'Hero' },
+      { href: '/admin/our-story', label: 'Our Story' },
+      { href: '/admin/why-join', label: 'Journey' },
+      { href: '/admin/activities', label: 'Activities Heading' },
+      { href: '/admin/calendar', label: 'Calendar' },
+      { href: '/admin/gallery', label: 'Gallery' },
+      { href: '/admin/testimonials', label: 'Testimonials' },
+      { href: '/admin/statistics', label: 'Statistics' },
+      { href: '/admin/faq', label: 'FAQ' },
+    ],
+  },
+  {
+    label: 'Activity',
+    items: [
+      { href: '/admin/activities-list', label: 'Activities List' },
+      { href: '/admin/activity-signups', label: 'Signups' },
+      { href: '/admin/coupons', label: 'Coupons' },
+    ],
+  },
+  {
+    label: 'Users',
+    items: [
+      { href: '/admin/users', label: 'Manage Users' },
+      { href: '/admin/invite', label: 'Invite Members' },
+      { href: '/admin/badges', label: 'Badges' },
+    ],
+  },
 ];
 
 export function Navbar() {
@@ -271,33 +289,44 @@ export function Navbar() {
           ].join(' ')}
         >
           {isAdminMode ? (
-            <ul className="flex flex-col items-stretch py-6">
-              <li className="px-6 pb-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                  Admin Sections
-                </p>
-              </li>
-              {ADMIN_NAV_LINKS.map((link) => {
-                const isActive = pathname === link.href;
+            <div className="flex flex-col py-6">
+              <p className="px-6 pb-2 text-xs font-semibold uppercase tracking-wider text-dark-gray">
+                Admin Sections
+              </p>
+              {ADMIN_NAV_GROUPS.map((group) => {
+                const hasActive = group.items.some((it) => pathname === it.href);
                 return (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      onClick={() => setMenuOpen(false)}
-                      className={[
-                        'block px-6 py-4 text-base font-medium transition-colors',
-                        isActive
-                          ? 'text-paprika bg-paprika/5 border-l-4 border-paprika'
-                          : 'text-graphite hover:bg-off-white hover:text-paprika',
-                      ].join(' ')}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
+                  <details key={group.label} open={hasActive}>
+                    <summary className="cursor-pointer select-none px-6 py-3 text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika list-none [&::-webkit-details-marker]:hidden">
+                      {group.label}
+                      <span className="float-right">▾</span>
+                    </summary>
+                    <ul className="flex flex-col">
+                      {group.items.map((link) => {
+                        const isActive = pathname === link.href;
+                        return (
+                          <li key={link.href}>
+                            <Link
+                              href={link.href}
+                              onClick={() => setMenuOpen(false)}
+                              className={[
+                                'block px-10 py-3 text-sm font-medium transition-colors',
+                                isActive
+                                  ? 'text-paprika bg-paprika/5 border-l-4 border-paprika'
+                                  : 'text-graphite hover:bg-off-white hover:text-paprika',
+                              ].join(' ')}
+                            >
+                              {link.label}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </details>
                 );
               })}
               {hydrated && isAuthenticated && (
-                <li className="px-6 pt-4 border-t border-light-gray mt-4">
+                <div className="px-6 pt-4 border-t border-light-gray mt-4">
                   <button
                     type="button"
                     onClick={handleLogout}
@@ -305,9 +334,9 @@ export function Navbar() {
                   >
                     Logout
                   </button>
-                </li>
+                </div>
               )}
-            </ul>
+            </div>
           ) : (
             <ul className="flex flex-col items-stretch py-6">
               {NAV_LINKS.map((link) => (

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import type { BadgeCatalogRecord } from '@/data/achievements-types';
@@ -175,12 +174,6 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
             Kelola badge yang bisa di授予 admin ke user dari halaman Manage User.
           </p>
         </div>
-        <Link
-          href="/admin/users"
-          className="text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika"
-        >
-          ← Manage User
-        </Link>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">

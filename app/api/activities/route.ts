@@ -84,6 +84,7 @@ type ActivityUpsertBody = {
     time: string;
     isFull?: boolean;
     archived?: boolean;
+    price?: string;
   };
 };
 
@@ -151,6 +152,7 @@ export async function PUT(request: Request) {
           time: String(activity.time ?? '').trim(),
           isFull: activity.isFull === true,
           archived: activity.archived === true,
+          price: String(activity.price ?? '').trim(),
         };
         // Draft ids (client-minted "draft-*") must never take the update path —
         // update on a nonexistent row "succeeds" silently and the create is lost.

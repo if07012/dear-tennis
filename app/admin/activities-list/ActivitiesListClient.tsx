@@ -50,9 +50,6 @@ const FIELD_LABEL_CLS = 'text-xs font-semibold uppercase tracking-wider text-dar
 const INPUT_CLS =
   'w-full rounded-lg border border-light-gray bg-white px-3 py-2 text-sm focus:border-hunter-green focus:outline-none';
 
-const NAV_LINK_CLS =
-  'text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika';
-
 function isPersistedId(id: string) {
   if (id.startsWith('draft-')) return false;
   return id.length > 24; // UUIDs from server
@@ -155,6 +152,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
         time: draft.time,
         isFull: draft.isFull === true,
         archived: draft.archived === true,
+        price: draft.price ?? '',
       };
 
       if (!isPersistedId(draft.id)) {
@@ -197,6 +195,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
         time: item.time,
         isFull: false,
         archived: false,
+        price: item.price ?? '',
       };
       const result = await apiFetch('activity', { activity: payload });
       const persisted = (result as { activity?: ActivityItem }).activity;
@@ -240,6 +239,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
           time: item.time,
           isFull: item.isFull === true,
           archived: nextArchived,
+          price: item.price ?? '',
         },
       });
       setActivities((prev) =>
@@ -334,6 +334,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
           time,
           isFull: false,
           archived: false,
+          price: item.price ?? '',
         };
         const result = await apiFetch('activity', { activity: payload });
         const persisted = (result as { activity?: ActivityItem }).activity;
@@ -371,6 +372,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
       time: '',
       isFull: false,
       archived: false,
+      price: '',
     });
   };
 
@@ -400,15 +402,6 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
-            <Link href="/admin/hero" className={NAV_LINK_CLS}>Hero</Link>
-            <Link href="/admin/our-story" className={NAV_LINK_CLS}>Our Story</Link>
-            <Link href="/admin/why-join" className={NAV_LINK_CLS}>Why Join</Link>
-            <Link href="/admin/activities" className={NAV_LINK_CLS}>
-              Activities Heading
-            </Link>
-            <Link href="/admin/calendar" className={NAV_LINK_CLS}>Calendar</Link>
-          </div>
           <SaveBadge status={status} />
           <button
             type="button"
@@ -919,6 +912,23 @@ function EditDrawer({ draft, onCancel, onSave }: EditDrawerProps) {
               />
             </label>
           </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="flex flex-col gap-1">
+              <span className={FIELD_LABEL_CLS}>Price</span>
+              <input
+                type="text"
+                value={state.price ?? ''}
+                onChange={(e) => update('price', e.target.value)}
+                placeholder="e.g. Rp 50.000"
+                className={INPUT_CLS}
+              />
+            </label>
+          </div>
+          <p className="text-[0.7rem] text-dark-gray">
+            Kelola kupon di halaman <strong>Coupons</strong> — potongan
+            harga dihitung otomatis dari kupon yang diklaim member.
+          </p>
 
           <label className="mt-1 flex items-center gap-3 rounded-lg border border-light-gray bg-off-white px-3 py-2.5">
             <input

@@ -60,6 +60,7 @@ const TABLES = new Set([
   'hero_settings', 'hero_slides',
   'activities_settings', 'activities_items',
   'activity_signups', 'activity_matches',
+  'coupons', 'coupon_claims',
   'badges', 'user_badges',
   'user_skill_points', 'user_performance_points',
   'gallery_settings', 'gallery_items',

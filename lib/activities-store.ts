@@ -124,6 +124,7 @@ function coerceItem(r: Record<string, unknown>, idx: number): ActivityItem {
     createdAt: r.createdAt ? String(r.createdAt) : undefined,
     isFull,
     archived,
+    price: String(r.price ?? ''),
   };
 }
 

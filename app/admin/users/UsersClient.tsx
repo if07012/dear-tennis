@@ -6,9 +6,6 @@ import { useAuth } from '@/hooks/useAuth';
 import type { PagedUsers, UserRecord, UserRole } from '@/lib/users-store';
 import type { BadgeCatalogRecord, GrantedBadge } from '@/data/achievements-types';
 
-const NAV_LINK_CLS =
-  'text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika';
-
 const FIELD_LABEL_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray';
 const INPUT_CLS =
@@ -339,18 +336,6 @@ export function UsersClient({ initial }: { initial: InitialPage }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Link href="/admin/hero" className={NAV_LINK_CLS}>
-            ← Hero Editor
-          </Link>
-          <Link href="/admin/our-story" className={NAV_LINK_CLS}>
-            Our Story
-          </Link>
-          <Link href="/admin/gallery" className={NAV_LINK_CLS}>
-            Gallery
-          </Link>
-          <Link href="/admin/badges" className={NAV_LINK_CLS}>
-            Badge Catalog
-          </Link>
           <ToastBadge toast={toast} />
         </div>
       </header>

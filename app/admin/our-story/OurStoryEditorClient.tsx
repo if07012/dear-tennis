@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import type { OurStorySettings } from '@/data/our-story-types';
 
@@ -111,12 +110,6 @@ export function OurStoryEditorClient({ initial }: { initial: OurStorySettings })
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href="/admin/hero"
-            className="text-xs font-semibold uppercase tracking-wider text-dark-gray transition-colors hover:text-paprika"
-          >
-            ← Hero Editor
-          </Link>
           <SaveBadge status={status} />
           <button
             type="button"
