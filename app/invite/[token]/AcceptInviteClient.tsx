@@ -29,6 +29,7 @@ type State =
 
 type FieldErrors = {
   name?: string;
+  phone?: string;
   password?: string;
   confirm?: string;
   form?: string;
@@ -116,7 +117,7 @@ export function AcceptInviteClient({ token }: { token: string }) {
                       .catch(() => ({}))) as {
                       success?: boolean;
                       error?: string;
-                      user?: { id: string; email: string; name: string };
+                      user?: { id: string; email: string; name: string; phone?: string };
                     };
                     if (!res.ok || !body.success || !body.user) {
                       setState({ kind: 'form', invite: state.invite });
@@ -269,10 +270,11 @@ function FormState({
   token: string;
   invite: InviteLookup;
   submitting: boolean;
-  onSubmit: (values: { name: string; password: string }) => Promise<FieldErrors | null>;
+  onSubmit: (values: { name: string; phone: string; password: string }) => Promise<FieldErrors | null>;
   onSuccessRedirect: () => void;
 }) {
   const [name, setName] = useState(invite.name ?? '');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -281,6 +283,9 @@ function FormState({
     e.preventDefault();
     const next: FieldErrors = {};
     if (!name.trim()) next.name = 'Nama wajib diisi';
+    if (phone.trim() && !/^[+\d][\d\s-]{5,}$/.test(phone.trim())) {
+      next.phone = 'Nomor telepon tidak valid';
+    }
     if (password.length < 6) next.password = 'Password minimal 6 karakter';
     if (confirm !== password) next.confirm = 'Konfirmasi password tidak cocok';
     if (Object.keys(next).length > 0) {
@@ -288,7 +293,7 @@ function FormState({
       return;
     }
     setErrors({});
-    const result = await onSubmit({ name: name.trim(), password });
+    const result = await onSubmit({ name: name.trim(), phone: phone.trim(), password });
     if (result) {
       setErrors(result);
     } else {
@@ -333,6 +338,25 @@ function FormState({
         {errors.name && (
           <span className="text-xs font-semibold text-paprika">
             {errors.name}
+          </span>
+        )}
+      </label>
+
+      <label className="flex flex-col gap-1">
+        <span className={FIELD_LABEL_CLS}>Nomor Telepon</span>
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          autoComplete="tel"
+          maxLength={20}
+          disabled={submitting}
+          className={INPUT_CLS}
+          placeholder="Opsional, e.g. +62 812 3456 7890"
+        />
+        {errors.phone && (
+          <span className="text-xs font-semibold text-paprika">
+            {errors.phone}
           </span>
         )}
       </label>

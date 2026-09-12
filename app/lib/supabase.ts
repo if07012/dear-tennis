@@ -70,6 +70,7 @@ const TABLES = new Set([
   'statistics_items',
   'why_join_settings', 'why_join_benefits',
   'our_story_settings',
+  'click_events',
 ] as const);
 
 // Old sheet name aliases → table names (why_join_benefits sheet was created
@@ -150,6 +151,70 @@ export async function readRowById(
   return data ? dropInternalColumns(data as Record<string, unknown>) : null;
 }
 
+// ============ FILTERED READS (admin views) ============
+// The read-all + JS-sort pattern of the older stores doesn't scale to
+// append-only event tables (click_events grows unbounded), so this one
+// helper pushes filter/sort/range down to Postgres.
+
+export type SheetFilterOp = 'gte' | 'lte' | 'ilike' | 'eq';
+export type SheetFilter = { op: SheetFilterOp; column: string; value: string };
+
+export type QueryRowsOptions = {
+  /** ANDed column filters. `ilike` values must be pre-escaped by the caller. */
+  filters?: SheetFilter[];
+  /**
+   * Raw supabase-js `.or()` query string for cross-column search, e.g.
+   * "buttonText.ilike.%Daftar%,ip.ilike.%1.2%". Caller builds it; the shim
+   * only forwards it.
+   */
+  orQuery?: string;
+  orderBy?: string;
+  ascending?: boolean;
+  offset?: number;
+  limit?: number;
+  /** Also return an exact total count (one extra head request). */
+  exactCount?: boolean;
+};
+
+export async function queryRowsBySheet(
+  _spreadsheetId: string,
+  sheetName: string,
+  options: QueryRowsOptions,
+): Promise<{ rows: Record<string, unknown>[]; total?: number }> {
+  const table = tableFor(sheetName);
+  const build = () => {
+    let q = db().from(table).select('*');
+    for (const f of options.filters ?? []) {
+      // Index-style call: TS can't unify the overloaded per-op filter builders
+      // when the op is a union, and referencing the builder's own type here
+      // recurses infinitely. All four ops share a (column, value) shape.
+      type Builder = Record<string, (column: string, value: string) => unknown>;
+      q = (q as unknown as Builder)[f.op](f.column, f.value) as typeof q;
+    }
+    if (options.orQuery) q = q.or(options.orQuery);
+    if (options.orderBy) q = q.order(options.orderBy, { ascending: options.ascending ?? false });
+    if (options.limit != null || options.offset != null) {
+      const offset = options.offset ?? 0;
+      q = q.range(offset, offset + (options.limit ?? 50) - 1);
+    }
+    return q;
+  };
+
+  const [rowsRes, countRes] = await Promise.all([
+    build(),
+    options.exactCount
+      ? db().from(table).select('id', { count: 'exact', head: true })
+      : Promise.resolve(null),
+  ]);
+  if (rowsRes.error) throw new Error(rowsRes.error.message);
+  const countData = await countRes;
+  if (countData?.error) throw new Error(countData.error.message);
+  return {
+    rows: (rowsRes.data ?? []).map(dropInternalColumns),
+    total: countData ? (countData.count ?? 0) : undefined,
+  };
+}
+
 // ============ WRITES ============
 
 export async function createRowWithId(
@@ -198,6 +263,18 @@ export async function deleteRowById(
     .eq('id', id);
   if (error) throw new Error(error.message);
   return { success: true };
+}
+
+/** Batch insert (click tracking). No RETURNING — callers don't need rows back. */
+export async function insertRowsBatch(
+  _spreadsheetId: string,
+  sheetName: string,
+  rows: Record<string, unknown>[],
+): Promise<{ success: boolean; count: number }> {
+  if (rows.length === 0) return { success: true, count: 0 };
+  const { error } = await db().from(tableFor(sheetName)).insert(rows);
+  if (error) throw new Error(error.message);
+  return { success: true, count: rows.length };
 }
 
 // ============ COMPAT NO-OPS ============

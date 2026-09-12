@@ -85,6 +85,7 @@ function buildSidebarUser(
   email: string,
   photo: string | undefined,
   rank: string | undefined,
+  phone: string | undefined,
   fallback: ProfileUser,
 ): ProfileUser {
   const safeName = name.trim() || email.split('@')[0] || fallback.name;
@@ -98,7 +99,7 @@ function buildSidebarUser(
   // Prefer the explicit rank from the viewed user's record; fall back
   // to the bundled profile rank when nothing is stored yet.
   const safeRank = rank?.trim() || fallback.rank;
-  return { ...fallback, name: safeName, avatarUrl, rank: safeRank };
+  return { ...fallback, name: safeName, avatarUrl, rank: safeRank, phone: phone?.trim() || undefined };
 }
 
 export function ProfileLayout({
@@ -238,6 +239,7 @@ export function ProfileLayout({
           viewedUser.email,
           viewedUser.photo,
           viewedUser.rank,
+          viewedUser.phone,
           profileUser,
         )
       : buildSidebarUser(
@@ -245,6 +247,7 @@ export function ProfileLayout({
           user?.email ?? '',
           user?.photo,
           user?.rank,
+          user?.phone,
           profileUser,
         );
     if (joinedCount === null && badgesCount === null && joinedHours === null) return base;

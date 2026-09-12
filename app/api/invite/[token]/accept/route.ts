@@ -16,6 +16,7 @@ import {
 } from '@/lib/invite-store';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phoneRegex = /^[+\d][\d\s-]{5,}$/;
 
 function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
@@ -50,18 +51,22 @@ export async function POST(
   if (!usersSheetId) return serverError('Supabase is not configured');
   const invitesSheetId = usersSheetId;
 
-  let body: { name?: string; password?: string };
+  let body: { name?: string; password?: string; phone?: string };
   try {
-    body = (await request.json()) as { name?: string; password?: string };
+    body = (await request.json()) as { name?: string; password?: string; phone?: string };
   } catch {
     return badRequest('Invalid JSON');
   }
 
   const name = String(body.name ?? '').trim();
   const password = String(body.password ?? '');
+  const phone = String(body.phone ?? '').trim();
   if (!name) return badRequest('Nama wajib diisi');
   if (password.length < 6) {
     return badRequest('Password minimal 6 karakter');
+  }
+  if (phone && (!phoneRegex.test(phone) || phone.length > 20)) {
+    return badRequest('Nomor telepon tidak valid');
   }
 
   try {
@@ -104,6 +109,7 @@ export async function POST(
       passwordHash: hash,
       salt,
       createdAt: new Date().toISOString(),
+      ...(phone ? { phone } : {}),
     });
     try {
       await markInviteAccepted(invitesSheetId, invite.id);

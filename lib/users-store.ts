@@ -38,6 +38,7 @@ const USERS_HEADERS = [
   'role',
   'photo',
   'rank',
+  'phone',
 ];
 
 export type UserRole = 'admin' | 'member';
@@ -58,6 +59,11 @@ export type UserRecord = {
    * from the profile page. Optional so older rows read as undefined.
    */
   rank?: string;
+  /**
+   * Optional phone number. Collected at registration and editable from the
+   * profile page. Optional so older rows read as undefined.
+   */
+  phone?: string;
 };
 
 export type PagedUsers = {
@@ -92,6 +98,7 @@ function coerceUser(r: Record<string, unknown>): UserRecord {
     createdAt: String(r.createdAt ?? '').trim(),
     photo: r.photo ? String(r.photo).trim() || undefined : undefined,
     rank: r.rank ? String(r.rank).trim() || undefined : undefined,
+    phone: r.phone ? String(r.phone).trim() || undefined : undefined,
   };
 }
 

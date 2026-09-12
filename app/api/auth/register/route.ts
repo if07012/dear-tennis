@@ -3,6 +3,7 @@ import { createRowWithId, getSpreadsheetId, listRowsBySheet } from '@/app/lib/su
 import { hashPassword } from '@/lib/auth';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phoneRegex = /^[+\d][\d\s-]{5,}$/;
 
 export async function POST(request: Request) {
   try {
@@ -10,6 +11,7 @@ export async function POST(request: Request) {
     const email = String(body.email ?? '').trim().toLowerCase();
     const name = String(body.name ?? '').trim();
     const password = String(body.password ?? '');
+    const phone = String(body.phone ?? '').trim();
 
     if (!email || !name || !password) {
       return NextResponse.json(
@@ -23,6 +25,12 @@ export async function POST(request: Request) {
     if (password.length < 6) {
       return NextResponse.json(
         { error: 'Password must be at least 6 characters' },
+        { status: 400 }
+      );
+    }
+    if (phone && (!phoneRegex.test(phone) || phone.length > 20)) {
+      return NextResponse.json(
+        { error: 'Invalid phone number' },
         { status: 400 }
       );
     }
@@ -51,6 +59,7 @@ export async function POST(request: Request) {
       passwordHash: hash,
       salt,
       createdAt: new Date().toISOString(),
+      ...(phone ? { phone } : {}),
     });
 
     return NextResponse.json({

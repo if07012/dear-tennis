@@ -397,3 +397,38 @@ BEGIN
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
   END LOOP;
 END $$;
+
+-- ============ CLICK TRACKING (2026-09) ============
+-- Migration 2026-09 (PRD: add-new-feature-for-tracking-user-export.md).
+-- PRD §12: click data is non-personal; anonymous visitors get IP only (plain
+-- text, no hashing). clickedAt is a UTC ISO string so lexicographic text
+-- sort matches chronological order.
+CREATE TABLE IF NOT EXISTS click_events (
+  "id" text PRIMARY KEY,
+  "buttonText" text NOT NULL DEFAULT '',
+  "elementType" text NOT NULL DEFAULT '',
+  "targetUrl" text NOT NULL DEFAULT '',
+  "pageUrl" text NOT NULL DEFAULT '',
+  "activityTitle" text NOT NULL DEFAULT '',
+  "clickedAt" text NOT NULL DEFAULT '',
+  "timezone" text NOT NULL DEFAULT '',
+  "referrerUrl" text NOT NULL DEFAULT '',
+  "userName" text NOT NULL DEFAULT '',
+  "userEmail" text NOT NULL DEFAULT '',
+  "ip" text NOT NULL DEFAULT '',
+  "browser" text NOT NULL DEFAULT '',
+  "deviceType" text NOT NULL DEFAULT '',
+  "seq" bigint GENERATED ALWAYS AS IDENTITY
+);
+CREATE INDEX IF NOT EXISTS idx_click_events_clicked_at ON click_events ("clickedAt");
+CREATE INDEX IF NOT EXISTS idx_click_events_button_text ON click_events ("buttonText");
+CREATE INDEX IF NOT EXISTS idx_click_events_ip ON click_events ("ip");
+-- The RLS DO-block earlier in this file ran before this table existed, so
+-- this table needs its own enable.
+ALTER TABLE click_events ENABLE ROW LEVEL SECURITY;
+-- Migration 2026-09: tracking is now activity-detail-only; store its title.
+ALTER TABLE click_events ADD COLUMN IF NOT EXISTS "activityTitle" text NOT NULL DEFAULT '';
+
+-- Migration 2026-09: optional phone number on users (set at registration,
+-- editable from the profile page).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS "phone" text;

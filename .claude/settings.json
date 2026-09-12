@@ -15,5 +15,8 @@
         ]
       }
     ]
+  },
+  "env":{
+    "CLAUDE_CODE_EXPERIEMNTAL_AGENT_TEAMS":"1"
   }
 }

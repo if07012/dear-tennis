@@ -5,6 +5,7 @@ import { listAllUsersForAdmin } from '@/lib/users-store';
 import { getSpreadsheetId } from '@/app/lib/supabase';
 import { listMatchesForActivity } from '@/app/lib/matches-store';
 import type { MatchRecord } from '@/data/matches-types';
+import { ClickTracker } from '@/components/tracking/ClickTracker';
 import { ActivityDetailClient } from './ActivityDetailClient';
 
 export const dynamic = 'force-dynamic';
@@ -75,11 +76,14 @@ export default async function ActivityDetailPage({ params }: Params) {
   const capacity = capacityMatch ? Number.parseInt(capacityMatch[0], 10) : 0;
 
   return (
-    <ActivityDetailClient
-      activity={activity}
-      members={members}
-      matches={matches}
-      capacity={capacity}
-    />
+    <>
+      {activity && <ClickTracker activityTitle={activity.title} />}
+      <ActivityDetailClient
+        activity={activity}
+        members={members}
+        matches={matches}
+        capacity={capacity}
+      />
+    </>
   );
 }

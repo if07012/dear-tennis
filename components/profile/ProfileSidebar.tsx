@@ -87,6 +87,9 @@ export function ProfileSidebar({ user, readOnly = false, loading = false }: Prop
   const displayRank = readOnly
     ? (rank ?? authUser?.rank ?? '')
     : (authUser?.rank ?? rank ?? '');
+  // Same source-of-truth rule as rank: view-as uses the viewed user's
+  // record, self-edit uses the auth record.
+  const displayPhone = readOnly ? user.phone : authUser?.phone;
   const [editorOpen, setEditorOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('url');
   const [urlInput, setUrlInput] = useState('');
@@ -99,6 +102,7 @@ export function ProfileSidebar({ user, readOnly = false, loading = false }: Prop
   const [profileEditing, setProfileEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState(name);
   const [rankDraft, setRankDraft] = useState(displayRank);
+  const [phoneDraft, setPhoneDraft] = useState(authUser?.phone ?? '');
   const [profileStatus, setProfileStatus] = useState<Status>({ kind: 'idle' });
 
   // RANK_OPTIONS / RANK_CUSTOM live at module scope. The <select> needs
@@ -112,13 +116,15 @@ export function ProfileSidebar({ user, readOnly = false, loading = false }: Prop
     if (!profileEditing) {
       setNameDraft(name);
       setRankDraft(displayRank);
+      setPhoneDraft(authUser?.phone ?? '');
     }
-  }, [name, displayRank, profileEditing]);
+  }, [name, displayRank, authUser?.phone, profileEditing]);
 
   const saveProfile = async () => {
     if (!authUser) return;
     const nextName = nameDraft.trim();
     const nextRank = rankDraft.trim();
+    const nextPhone = phoneDraft.trim();
     if (nextName.length === 0) {
       setProfileStatus({ kind: 'error', message: 'Nama tidak boleh kosong' });
       return;
@@ -131,11 +137,11 @@ export function ProfileSidebar({ user, readOnly = false, loading = false }: Prop
           'content-type': 'application/json',
           'x-auth-email': authUser.email,
         },
-        body: JSON.stringify({ name: nextName, rank: nextRank }),
+        body: JSON.stringify({ name: nextName, rank: nextRank, phone: nextPhone }),
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
-      setAuthUser({ ...authUser, name: nextName, rank: nextRank || undefined });
+      setAuthUser({ ...authUser, name: nextName, rank: nextRank || undefined, phone: nextPhone || undefined });
       setProfileStatus({ kind: 'saved', at: Date.now() });
       setTimeout(() => {
         setProfileEditing(false);
@@ -369,6 +375,19 @@ export function ProfileSidebar({ user, readOnly = false, loading = false }: Prop
                 />
               )}
             </label>
+            <label className="flex flex-col gap-1 text-left">
+              <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-dark-gray">
+                Nomor Telepon
+              </span>
+              <input
+                type="tel"
+                value={phoneDraft}
+                onChange={(e) => setPhoneDraft(e.target.value)}
+                maxLength={20}
+                className="rounded-lg border border-light-gray bg-white px-3 py-1.5 text-sm focus:border-hunter-green focus:outline-none"
+                placeholder="e.g. +62 812 3456 7890"
+              />
+            </label>
             {profileStatus.kind === 'error' && (
               <p className="text-xs text-paprika">{profileStatus.message}</p>
             )}
@@ -404,6 +423,9 @@ export function ProfileSidebar({ user, readOnly = false, loading = false }: Prop
             <p className="mt-1 text-sm font-medium text-paprika">
               {displayRank}
             </p>
+            {displayPhone && (
+              <p className="mt-0.5 text-sm text-dark-gray">{displayPhone}</p>
+            )}
           </>
         )}
 

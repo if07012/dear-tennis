@@ -85,6 +85,7 @@ export type ProfileUser = {
   name: string;
   rank: string;
   avatarUrl: string;
+  phone?: string;
   stats: {
     sessions: number;
     avgScore: number;

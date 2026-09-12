@@ -20,6 +20,7 @@ import { USERS_HEADERS } from '@/lib/users-store';
 const MAX_PHOTO_BYTES = 200 * 1024; // 200 KB cap on the base64 string
 const MAX_NAME_LEN = 80;
 const MAX_RANK_LEN = 60;
+const MAX_PHONE_LEN = 20;
 
 function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
@@ -42,6 +43,7 @@ type PatchBody = {
   photo?: string | null;
   name?: string;
   rank?: string | null;
+  phone?: string | null;
 };
 
 export async function PATCH(request: Request) {
@@ -100,6 +102,21 @@ export async function PATCH(request: Request) {
   } else if (body.rank === null) {
     patch.rank = '';
   }
+  if (body.phone !== null && body.phone !== undefined) {
+    if (typeof body.phone !== 'string') {
+      return badRequest('phone must be a string');
+    }
+    const trimmed = body.phone.trim();
+    if (trimmed.length > MAX_PHONE_LEN) {
+      return badRequest(`phone must be ${MAX_PHONE_LEN} characters or fewer`);
+    }
+    if (trimmed && !/^[+\d][\d\s-]{5,}$/.test(trimmed)) {
+      return badRequest('phone must be a valid phone number');
+    }
+    patch.phone = trimmed;
+  } else if (body.phone === null) {
+    patch.phone = '';
+  }
 
   if (Object.keys(patch).length === 0) {
     return badRequest('No fields to update');
@@ -123,7 +140,7 @@ export async function PATCH(request: Request) {
     await ensureSheetWithHeaders(spreadsheetId, 'users', [...USERS_HEADERS]);
 
     await updateRowById(spreadsheetId, 'users', userId, patch);
-    return NextResponse.json({ ok: true, user: { name: patch.name, rank: patch.rank } });
+    return NextResponse.json({ ok: true, user: { name: patch.name, rank: patch.rank, phone: patch.phone } });
   } catch (error) {
     console.error('Error in PATCH /api/profile:', error);
     return serverError('Failed to update profile');

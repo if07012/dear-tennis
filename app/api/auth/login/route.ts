@@ -87,6 +87,7 @@ export async function POST(request: Request) {
         email: obj.email,
         name: obj.name,
         photo: obj.photo ? String(obj.photo) : undefined,
+        phone: obj.phone ? String(obj.phone) : undefined,
       },
     });
   } catch (error) {

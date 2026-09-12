@@ -21,6 +21,11 @@ export type AuthUser = {
    * profile editor; persisted on the users sheet's `rank` column.
    */
   rank?: string;
+  /**
+   * Optional phone number. Collected at registration and editable from
+   * the profile editor; persisted on the users sheet's `phone` column.
+   */
+  phone?: string;
 };
 
 function readUser(): AuthUser | null {
