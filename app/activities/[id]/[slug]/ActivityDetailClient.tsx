@@ -533,7 +533,7 @@ export function ActivityDetailClient({ activity, members, matches, capacity }: P
                   Harga
                 </p>
                 <p className="mt-1 font-serif text-xl font-bold text-hunter-green">
-                  {activity.price}
+                  {priceAmount > 0 ? formatRupiah(priceAmount) : activity.price}
                 </p>
               </div>
             )}
