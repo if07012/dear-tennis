@@ -31,15 +31,18 @@ Dear Tennis is a tennis community website with a member side and an admin/CMS si
 **Admin** (`/admin/*`, grouped nav: CMS / Activity / Users)
 - CMS editors: hero, our story, why-join, activities heading, calendar, gallery, testimonials, statistics, FAQ.
 - Activities list: full CRUD, ordering, archive, clone, recurring duplication, price, per-activity signup counts.
+- Matches drawer: record match results per activity, auto-pair an approved roster (round-robin or bracket), standings view.
+- Performance/skill-points drawers: record per-member performance points and skill points directly from the activity list.
 - Activity signups: approve/reject/delete requests, filter by status and by activity.
 - Coupons: CRUD + member claims list.
 - Users: role management, badge granting, profile view.
 - Invites: issue invite links.
+- Groq Bot (`/admin/groq`): WhatsApp chatbot via WAHA + Groq — members ask about training progress, get activity recommendations that train their weakest skill, and book (lands in the same pending-approval flow). Admin manages the Groq key pool (priority rotation on 429) and call logs; activity editor tags activities with trained skills.
 
 ### Planned / not built (from PRDs)
 
 - Tennis Training Progress Dashboard (per `profile.md`): overall score, radar chart, fault analysis, weakest-skill recommendations, goal tracking, coach notes, export, training calendar. Current dashboard is a subset: skill points + matches + badges.
-- Roadmap items (`PRD.md`): court booking, tournament registration, blog, merchandise, leaderboard, WhatsApp integration, Google Calendar sync.
+- Roadmap items (`PRD.md`): court booking, tournament registration, blog, merchandise, leaderboard, Google Calendar sync.
 - Future concepts: AI coach insights, video/swing analysis.
 
 ## Open product questions
@@ -48,4 +51,4 @@ From `profile.md` §24, still undecided: skill scoring scale (0–100 vs 1–10)
 
 ## Status
 
-As of September 2026: marketing site + CMS + membership + activities + coupons + badges shipped; progress-dashboard features partially implemented (skill points, matches, achievements). See git history for recent work.
+As of September 2026: marketing site + CMS + membership + activities + coupons + badges + match tracking (autopair, standings) shipped; progress-dashboard features partially implemented (skill points, matches, achievements). See git history for recent work.

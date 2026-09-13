@@ -71,11 +71,6 @@ export async function POST(request: Request) {
       String(obj?.passwordHash ?? ''),
       String(obj?.salt ?? '')
     );
-    console.log('obj', obj);
-    console.log('ok', ok);
-    console.log('password', password);
-    console.log('passwordHash', obj?.passwordHash);
-    console.log('salt', obj?.salt);
     if (!obj || !ok) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }

@@ -43,6 +43,7 @@ const ADMIN_NAV_GROUPS: { label: string; items: { href: string; label: string }[
       { href: '/admin/activity-signups', label: 'Signups' },
       { href: '/admin/coupons', label: 'Coupons' },
       { href: '/admin/clicks', label: 'Click Tracking' },
+      { href: '/admin/groq', label: 'Groq Bot' },
     ],
   },
   {

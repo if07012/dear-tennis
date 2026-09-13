@@ -20,18 +20,14 @@
 
 import { NextResponse } from 'next/server';
 import { getSpreadsheetId, listRowsBySheet } from '@/app/lib/supabase';
-import {
-  findSignup,
-  requestSignup,
-  getSignupCountsByActivity,
-} from '@/lib/activity-signups-store';
-import { parsePriceToAmount } from '@/data/activity-signups-types';
+import { registerUserForActivity } from '@/lib/activity-bookings';
 import {
   isExpired,
   listClaims,
   listCoupons,
 } from '@/lib/coupons-store';
 import { getActivitiesContent } from '@/lib/activities-store';
+import { parsePriceToAmount } from '@/data/activity-signups-types';
 
 function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
@@ -96,37 +92,12 @@ export async function POST(request: Request) {
     const user = await resolveUser(usersSheetId, email);
     if (!user) return unauthorized();
 
-    const existing = await findSignup(activitiesSheetId, activityId, user.email);
-    // Already joined — short-circuit to keep the UI in sync without a
-    // server-side mutation.
-    if (existing && existing.status === 'joined') {
-      return NextResponse.json({ ok: true, signup: existing, created: false });
-    }
-
-    // Activity must exist and be open for registration.
-    const { activities } = await getActivitiesContent();
-    const activity = activities.find((a) => a.id === activityId);
-    if (!activity) return badRequest('Activity tidak ditemukan');
-    if (activity.archived === true) return badRequest('Activity sudah tidak tersedia');
-    if (activity.isFull === true) return badRequest('Activity sudah penuh');
-
-    // Capacity: waiting_payment + payment_submitted + joined occupy slots.
-    // groupSize is free text ("20", "4-8 orang"); take the first number as
-    // the capacity, 0 = unlimited.
-    const capacityMatch = (activity.groupSize ?? '').match(/\d+/);
-    const capacity = capacityMatch ? Number.parseInt(capacityMatch[0], 10) : 0;
-    if (capacity > 0) {
-      const { occupied } = await getSignupCountsByActivity();
-      if ((occupied[activityId] ?? 0) >= capacity) {
-        return badRequest('Slot activity sudah penuh');
-      }
-    }
-
     // Coupon eligibility (PRD §6): active, unexpired, applicable activity,
-    // right user, not already claimed by this user.
-    let couponCodeSnapshot = '';
+    // right user, not already claimed by this user. The discount % is
+    // snapshotted onto the signup row; everything else (idempotency,
+    // archived/full checks, capacity) runs in the shared pipeline.
+    let couponCodeSnapshot: string | undefined;
     let discountPct = 0;
-    const originalAmount = parsePriceToAmount(activity.price);
     if (couponCode) {
       const [coupons, claims] = await Promise.all([listCoupons(), listClaims()]);
       const coupon = coupons.find((c) => c.code === couponCode);
@@ -145,21 +116,19 @@ export async function POST(request: Request) {
       couponCodeSnapshot = coupon.code;
       discountPct = coupon.discountPct;
     }
-    const finalAmount = Math.round(originalAmount * (1 - discountPct / 100));
 
-    const result = await requestSignup(activitiesSheetId, {
-      activityId,
-      userEmail: user.email,
-      userName: user.name,
+    const result = await registerUserForActivity(user, activityId, {
       message,
       couponCode: couponCodeSnapshot,
       discountPct,
-      originalAmount,
-      finalAmount,
     });
+    if (!result.ok) return badRequest(result.error);
+    // The shared helper returns status only; fetch the row for the response.
+    const { findSignup } = await import('@/lib/activity-signups-store');
+    const signup = await findSignup(activitiesSheetId, activityId, user.email);
     return NextResponse.json({
       ok: true,
-      signup: result.signup,
+      signup,
       created: result.created,
     });
   } catch (error) {

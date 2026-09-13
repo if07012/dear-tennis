@@ -23,6 +23,7 @@ import type {
   ActivityCategory,
   ActivityItem,
 } from '@/data/activities-types';
+import { SKILL_KEYS, SKILL_LABELS } from '@/data/user-skill-points-types';
 
 type SaveStatus =
   | { kind: 'idle' }
@@ -153,6 +154,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
         isFull: draft.isFull === true,
         archived: draft.archived === true,
         price: draft.price ?? '',
+        skillTags: draft.skillTags ?? '',
       };
 
       if (!isPersistedId(draft.id)) {
@@ -196,6 +198,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
         isFull: false,
         archived: false,
         price: item.price ?? '',
+        skillTags: item.skillTags ?? '',
       };
       const result = await apiFetch('activity', { activity: payload });
       const persisted = (result as { activity?: ActivityItem }).activity;
@@ -335,6 +338,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
           isFull: false,
           archived: false,
           price: item.price ?? '',
+          skillTags: item.skillTags ?? '',
         };
         const result = await apiFetch('activity', { activity: payload });
         const persisted = (result as { activity?: ActivityItem }).activity;
@@ -373,6 +377,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
       isFull: false,
       archived: false,
       price: '',
+      skillTags: '',
     });
   };
 
@@ -929,6 +934,38 @@ function EditDrawer({ draft, onCancel, onSave }: EditDrawerProps) {
             Kelola kupon di halaman <strong>Coupons</strong> — potongan
             harga dihitung otomatis dari kupon yang diklaim member.
           </p>
+
+          <fieldset className="mt-2">
+            <legend className={FIELD_LABEL_CLS}>Skill yang dilatih</legend>
+            <p className="mb-2 text-[0.7rem] text-dark-gray">
+              Dipakai bot WhatsApp untuk merekomendasikan activity yang melatih
+              skill terlemah member.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SKILL_KEYS.map((skill) => {
+                const checked = (state.skillTags ?? '').split(',').includes(skill);
+                return (
+                  <label
+                    key={skill}
+                    className="flex cursor-pointer items-center gap-2 rounded-full border border-light-gray bg-white px-3 py-1.5 text-sm has-checked:border-paprika has-checked:bg-paprika/5"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => {
+                        const set = new Set((state.skillTags ?? '').split(',').filter(Boolean));
+                        if (e.target.checked) set.add(skill);
+                        else set.delete(skill);
+                        update('skillTags', Array.from(set).join(','));
+                      }}
+                      className="h-3.5 w-3.5 cursor-pointer rounded border-light-gray text-paprika focus:ring-paprika"
+                    />
+                    {SKILL_LABELS[skill]}
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
 
           <label className="mt-1 flex items-center gap-3 rounded-lg border border-light-gray bg-off-white px-3 py-2.5">
             <input

@@ -16,6 +16,7 @@ import {
   listRowsBySheet,
 } from '@/app/lib/supabase';
 import { activities as fallbackActivities } from '@/data/activities';
+import { isSkillKey, type SkillKey } from '@/data/user-skill-points-types';
 import {
   ACTIVITIES_SETTINGS_HEADERS,
   ACTIVITY_HEADERS,
@@ -125,6 +126,11 @@ function coerceItem(r: Record<string, unknown>, idx: number): ActivityItem {
     isFull,
     archived,
     price: String(r.price ?? ''),
+    skillTags: String(r.skillTags ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s): s is SkillKey => isSkillKey(s))
+      .join(','),
   };
 }
 

@@ -71,6 +71,7 @@ const TABLES = new Set([
   'why_join_settings', 'why_join_benefits',
   'our_story_settings',
   'click_events',
+  'wa_messages', 'groq_keys', 'groq_logs', 'phone_verifications',
 ] as const);
 
 // Old sheet name aliases → table names (why_join_benefits sheet was created

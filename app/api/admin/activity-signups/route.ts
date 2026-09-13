@@ -24,6 +24,7 @@ import {
 import { parsePriceToAmount } from '@/data/activity-signups-types';
 import { isAdminEmail } from '@/lib/admin';
 import { getSpreadsheetId, listRowsBySheet } from '@/app/lib/supabase';
+import { notifySignupDecision } from '@/lib/whatsapp-bot';
 
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -146,6 +147,7 @@ export async function PATCH(request: Request) {
       if (!signup) {
         return error ? badRequest(error) : badRequest('Signup not found');
       }
+      void notifySignupDecision(signup.userEmail, action === 'approve-payment' ? 'payment-approved' : 'payment-rejected', signup.activityId);
       return NextResponse.json({ ok: true, signup });
     }
 
@@ -182,6 +184,11 @@ export async function PATCH(request: Request) {
     if (!signup) {
       return error ? badRequest(error) : badRequest('Signup not found');
     }
+    void notifySignupDecision(
+      signup.userEmail,
+      action === 'approve' ? 'approved' : 'rejected',
+      signup.activityId,
+    );
     return NextResponse.json({ ok: true, signup });
   } catch (error) {
     console.error('Error in PATCH /api/admin/activity-signups:', error);

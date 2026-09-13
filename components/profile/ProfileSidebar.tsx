@@ -104,6 +104,11 @@ export function ProfileSidebar({ user, readOnly = false, loading = false }: Prop
   const [rankDraft, setRankDraft] = useState(displayRank);
   const [phoneDraft, setPhoneDraft] = useState(authUser?.phone ?? '');
   const [profileStatus, setProfileStatus] = useState<Status>({ kind: 'idle' });
+  // WhatsApp OTP: requested after saving a (new) phone, verified inline.
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpBusy, setOtpBusy] = useState(false);
+  const [otpStatus, setOtpStatus] = useState<Status>({ kind: 'idle' });
 
   // RANK_OPTIONS / RANK_CUSTOM live at module scope. The <select> needs
   // a controlled value that matches one of its <option>s, so when the
@@ -117,8 +122,63 @@ export function ProfileSidebar({ user, readOnly = false, loading = false }: Prop
       setNameDraft(name);
       setRankDraft(displayRank);
       setPhoneDraft(authUser?.phone ?? '');
+      setOtpSent(false);
+      setOtpCode('');
+      setOtpStatus({ kind: 'idle' });
     }
   }, [name, displayRank, authUser?.phone, profileEditing]);
+
+  const requestOtp = async () => {
+    if (!authUser) return;
+    setOtpBusy(true);
+    setOtpStatus({ kind: 'idle' });
+    try {
+      const res = await fetch('/api/phone-verification', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-auth-email': authUser.email,
+        },
+        body: JSON.stringify({ phone: phoneDraft.trim() }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+      setOtpSent(true);
+      setOtpStatus({ kind: 'idle' });
+    } catch (e) {
+      setOtpStatus({
+        kind: 'error',
+        message: e instanceof Error ? e.message : 'Gagal mengirim kode',
+      });
+    } finally {
+      setOtpBusy(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    if (!authUser) return;
+    setOtpBusy(true);
+    try {
+      const res = await fetch('/api/phone-verification', {
+        method: 'PUT',
+        headers: {
+          'content-type': 'application/json',
+          'x-auth-email': authUser.email,
+        },
+        body: JSON.stringify({ phone: phoneDraft.trim(), code: otpCode.trim() }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+      setOtpStatus({ kind: 'saved', at: Date.now() });
+    } catch (e) {
+      setOtpStatus({
+        kind: 'error',
+        message: e instanceof Error ? e.message : 'Gagal verifikasi',
+      });
+    } finally {
+      setOtpBusy(false);
+    }
+  };
 
   const saveProfile = async () => {
     if (!authUser) return;
@@ -382,12 +442,53 @@ export function ProfileSidebar({ user, readOnly = false, loading = false }: Prop
               <input
                 type="tel"
                 value={phoneDraft}
-                onChange={(e) => setPhoneDraft(e.target.value)}
+                onChange={(e) => {
+                  setPhoneDraft(e.target.value);
+                  setOtpSent(false);
+                  setOtpStatus({ kind: 'idle' });
+                }}
                 maxLength={20}
                 className="rounded-lg border border-light-gray bg-white px-3 py-1.5 text-sm focus:border-hunter-green focus:outline-none"
                 placeholder="e.g. +62 812 3456 7890"
               />
             </label>
+            <div className="flex flex-col gap-1 text-left">
+              <button
+                type="button"
+                onClick={requestOtp}
+                disabled={otpBusy || !phoneDraft.trim()}
+                className="self-start rounded-full border border-hunter-green px-3 py-1 text-[0.7rem] font-semibold text-hunter-green transition-colors hover:bg-hunter-green hover:text-white disabled:opacity-50"
+              >
+                {otpBusy && !otpSent ? 'Mengirim…' : otpSent ? 'Kirim ulang kode' : 'Verifikasi nomor (WA)'}
+              </button>
+              {otpSent && (
+                <div className="flex flex-wrap items-center gap-1">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6}
+                    placeholder="Kode OTP"
+                    className="w-24 rounded-lg border border-light-gray bg-white px-3 py-1.5 text-sm tracking-widest focus:border-hunter-green focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={verifyOtp}
+                    disabled={otpBusy || otpCode.length !== 6}
+                    className="rounded-full bg-paprika px-3 py-1 text-[0.7rem] font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-50"
+                  >
+                    Verifikasi
+                  </button>
+                </div>
+              )}
+              {otpStatus.kind === 'error' && (
+                <p className="text-xs text-paprika">{otpStatus.message}</p>
+              )}
+              {otpStatus.kind === 'saved' && (
+                <p className="text-xs text-hunter-green">Nomor terverifikasi ✓</p>
+              )}
+            </div>
             {profileStatus.kind === 'error' && (
               <p className="text-xs text-paprika">{profileStatus.message}</p>
             )}

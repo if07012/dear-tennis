@@ -432,3 +432,75 @@ ALTER TABLE click_events ADD COLUMN IF NOT EXISTS "activityTitle" text NOT NULL 
 -- Migration 2026-09: optional phone number on users (set at registration,
 -- editable from the profile page).
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "phone" text;
+
+-- ============ WHATSAPP BOT (2026-09) ============
+-- Migration 2026-09 (PRD: chat-bot-mengguanakan-waha-pada-existing-tennis-community-export.md).
+-- WAHA webhook + Groq chatbot. wa_messages stores both sides of every chat
+-- (direction in|out); groq_keys is the admin-managed rotation pool;
+-- groq_logs records every Groq attempt (key, status, duration) for the
+-- admin dashboard. skillTags on activities_items is a CSV of the six
+-- SKILL_KEYS (user_skill_points taxonomy) — what the activity trains.
+CREATE TABLE IF NOT EXISTS wa_messages (
+  "id" text PRIMARY KEY,
+  "chatId" text NOT NULL DEFAULT '',
+  "userEmail" text NOT NULL DEFAULT '',
+  "direction" text NOT NULL DEFAULT '',
+  "body" text NOT NULL DEFAULT '',
+  "createdAt" text NOT NULL DEFAULT '',
+  "seq" bigint GENERATED ALWAYS AS IDENTITY
+);
+CREATE INDEX IF NOT EXISTS wa_messages_chat_idx ON wa_messages ("chatId");
+
+CREATE TABLE IF NOT EXISTS groq_keys (
+  "id" text PRIMARY KEY,
+  "fullKey" text NOT NULL DEFAULT '',
+  "maskedKey" text NOT NULL DEFAULT '',
+  "sortOrder" integer NOT NULL DEFAULT 0,
+  "active" boolean NOT NULL DEFAULT true,
+  "createdAt" text NOT NULL DEFAULT '',
+  "seq" bigint GENERATED ALWAYS AS IDENTITY
+);
+
+CREATE TABLE IF NOT EXISTS groq_logs (
+  "id" text PRIMARY KEY,
+  "keyId" text NOT NULL DEFAULT '',
+  "maskedKey" text NOT NULL DEFAULT '',
+  "requestId" text NOT NULL DEFAULT '',
+  "chatId" text NOT NULL DEFAULT '',
+  "status" text NOT NULL DEFAULT '',
+  "durationMs" integer NOT NULL DEFAULT 0,
+  "errorMessage" text,
+  "createdAt" text NOT NULL DEFAULT '',
+  "seq" bigint GENERATED ALWAYS AS IDENTITY
+);
+CREATE INDEX IF NOT EXISTS groq_logs_created_idx ON groq_logs ("createdAt");
+
+-- These tables were created after the RLS DO-block above ran, so each needs
+-- its own enable (same pattern as click_events).
+ALTER TABLE wa_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE groq_keys ENABLE ROW LEVEL SECURITY;
+ALTER TABLE groq_logs ENABLE ROW LEVEL SECURITY;
+
+-- CSV of the six skills (forehand,backhand,serve,volley,footwork,strategy)
+-- this activity trains; '' = untagged.
+ALTER TABLE activities_items ADD COLUMN IF NOT EXISTS "skillTags" text NOT NULL DEFAULT '';
+
+-- Migration 2026-09: WhatsApp OTP phone verification. phone_verifications
+-- holds pending 6-digit codes (10-min expiry, max 5 attempts). users.waChatId
+-- stores the canonical WhatsApp chat id of a VERIFIED number so the bot
+-- matches members by exact chat id instead of fuzzy phone comparison.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS "waChatId" text;
+
+CREATE TABLE IF NOT EXISTS phone_verifications (
+  "id" text PRIMARY KEY,
+  "userEmail" text NOT NULL DEFAULT '',
+  "phone" text NOT NULL DEFAULT '',
+  "waChatId" text NOT NULL DEFAULT '',
+  "code" text NOT NULL DEFAULT '',
+  "attempts" integer NOT NULL DEFAULT 0,
+  "expiresAt" text NOT NULL DEFAULT '',
+  "createdAt" text NOT NULL DEFAULT '',
+  "seq" bigint GENERATED ALWAYS AS IDENTITY
+);
+CREATE INDEX IF NOT EXISTS phone_verifications_email_idx ON phone_verifications ("userEmail");
+ALTER TABLE phone_verifications ENABLE ROW LEVEL SECURITY;

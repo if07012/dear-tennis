@@ -44,6 +44,12 @@ export type ActivityItem = {
    * have no price and the UI hides the line.
    */
   price?: string;
+  /**
+   * CSV of trained skills (subset of the 6 skill keys). Used by the
+   * WhatsApp bot to recommend activities that train a member's weakest
+   * skill. Optional so older rows read as ''.
+   */
+  skillTags?: string;
 };
 
 export type ActivitiesContent = {
@@ -74,6 +80,7 @@ export const ACTIVITY_HEADERS = [
   'isFull',
   'archived',
   'price',
+  'skillTags',
 ] as const;
 
 export const ALL_CATEGORIES: ActivityCategory[] = ['training', 'social', 'competitive'];

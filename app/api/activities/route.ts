@@ -37,6 +37,7 @@ import type {
   ActivityItem,
   ActivitiesSettings,
 } from '@/data/activities-types';
+import { isSkillKey, type SkillKey } from '@/data/user-skill-points-types';
 
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -85,6 +86,7 @@ type ActivityUpsertBody = {
     isFull?: boolean;
     archived?: boolean;
     price?: string;
+    skillTags?: string;
   };
 };
 
@@ -126,7 +128,6 @@ export async function PUT(request: Request) {
         };
 
         const existingId = await getActivitiesSettingsRowId(spreadsheetId);
-        console.log('PUT /api/activities settings, existingId:', existingId, 'next:', next);
         if (existingId) {
           await updateRowById(spreadsheetId, SETTINGS_SHEET, SETTINGS_ROW_ID, next);
         } else {
@@ -153,6 +154,11 @@ export async function PUT(request: Request) {
           isFull: activity.isFull === true,
           archived: activity.archived === true,
           price: String(activity.price ?? '').trim(),
+          skillTags: String(activity.skillTags ?? '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter((s): s is SkillKey => isSkillKey(s))
+            .join(','),
         };
         // Draft ids (client-minted "draft-*") must never take the update path —
         // update on a nonexistent row "succeeds" silently and the create is lost.

@@ -1,39 +1,51 @@
 # Architecture
 
-Dear Tennis — Next.js 16 App Router + TypeScript + Tailwind CSS 4 + Supabase (Postgres).
+Dear Tennis — tennis community website. **Next.js 16 App Router + TypeScript + Tailwind CSS 4 + Supabase (Postgres)**, migrated from an earlier Google Sheets + static-HTML iteration. `profile.md` (dashboard PRD), `PRD.md` (marketing PRD, Indonesian), `PRODUCT.md` (shipped vs. planned) describe intent; this file and the code are truth.
 
-## Data layer (the one thing you must know)
+## High-level shape
 
-`app/lib/supabase.ts` is a shim that replaced an old Google Sheets layer. Stores call `listRowsBySheet(spreadsheetId, sheetName, ...)` / `createRowWithId` / `updateRowById` / `deleteRowById` / `readRowById`; the spreadsheetId args are ignored. All persistence is Postgres via the **service-role key** (bypasses RLS).
+```
+Browser (React 19, client components)
+   │  fetch /api/*, custom header x-auth-email
+   ▼
+Next.js server (app/api/**/route.ts)          app/ pages (server-rendered)
+   │  route handlers validate admin via        │
+   │  ADMIN_EMAIL match                        ▼
+   ▼                                       components/{sections,ui,layout,admin,profile}
+lib/*-store.ts  (per-domain data stores, in-memory cache, bundled fallbacks)
+   ▼
+app/lib/supabase.ts  (thin shim: same function names the old Sheets layer had)
+   ▼
+Supabase Postgres — service role key, tables 1:1 with old sheet names
+```
 
-- **Adding a new table**: add it to the `TABLES` set in `app/lib/supabase.ts` **and** define it in `supabase/schema.sql` (the user runs migrations manually in the Supabase SQL editor — tell them what to run). Column names are camelCase and must be quoted (`"userEmail"`). Every table needs `"seq" bigint GENERATED ALWAYS AS IDENTITY` (ordering) and `"id" text PRIMARY KEY`.
-- **Migrations are append-only**: never edit an existing table definition or script block in `supabase/schema.sql` after it has been run — the user pastes scripts into the Supabase SQL editor once; a modified old block will never be re-executed. For changes to an existing table (new column, index, etc.) append a NEW idempotent script (e.g. `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...`, `CREATE TABLE IF NOT EXISTS`, `CREATE UNIQUE INDEX IF NOT EXISTS`) and tell the user to run it.
-- Tables have RLS enabled with **no policies** (deny-all for anon/authenticated). All access goes through route handlers using the service key.
-- `data/*-types.ts` files hold TS types + the legacy sheet-header arrays (e.g. `ACTIVITY_HEADERS`) — headers are historical, but keep them in sync when adding fields.
+## Data layer
 
-## Store pattern
+- **`app/lib/supabase.ts`** — drop-in replacement for the retired Google Sheets client. Same signatures (`listRowsBySheet`, `createRowWithId`, `updateRowById`, …) so `lib/*-store.ts` and routes never changed. Connects with `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS); single cached client on `globalThis` to survive hot reloads/serverless. `getSpreadsheetId()` is now just an env check returning `'supabase'`.
+- **`supabase/schema.sql`** — full schema. Every table: `"id"` text PK (UUID, or `'current'` for single settings rows), `seq` bigint identity preserving arrival order, camelCase quoted columns matching store object keys. RLS enabled with no policies → deny-all except service role.
+- **`lib/*-store.ts`** (~20 stores: `hero`, `activities`, `coupons`, `activity-signups`, `users`, …) — each owns one domain: read/write helpers, a `globalThis` Map cache with TTL, `ensureSheetWithHeaders`-style lazy creation, and fallback to bundled defaults in `data/` when Supabase is unset. Admin writes call `clear*Cache()` after mutation.
 
-Each domain has `lib/<domain>-store.ts` (server-only, talks to the supabase shim): `hero-store`, `activities-store`, `coupons-store`, `users-store`, `activity-signups-store`, etc. Stores read/write rows and normalize types from `data/*-types.ts`.
+## API layer (`app/api/**/route.ts`)
 
-## API pattern
+- Route files export only HTTP method handlers (Next requirement).
+- **Public GETs** read through stores (`/api/hero`, `/api/activities`, `/api/faq`, …). **Mutations** are dispatched by a `kind` field in the JSON body (`settings` / `slide` / `reorder` / `delete`) — one POST endpoint per domain.
+- **Admin authorization**: no session/cookie system. The client keeps the logged-in email in `localStorage` and sends it as an `x-auth-email` header; the route compares it against `ADMIN_EMAIL` (`isAdminEmail` in `lib/admin.ts` client-side mirror, per-store server-side). `/api/admin/*` additionally checks the user's `role` column.
+- **Auth**: `/api/auth/register` + `/api/auth/login`. Passwords hashed with Node `scrypt` + per-user 16-byte salt (`lib/auth.ts`), stored in `users` table. Login rate-limited per-process (10/min per IP). Admin user self-seeds on first login attempt (`lib/seedAdmin.ts`).
+- `/api/proxy-image` routes Unsplash images through the server (avoids client referer restrictions).
 
-`app/api/**/route.ts` Next.js route handlers. Admin/protected routes take `x-auth-email` header and validate with `isAdminEmail` (from `lib/admin.ts`, compares against `NEXT_PUBLIC_ADMIN_EMAIL` env). Public reads are GET without auth. Member actions (join, claim coupon) POST with `x-auth-email` and validate the user exists.
+## Frontend structure
 
-## Auth
-
-**No Supabase Auth.** Custom scheme: `useAuth` hook (`hooks/useAuth.ts`) keeps the user in `localStorage` (`authUser` key) + a `dearTennis:authChange` event for cross-tab sync. Login/register go through `/api/auth/*`, passwords hashed with Node scrypt (`lib/auth.ts`). All real authorization happens server-side in route handlers — the client email header is trusted only after validating it against the users table.
-
-## Admin pages
-
-`app/admin/<section>/page.tsx` (server component) loads data via a store and renders a `<section>Client.tsx` (client component, usually has localStorage draft-restore). Every admin page is wrapped in `AdminAuthGate` (`app/admin/hero/AdminAuthGate.tsx` — client redirect guard on `isAdminEmail`). Admin navigation lives in `components/layout/Navbar.tsx`: the burger opens a drawer with a grouped accordion (CMS / Activity / Users groups, `ADMIN_NAV_GROUPS` const). Adding an admin page = create the route, then add an entry to the right group in `Navbar.tsx`.
-
-## Public pages
-
-- `/` — landing: sections in `components/sections/*` render from store data, falling back to `data/*.ts` static content.
-- `/activities/[id]/[slug]` — activity detail; `[slug]` is cosmetic, `[id]` authoritative. `/activities/[id]` redirects to the slug path. `lib/slug.ts` has `slugify`/`activityPath`.
-- `/profile` — member dashboard (charts, skill points, badges, joined activities); `?user=<email>` shows another member (admin view).
-- `/invite/[token]` — invite signup flow.
+- **Public pages**: `/` (landing, section components in `components/sections/`), `/activities/[id]` and `/activities/[id]/[slug]`, `/login`, `/profile` (training dashboard, `components/profile/`), `/invite/[token]`.
+- **Admin pages** `app/admin/*` (~15 editors: hero, gallery, coupons, users, activity-signups, …) — one editor per store, Indonesian UI copy, shared primitives in `components/admin/` and `components/ui/` (`Button`, `JoinConfirmDialog` modal pattern).
+- **UI**: Tailwind 4 with theme tokens — paprika `#E85D04` accent, hunter-green `#2C5F4B` primary, card idiom `rounded-2xl border border-light-gray bg-white`. All imagery Unsplash URLs via `next/image`; no local assets.
+- Legacy static HTML (`index.html`, `login.html`, `profile.html`) and `test-server.py` are dead; edit `app/` only.
 
 ## Env vars
 
-`SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`), `SUPABASE_SERVICE_ROLE_KEY` (or `SUPABASE_KEY`), `NEXT_PUBLIC_ADMIN_EMAIL` for admin UI gating.
+`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (data layer), `ADMIN_EMAIL` (server) + `NEXT_PUBLIC_ADMIN_EMAIL` (client UI gating), plus optional `nodemailer` SMTP settings for invites.
+
+WhatsApp chatbot (WAHA → Groq → WAHA): `WAHA_BASE_URL`, `WAHA_WEBHOOK_SECRET` (webhook `/api/webhook/waha` stays 503-closed without it), `WAHA_SESSION` (default `default`), optional `WAHA_API_KEY`, `GROQ_MODEL` (default `llama-3.3-70b-versatile`). Groq keys are admin-managed rows in the `groq_keys` table (`/admin/groq`), not env. Bot tables: `wa_messages` (chat both sides), `groq_keys`, `groq_logs` (every attempt: key, status, duration). Groq calls run through an in-process global FIFO queue with key rotation on 429 (`lib/groq-client.ts`).
+
+## Commands
+
+`npm run dev` (webpack), `dev:turbo`, `build`, `typecheck` (run after changes — there are **no tests**), `lint`.
