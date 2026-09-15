@@ -31,6 +31,7 @@ import {
   ACTIVE_STATUSES,
   isSignupStatus,
   coerceLegacyStatus,
+  parsePriceToAmount,
   type ActivitySignup,
   type SignupStatus,
 } from '@/data/activity-signups-types';
@@ -110,6 +111,7 @@ function coerceRow(r: Record<string, unknown>, idx: number): ActivitySignup {
     rejectionReason: r.rejectionReason ? String(r.rejectionReason) : undefined,
     joinedAt: r.joinedAt ? String(r.joinedAt) : undefined,
     expiresAt: r.expiresAt ? String(r.expiresAt) : undefined,
+    cancelReason: r.cancelReason ? String(r.cancelReason) : undefined,
   };
 }
 
@@ -473,6 +475,15 @@ export async function expireOverdueSignups(
   }
 }
 
+/** Read one signup row by id (no status filtering). Null when missing. */
+export async function readSignupById(
+  spreadsheetId: string,
+  id: string,
+): Promise<ActivitySignup | null> {
+  const row = await readRowById(spreadsheetId, SHEET, id);
+  return row ? coerceRow(row, 0) : null;
+}
+
 export async function removeSignup(
   spreadsheetId: string,
   id: string,
@@ -483,6 +494,42 @@ export async function removeSignup(
   await deleteRowById(spreadsheetId, SHEET, id);
   cacheClear();
   return true;
+}
+
+/**
+ * Member-initiated cancellation (WhatsApp bot). Only active statuses can be
+ * cancelled; decidedAt/decidedBy record the cancellation, cancelReason keeps
+ * the member's free-text reason (if any).
+ */
+export async function cancelSignup(
+  spreadsheetId: string,
+  id: string,
+  userEmail: string,
+  reason?: string,
+): Promise<{ signup: ActivitySignup | null; error?: string }> {
+  await ensureSignupsSheet(spreadsheetId);
+  const row = await readRowById(spreadsheetId, SHEET, id);
+  if (!row) return { signup: null, error: 'Pendaftaran tidak ditemukan' };
+  const current = coerceRow(row, 0);
+  if (current.userEmail !== userEmail.trim().toLowerCase()) {
+    return { signup: null, error: 'Bukan pendaftaran kamu' };
+  }
+  if (!ACTIVE_STATUSES.includes(current.status)) {
+    return {
+      signup: null,
+      error: `Pendaftaran dengan status ${current.status} tidak bisa dibatalkan`,
+    };
+  }
+
+  await updateRowById(spreadsheetId, SHEET, id, {
+    status: 'cancelled',
+    decidedAt: new Date().toISOString(),
+    decidedBy: 'member:wa',
+    cancelReason: (reason ?? '').trim().slice(0, 500),
+  });
+  cacheClear();
+  const updated = await readRowById(spreadsheetId, SHEET, id);
+  return { signup: updated ? coerceRow(updated, 0) : null };
 }
 
 export type PagedSignups = {
@@ -642,6 +689,45 @@ export async function getActivityMembers(
     console.error('Failed to load activity members:', error);
     return [];
   }
+}
+
+/**
+ * Shared registration decision used by BOTH the admin dashboard PATCH and the
+ * one-click /approval/[token] links: loads the signup's activity, derives its
+ * capacity/payment/deadline settings, and runs decideSignup. Single place so
+ * WhatsApp-link approvals follow the exact same rules as the dashboard.
+ */
+export async function decideSignupWithActivity(
+  spreadsheetId: string,
+  id: string,
+  decision: 'approve' | 'reject',
+  decidedBy: string,
+): Promise<{ signup: ActivitySignup | null; error?: string }> {
+  const row = await readRowById(spreadsheetId, SHEET, id);
+  if (!row) return { signup: null, error: 'Signup not found' };
+  const activityId = String(row.activityId ?? '').trim();
+  let activity: Record<string, unknown> | null = null;
+  try {
+    const rows = await listRowsBySheet(spreadsheetId, 'activities_items');
+    activity = rows.find((r) => String(r.id ?? '').trim() === activityId) ?? null;
+  } catch {
+    activity = null;
+  }
+
+  const groupSize = String((activity as { groupSize?: unknown } | null)?.groupSize ?? '');
+  const capacityMatch = groupSize.match(/\d+/);
+  const capacity = capacityMatch ? Number.parseInt(capacityMatch[0], 10) : 0;
+  const price = String((activity as { price?: unknown } | null)?.price ?? '');
+  const paymentRequired = parsePriceToAmount(price) > 0;
+  const deadlineRaw = Number(
+    (activity as { paymentDeadlineHours?: unknown } | null)?.paymentDeadlineHours ?? 0,
+  );
+
+  return decideSignup(spreadsheetId, id, decision, decidedBy, {
+    capacity: capacity > 0 ? capacity : undefined,
+    paymentRequired,
+    deadlineHours: Number.isFinite(deadlineRaw) ? deadlineRaw : undefined,
+  });
 }
 
 export {

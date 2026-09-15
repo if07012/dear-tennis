@@ -19,7 +19,28 @@ const RETRY_BETWEEN_KEYS_MS = 1_000;
 const RETRY_FULL_CYCLE_MS = 60_000;
 const MAX_CYCLES = 2;
 
-export type GroqChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
+// OpenAI-compatible tool definition sent verbatim in the request body.
+export type GroqToolDef = {
+  type: 'function';
+  function: { name: string; description: string; parameters: object };
+};
+
+/** One tool invocation requested by the model. `arguments` is a JSON string. */
+export type GroqToolCall = {
+  id: string;
+  /** Required when echoing a tool_call back in an assistant message. */
+  type?: 'function';
+  function: { name: string; arguments: string };
+};
+
+export type GroqChatMessage = {
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: string | null;
+  /** Assistant turn: the tool calls the model wants executed. */
+  tool_calls?: GroqToolCall[];
+  /** Tool turn: which call this result answers. */
+  tool_call_id?: string;
+};
 
 type GroqLogEntry = Parameters<typeof insertGroqLogs>[0][number];
 
@@ -37,7 +58,11 @@ function enqueue<T>(fn: () => Promise<T>): Promise<T> {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-type AttemptResult = { text: string | null; allRateLimited: boolean };
+type AttemptResult = {
+  text: string | null;
+  toolCalls: GroqToolCall[];
+  allRateLimited: boolean;
+};
 
 async function attemptWithKey(
   apiKey: string,
@@ -47,10 +72,11 @@ async function attemptWithKey(
   chatId: string,
   messages: GroqChatMessage[],
   logs: GroqLogEntry[],
+  tools?: GroqToolDef[],
+  toolChoice?: 'auto' | 'none',
 ): Promise<AttemptResult> {
   const startedAt = Date.now();
   try {
-    console.log(GROQ_API_URL, messages, process.env.GROQ_MODEL?.trim() || DEFAULT_MODEL);
     const res = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
@@ -61,14 +87,19 @@ async function attemptWithKey(
         model: process.env.GROQ_MODEL?.trim() || DEFAULT_MODEL,
         messages,
         temperature: 0.4,
+        ...(tools && tools.length > 0 ? { tools, tool_choice: toolChoice ?? 'auto' } : {}),
       }),
       signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
     });
+    // Read the body ONCE into a string: logging res.text() first would leave
+    // res.json() nothing to read (body already consumed → every success throws).
+    const raw = await res.text();
     const durationMs = Date.now() - startedAt;
-    console.log(res);
     if (res.ok) {
-      const body = (await res.json()) as {
-        choices?: Array<{ message?: { content?: string } }>;
+      const body = JSON.parse(raw) as {
+        choices?: Array<{
+          message?: { content?: string | null; tool_calls?: GroqToolCall[] };
+        }>;
       };
       logs.push({
         keyId,
@@ -78,13 +109,18 @@ async function attemptWithKey(
         status: 'success',
         durationMs,
       });
-      return { text: body.choices?.[0]?.message?.content ?? null, allRateLimited: false };
+      const message = body.choices?.[0]?.message;
+      return {
+        text: message?.content ?? null,
+        toolCalls: message?.tool_calls ?? [],
+        allRateLimited: false,
+      };
     }
 
-    const errorText = (await res.text().catch(() => '')).slice(0, 200);
+    const errorText = raw.slice(0, 200);
     if (res.status === 429) {
       logs.push({ keyId, maskedKey, requestId, chatId, status: '429', durationMs });
-      return { text: null, allRateLimited: true };
+      return { text: null, toolCalls: [], allRateLimited: true };
     }
     // Other error: no rotation (PRD flowchart) — log and stop the cycle.
     logs.push({
@@ -96,7 +132,7 @@ async function attemptWithKey(
       durationMs,
       errorMessage: `HTTP ${res.status}: ${errorText}`,
     });
-    return { text: null, allRateLimited: false };
+    return { text: null, toolCalls: [], allRateLimited: false };
   } catch (error) {
     logs.push({
       keyId,
@@ -107,27 +143,32 @@ async function attemptWithKey(
       durationMs: Date.now() - startedAt,
       errorMessage: error instanceof Error ? error.message.slice(0, 200) : 'fetch failed',
     });
-    return { text: null, allRateLimited: false };
+    return { text: null, toolCalls: [], allRateLimited: false };
   }
 }
 
+export type GroqCallResult = { text: string | null; toolCalls: GroqToolCall[] };
+
+const EMPTY_CALL: GroqCallResult = { text: null, toolCalls: [] };
+
 /**
  * Run one Groq chat completion through the global queue with key rotation.
- * Returns the assistant text, or null when no keys are configured, every
- * attempt fails, or the model returned no content.
+ * Returns the assistant text plus any tool calls the model requested, or
+ * `{ text: null, toolCalls: [] }` when no keys are configured, every attempt
+ * fails, or the model returned no content.
  */
 export async function callGroq(
   messages: GroqChatMessage[],
   chatId = '',
-): Promise<string | null> {
+  tools?: GroqToolDef[],
+  toolChoice?: 'auto' | 'none',
+): Promise<GroqCallResult> {
   return enqueue(async () => {
-    console.log('callGroq: messages.length:', messages.length, 'chatId:', chatId);
     const keys = (await listGroqKeyRows()).filter((k) => k.active);
     if (keys.length === 0) {
       console.error('No active Groq keys configured');
-      return null;
+      return EMPTY_CALL;
     }
-    console.log('callGroq: active keys:', keys.map((k) => k.maskedKey).join(', '));
     const requestId = crypto.randomUUID();
     const logs: GroqLogEntry[] = [];
 
@@ -142,16 +183,17 @@ export async function callGroq(
           chatId,
           messages,
           logs,
+          tools,
+          toolChoice,
         );
-        console.log("result:", { text: result.text, allRateLimited: result.allRateLimited, keyId: key.id, maskedKey: key.maskedKey });
-        if (result.text !== null) {
+        if (result.text !== null || result.toolCalls.length > 0) {
           await insertGroqLogs(logs).catch(() => undefined);
-          return result.text;
+          return { text: result.text, toolCalls: result.toolCalls };
         }
         if (!result.allRateLimited) {
           // Non-429 failure — rotation won't help.
           await insertGroqLogs(logs).catch(() => undefined);
-          return null;
+          return EMPTY_CALL;
         }
         // 429: wait 1s before the next key (also after the last key of a
         // cycle that will retry — the wait doubles as the inter-cycle pause
@@ -167,6 +209,6 @@ export async function callGroq(
     }
 
     await insertGroqLogs(logs).catch(() => undefined);
-    return null;
+    return EMPTY_CALL;
   });
 }

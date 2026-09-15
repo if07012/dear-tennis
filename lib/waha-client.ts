@@ -126,6 +126,76 @@ export async function sendWahaText(chatId: string, text: string): Promise<boolea
 }
 
 /**
+ * Send an image with an optional caption via WAHA POST api/sendImage.
+ * `imageOrUrl` is a data: URL (parsed into the base64 {mimetype, data} body
+ * shape) or a public https URL (sent as {url}). Returns true when WAHA
+ * accepted it; never throws.
+ */
+export async function sendWahaImage(
+  chatId: string,
+  imageOrUrl: string,
+  caption?: string,
+): Promise<boolean> {
+  if (!chatId || !imageOrUrl) return false;
+  let file: { mimetype: string; data: string } | { mimetype: string; url: string };
+  if (imageOrUrl.startsWith('data:')) {
+    const match = /^data:([^;,]+);base64,(.*)$/s.exec(imageOrUrl);
+    if (!match) return false;
+    file = { mimetype: match[1].toLowerCase(), data: match[2] };
+  } else {
+    file = { mimetype: 'image/jpeg', url: imageOrUrl };
+  }
+  const { ok } = await wahaRequest('api/sendImage', {
+    method: 'POST',
+    body: JSON.stringify({
+      session: sessionName(),
+      chatId,
+      file,
+      ...(caption ? { caption } : {}),
+    }),
+  });
+  return ok;
+}
+
+/**
+ * Download a received media file by its WAHA file id (the `media.url` value
+ * from a webhook message payload; served by GET /api/files/{file_id}).
+ * Returns { mimetype, base64 } or null — never throws.
+ */
+export async function fetchWahaFile(
+  fileId: string,
+): Promise<{ mimetype: string; base64: string } | null> {
+  const base = process.env.WAHA_BASE_URL?.trim();
+  if (!base || !fileId) return null;
+
+  const url = new URL(`api/files/${encodeURIComponent(fileId)}`, `${base.replace(/\/$/, '')}/`);
+  const apiKey = process.env.WAHA_API_KEY?.trim();
+  const authHeaders: Record<string, string> = apiKey
+    ? { 'x-api-key': apiKey, authorization: `Bearer ${apiKey}` }
+    : {};
+
+  try {
+    console.log('fetchWahaFile: downloading', url);
+    const res = await fetch(url, {
+      headers: authHeaders,
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) {
+      console.error(`WAHA file download failed: HTTP ${res.status}`);
+      return null;
+    }
+    const buf = Buffer.from(await res.arrayBuffer());
+    return {
+      mimetype: res.headers.get('content-type')?.split(';')[0]?.trim() || 'application/octet-stream',
+      base64: buf.toString('base64'),
+    };
+  } catch (error) {
+    console.error('WAHA file download error:', error);
+    return null;
+  }
+}
+
+/**
  * Resolve a webhook "from" chat id to the phone-number chat id. WhatsApp
  * increasingly identifies chats by LID ("…@lid"); member identity matching
  * (users.waChatId, users.phone) needs the pn ("62812…@c.us"). Uses

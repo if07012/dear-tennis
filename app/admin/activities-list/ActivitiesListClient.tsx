@@ -76,6 +76,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
   const [matchesActivity, setMatchesActivity] = useState<ActivityItem | null>(null);
   const [standingsActivity, setStandingsActivity] = useState<ActivityItem | null>(null);
   const [filter, setFilter] = useState<ActivityCategory | 'all'>('all');
+  const [timeScope, setTimeScope] = useState<'all' | 'thisWeek'>('all');
   const [archiveFilter, setArchiveFilter] = useState<'active' | 'archived' | 'all'>(
     'active',
   );
@@ -98,18 +99,52 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
     refreshSignupCounts();
   }, [refreshSignupCounts]);
 
+  // Week window frozen once per mount — the badge and the list would
+  // otherwise drift apart as Date.now() moves between renders.
+  const [weekStart] = useState(() => Date.now());
+  const [weekEnd] = useState(() => Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  // Shared predicate for the weekly tab — used by both the badge count and
+  // the row list so the two can never disagree.
+  const inThisWeek = useCallback(
+    (a: ActivityItem) => {
+      if (a.archived === true) return false;
+      const t = new Date(a.time).getTime();
+      return !Number.isNaN(t) && t >= weekStart && t <= weekEnd;
+    },
+    [weekStart, weekEnd],
+  );
+
+  // Rows surviving the current archive scope — chip counts must be computed
+  // on this, or "Competitive (1)" shows while the active-only list is empty
+  // (the one competitive event is archived).
+  const archiveScoped = useMemo(() => {
+    if (archiveFilter === 'active')
+      return activities.filter((a) => a.archived !== true);
+    if (archiveFilter === 'archived')
+      return activities.filter((a) => a.archived === true);
+    return activities;
+  }, [activities, archiveFilter]);
+
   const filtered = useMemo(() => {
-    let out = activities;
-    if (archiveFilter === 'active') {
-      out = out.filter((a) => a.archived !== true);
-    } else if (archiveFilter === 'archived') {
-      out = out.filter((a) => a.archived === true);
+    if (timeScope === 'thisWeek') {
+      // Weekly view is a chronological "what's happening" list — archive and
+      // category chips don't apply here (badge count uses the same predicate).
+      return activities
+        .filter(inThisWeek)
+        .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
     }
+    let out = archiveScoped;
     if (filter !== 'all') {
       out = out.filter((a) => a.category === filter);
     }
     return out;
-  }, [activities, filter, archiveFilter]);
+  }, [archiveScoped, filter, timeScope, inThisWeek]);
+
+  const thisWeekCount = useMemo(
+    () => activities.filter(inThisWeek).length,
+    [activities, inThisWeek],
+  );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -438,11 +473,9 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
                 ].join(' ')}
               >
                 {key === 'active'
-                  ? `Active (${activities.filter((a) => a.archived !== true).length
-                  })`
+                  ? `Active (${archiveScoped.length})`
                   : key === 'archived'
-                    ? `Archived (${activities.filter((a) => a.archived === true).length
-                    })`
+                    ? `Archived (${activities.filter((a) => a.archived === true).length})`
                     : `All (${activities.length})`}
               </button>
             ))}
@@ -466,15 +499,36 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
                 ].join(' ')}
               >
                 {key === 'all'
-                  ? `All (${activities.length})`
-                  : `${key} (${activities.filter((a) => a.category === key).length
-                  })`}
+                  ? `All (${archiveScoped.length})`
+                  : `${key} (${archiveScoped.filter((a) => a.category === key).length})`}
               </button>
             ))}
           </div>
-          <p className="text-xs text-dark-gray">
-            Halaman {safePage} dari {totalPages}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {(['all', 'thisWeek'] as const).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  setTimeScope(key);
+                  setPage(1);
+                }}
+                className={[
+                  'rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors',
+                  timeScope === key
+                    ? 'bg-hunter-green text-white'
+                    : 'bg-off-white text-dark-gray hover:bg-light-gray',
+                ].join(' ')}
+              >
+                {key === 'all'
+                  ? 'All time'
+                  : `Event minggu ini (${thisWeekCount})`}
+              </button>
+            ))}
+            <p className="text-xs text-dark-gray">
+              Halaman {safePage} dari {totalPages}
+            </p>
+          </div>
         </div>
 
         <div className="divide-y divide-light-gray">

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Reveal } from '@/components/ui/Reveal';
-import { profileUser, skillByEvent } from '@/data/profile';
+import { skillByEvent } from '@/data/profile';
 import type { ProfileUser, SkillKey } from '@/data/profile-types';
 import { ProfileSidebar } from './ProfileSidebar';
 import { AchievementsGrid } from './AchievementsGrid';
@@ -76,9 +76,8 @@ function summarize(
 /**
  * Build the ProfileUser shown in the sidebar. Real `name` + `avatarUrl`
  * come from the logged-in user (see useAuth) so the dashboard reflects who
- * is actually signed in. Everything else (rank, stats, skill breakdowns)
- * still uses the bundled mock data — the profile is otherwise static for
- * now.
+ * is actually signed in. Stats default to 0 until the live counts load;
+ * rank is empty until the user picks one.
  */
 function buildSidebarUser(
   name: string,
@@ -86,9 +85,8 @@ function buildSidebarUser(
   photo: string | undefined,
   rank: string | undefined,
   phone: string | undefined,
-  fallback: ProfileUser,
 ): ProfileUser {
-  const safeName = name.trim() || email.split('@')[0] || fallback.name;
+  const safeName = name.trim() || email.split('@')[0] || 'Player';
   // Use the user's uploaded photo (base64 data URL from the profile
   // editor) when present. Otherwise fall back to a DiceBear silhouette
   // keyed on the name so each login still shows a unique face.
@@ -96,10 +94,14 @@ function buildSidebarUser(
     photo && photo.startsWith('data:image/')
       ? photo
       : `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(safeName)}`;
-  // Prefer the explicit rank from the viewed user's record; fall back
-  // to the bundled profile rank when nothing is stored yet.
-  const safeRank = rank?.trim() || fallback.rank;
-  return { ...fallback, name: safeName, avatarUrl, rank: safeRank, phone: phone?.trim() || undefined };
+  return {
+    id: email || safeName,
+    name: safeName,
+    rank: rank?.trim() || '',
+    avatarUrl,
+    phone: phone?.trim() || undefined,
+    stats: { sessions: 0, avgScore: 0, hours: 0, badges: 0 },
+  };
 }
 
 export function ProfileLayout({
@@ -240,7 +242,6 @@ export function ProfileLayout({
           viewedUser.photo,
           viewedUser.rank,
           viewedUser.phone,
-          profileUser,
         )
       : buildSidebarUser(
           user?.name ?? '',
@@ -248,7 +249,6 @@ export function ProfileLayout({
           user?.photo,
           user?.rank,
           user?.phone,
-          profileUser,
         );
     if (joinedCount === null && badgesCount === null && joinedHours === null) return base;
     return {

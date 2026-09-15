@@ -105,6 +105,8 @@ export type ActivitySignup = {
   joinedAt?: string;
   /** Payment deadline (ISO); after it the reserved slot is released. */
   expiresAt?: string;
+  /** Member's free-text reason when they cancelled (WhatsApp bot). */
+  cancelReason?: string;
 };
 
 export const SIGNUP_HEADERS = [
@@ -129,6 +131,7 @@ export const SIGNUP_HEADERS = [
   'rejectionReason',
   'joinedAt',
   'expiresAt',
+  'cancelReason',
 ] as const;
 
 /**

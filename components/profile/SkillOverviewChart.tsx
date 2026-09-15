@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useChartReady } from '@/hooks/useChartReady';
-import { skillRadar } from '@/data/profile';
+import { skillRadar } from '@/data/profile'; // labels only — values are live per-user
 import { BarChartIcon } from '@/components/ui/Icons';
 
 // Loose shape that mirrors Chart.js's public surface; we deliberately avoid
@@ -13,9 +13,8 @@ type ChartCtor = new (ctx: HTMLCanvasElement, config: unknown) => ChartHandle;
 type Props = {
   /**
    * Per-user override values for the 6 radar skills in the same order as
-   * `skillRadar.labels`. When `undefined`, falls back to the static
-   * `skillRadar.values` constant. When `null`, the chart still renders with
-   * the fallback (treated as "no row yet" for the signed-in user).
+   * `skillRadar.labels`. `null` or a wrong-length array = "no row yet" →
+   * the radar renders with all zeros (no mock data).
    */
   values?: number[] | null;
 };
@@ -33,10 +32,11 @@ export function SkillOverviewChart({ values }: Props = {}) {
       chartRef.current = null;
     }
 
+    // No per-user row yet → all-zero radar instead of mock values.
     const dataValues =
-      Array.isArray(values) && values.length === skillRadar.values.length
+      Array.isArray(values) && values.length === skillRadar.labels.length
         ? values
-        : skillRadar.values;
+        : skillRadar.labels.map(() => 0);
 
     chartRef.current = new Chart(canvasRef.current, {
       type: 'radar',

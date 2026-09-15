@@ -485,6 +485,10 @@ ALTER TABLE groq_logs ENABLE ROW LEVEL SECURITY;
 -- this activity trains; '' = untagged.
 ALTER TABLE activities_items ADD COLUMN IF NOT EXISTS "skillTags" text NOT NULL DEFAULT '';
 
+-- Migration 2026-09: member-initiated cancellation (WhatsApp bot). Reason
+-- recorded on the signup row; decidedAt/decidedBy carry the timestamp/actor.
+ALTER TABLE activity_signups ADD COLUMN IF NOT EXISTS "cancelReason" text NOT NULL DEFAULT '';
+
 -- Migration 2026-09: WhatsApp OTP phone verification. phone_verifications
 -- holds pending 6-digit codes (10-min expiry, max 5 attempts). users.waChatId
 -- stores the canonical WhatsApp chat id of a VERIFIED number so the bot

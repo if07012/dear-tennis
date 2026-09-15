@@ -13,6 +13,7 @@
 import { NextResponse } from 'next/server';
 import { getSpreadsheetId } from '@/app/lib/supabase';
 import { submitPaymentProof } from '@/lib/activity-signups-store';
+import { notifyPaymentSubmitted } from '@/lib/whatsapp-bot';
 
 const MAX_PROOF_BYTES = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_MIME = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
@@ -93,6 +94,8 @@ export async function POST(
     if (!signup) {
       return error ? badRequest(error) : badRequest('Pendaftaran tidak ditemukan');
     }
+    // Fire-and-forget: tell the admin over WhatsApp, proof image attached.
+    void notifyPaymentSubmitted(email, signup.activityId, proofUrl, note, signup.id);
     return NextResponse.json({ ok: true, signup });
   } catch (error) {
     console.error('Error in POST /api/activity-signups/[id]/payment:', error);

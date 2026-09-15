@@ -223,7 +223,7 @@ export function Navbar() {
                       href="/profile"
                       className="text-sm font-medium text-graphite hover:text-paprika transition-colors"
                     >
-                      Dashboard
+                      Profile
                     </Link>
                   </li>
                   {isAdmin && (

@@ -10,11 +10,16 @@
 import { getSpreadsheetId, listRowsBySheet } from '@/app/lib/supabase';
 import { callGroq, type GroqChatMessage } from '@/lib/groq-client';
 import { insertWaMessage, listWaMessages } from '@/lib/groq-store';
-import { sendWahaText } from '@/lib/waha-client';
-import { registerUserForActivity, type BookingUser } from '@/lib/activity-bookings';
-import { getSkillPointsForUser } from '@/lib/user-skill-points-store';
+import { sendWahaImage, sendWahaText } from '@/lib/waha-client';
+import { approvalLink } from '@/lib/approval-token';
+import { type BookingUser } from '@/lib/activity-bookings';
 import { getActivitiesContent } from '@/lib/activities-store';
-import { SKILL_KEYS, SKILL_LABELS } from '@/data/user-skill-points-types';
+import {
+  GROQ_TOOL_DEFS,
+  hasPendingProof,
+  runBotTool,
+  stashPendingProof,
+} from '@/lib/groq-tools';
 
 const UNREGISTERED_REPLY =
   'Nomor WhatsApp kamu belum terverifikasi di Dear Tennis. ' +
@@ -38,7 +43,7 @@ export type SignupDecisionKind =
 
 const DECISION_MESSAGES: Record<SignupDecisionKind, (title: string) => string> = {
   approved: (t) =>
-    `Pendaftaran "${t}" sudah disetujui admin! Silakan lanjutkan pembayaran di website Dear Tennis ya. 🎾`,
+    `Pendaftaran "${t}" sudah disetujui admin! Silakan unggah bukti pembayaran di website Dear Tennis ya (buka activity-nya, lalu klik "Unggah Bukti Pembayaran"). 🎾`,
   rejected: (t) =>
     `Maaf, pendaftaran "${t}" tidak disetujui admin. Hubungi admin untuk info lebih lanjut. 🎾`,
   'payment-approved': (t) =>
@@ -88,6 +93,143 @@ export async function notifySignupDecision(
 }
 
 /**
+ * Resolve the admin's WhatsApp chat id. ADMIN_WA_PHONE wins (digits get the
+ * `@c.us` suffix; a full chat id is used as-is); when unset, fall back to
+ * the users-table row behind ADMIN_EMAIL (waChatId, then phone).
+ */
+async function resolveAdminChatId(): Promise<string | null> {
+  const configured = process.env.ADMIN_WA_PHONE?.trim();
+  if (configured) {
+    if (configured.includes('@')) return configured;
+    const digits = configured.replace(/\D/g, '');
+    if (digits) {
+      return digits.startsWith('0') ? `62${digits.slice(1)}@c.us` : `${digits}@c.us`;
+    }
+  }
+
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  if (!adminEmail) return null;
+  const spreadsheetId = getSpreadsheetId();
+  if (!spreadsheetId) return null;
+  const rows = await listRowsBySheet(spreadsheetId, 'users');
+  const admin = rows.find(
+    (r) => String((r as { email?: unknown }).email ?? '').trim().toLowerCase() === adminEmail,
+  );
+  const waChatId = String((admin as { waChatId?: unknown } | undefined)?.waChatId ?? '').trim();
+  let phone = String((admin as { phone?: unknown } | undefined)?.phone ?? '').replace(/\D/g, '');
+  if (!waChatId && !phone) return null;
+  if (phone.startsWith('0')) phone = `62${phone.slice(1)}`;
+  return waChatId || `${phone}@c.us`;
+}
+
+/** Both approval messages end with the same one-click link block. */
+function approvalLinksLine(signupId: string): string {
+  const approve = approvalLink(signupId, 'approve');
+  const reject = approvalLink(signupId, 'reject');
+  if (!approve || !reject) return '';
+  return `\n\nSetujui: ${approve}\nTolak: ${reject}`;
+}
+
+function paymentApprovalLinksLine(signupId: string): string {
+  const approve = approvalLink(signupId, 'approve-payment');
+  const reject = approvalLink(signupId, 'reject-payment');
+  if (!approve || !reject) return '';
+  return `\n\nVerifikasi pembayaran: ${approve}\nTolak pembayaran: ${reject}`;
+}
+
+/**
+ * When a member's signup lands in pending_approval (website or bot), notify
+ * the admin over WhatsApp with one-click approve/reject links. Silent no-op
+ * when the admin target can't be resolved or WAHA is down.
+ */
+export async function notifyAdminNewSignup(
+  userEmail: string,
+  activityId: string,
+  signupId: string,
+): Promise<void> {
+  try {
+    const chatId = await resolveAdminChatId();
+    if (!chatId) return;
+    const [{ activities }, memberName] = await Promise.all([
+      getActivitiesContent(),
+      resolveUserName(userEmail),
+    ]);
+    const title = activities.find((a) => a.id === activityId)?.title ?? activityId;
+    const text =
+      `Pendaftaran baru dari ${memberName} untuk "${title}" — menunggu persetujuan.` +
+      approvalLinksLine(signupId);
+    if (await sendWahaText(chatId, text)) {
+      await insertWaMessage({ chatId, userEmail: '', direction: 'out', body: text });
+    }
+  } catch (error) {
+    console.error('wa bot: failed to notify admin new signup:', error);
+  }
+}
+
+/** Display name for a member email; falls back to the email itself. */
+async function resolveUserName(userEmail: string): Promise<string> {
+  try {
+    const spreadsheetId = getSpreadsheetId();
+    if (!spreadsheetId) return userEmail;
+    const rows = await listRowsBySheet(spreadsheetId, 'users');
+    const row = rows.find(
+      (r) => String((r as { email?: unknown }).email ?? '').trim().toLowerCase() === userEmail,
+    );
+    return String((row as { name?: unknown } | undefined)?.name ?? '').trim() || userEmail;
+  } catch {
+    return userEmail;
+  }
+}
+
+/**
+ * When a member uploads payment proof (status → payment_submitted), notify
+ * the admin over WhatsApp with the proof image attached. PDF proofs are sent
+ * as a text mention instead (sendImage is images only). Silent no-op when the
+ * admin has no phone on file or WAHA is down.
+ */
+export async function notifyPaymentSubmitted(
+  userEmail: string,
+  activityId: string,
+  proofUrl: string,
+  note?: string,
+  signupId?: string,
+): Promise<void> {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase() || 'admin';
+    const chatId = await resolveAdminChatId();
+    if (!chatId) return;
+
+    const [{ activities }, memberName] = await Promise.all([
+      getActivitiesContent(),
+      resolveUserName(userEmail),
+    ]);
+    const title = activities.find((a) => a.id === activityId)?.title ?? activityId;
+
+    const text =
+      `Bukti pembayaran baru dari ${memberName} untuk "${title}".` +
+      (note ? ` Catatan: ${note}` : '') +
+      (proofUrl.startsWith('data:application/pdf')
+        ? ' Bukti berupa PDF — cek detailnya di dashboard admin Dear Tennis.'
+        : '') +
+      (signupId ? paymentApprovalLinksLine(signupId) : '');
+
+    // Images go as sendImage with caption; PDFs (and send failures) fall back
+    // to text so the admin always hears about the upload.
+    if (!proofUrl.startsWith('data:application/pdf')) {
+      if (await sendWahaImage(chatId, proofUrl, text)) {
+        await insertWaMessage({ chatId, userEmail: adminEmail, direction: 'out', body: text });
+        return;
+      }
+    }
+    if (await sendWahaText(chatId, text)) {
+      await insertWaMessage({ chatId, userEmail: adminEmail, direction: 'out', body: text });
+    }
+  } catch (error) {
+    console.error('wa bot: failed to notify payment submitted:', error);
+  }
+}
+
+/**
  * Match a chat id to a member. Primary: exact users.waChatId — stamped when
  * the member OTP-verifies their number from the profile page, so formatting
  * can never cause a mismatch. Fallback: users.phone digit comparison
@@ -95,7 +237,6 @@ export async function notifySignupDecision(
  */
 async function resolveUserByPhone(chatId: string): Promise<BookingUser | null> {
   const spreadsheetId = getSpreadsheetId();
-  console.log('resolveUserByPhone chatId:', chatId, 'spreadsheetId:', spreadsheetId);
   if (!spreadsheetId) return null;
   const rows = await listRowsBySheet(spreadsheetId, 'users');
   const userFromRow = (r: Record<string, unknown>): BookingUser | null => {
@@ -132,72 +273,80 @@ async function resolveUserByPhone(chatId: string): Promise<BookingUser | null> {
   return null;
 }
 
-/** Indonesian skill summary + open activity catalog for the system prompt. */
-async function buildContext(user: BookingUser): Promise<string> {
-  const [skillPoints, { activities }] = await Promise.all([
-    getSkillPointsForUser(user.email),
-    getActivitiesContent(),
-  ]);
-
-  const skills = skillPoints
-    ? SKILL_KEYS.map(
-      (k) => `${SKILL_LABELS[k]}: ${skillPoints.values[k]}/100`,
-    ).join(', ')
-    : 'Belum ada data skill (member belum pernah dinilai).';
-
-  const weakest = skillPoints
-    ? [...SKILL_KEYS].sort(
-      (a, b) => skillPoints.values[a] - skillPoints.values[b],
-    )[0]
-    : null;
-
-  const catalog = activities
-    .filter((a) => a.archived !== true && a.isFull !== true)
-    .map(
-      (a) =>
-        `- id=${a.id} | ${a.title} (${a.category}) | ${a.time || 'jadwal belum ditentukan'} | ${a.location || 'lokasi belum ditentukan'} | ${a.price || 'gratis'} | melatih: ${a.skillTags || 'umum'}`,
-    )
-    .join('\n');
-
-  return [
-    `Data skill member ${user.name} (rata-rata per skill): ${skills}`,
-    weakest
-      ? `Skill terlemah: ${SKILL_LABELS[weakest]} — prioritaskan rekomendasi activity yang melatih skill itu.`
-      : 'Belum ada data skill, rekomendasikan activity umum.',
-    `Daftar activity yang tersedia:\n${catalog || '(kosong)'}`,
-  ].join('\n\n');
-}
-
 const SYSTEM_PROMPT = [
   'Kamu adalah asisten WhatsApp komunitas tenis "Dear Tennis".',
   'Balas selalu dalam Bahasa Indonesia, singkat dan ramah (maksimal ~120 kata).',
-  'Tugasmu:',
-  '1. Jawab pertanyaan member tentang progres latihan mereka berdasarkan data skill di bawah.',
-  '2. Rekomendasikan activity dari daftar yang melatih skill terlemah member; sebut judul, jadwal, lokasi, dan harga.',
-  '3. Jika member ingin mendaftar/booking suatu activity, lakukan pendaftaran: akhiri balasan dengan satu baris JSON berisi aksi booking, format persis: {"action":"book","activityId":"<id activity>"}',
+  'Member ini sudah terverifikasi: kamu bisa memakai tools untuk mengambil data pribadinya',
+  '(activity, skill, performance, hasil pertandingan, achievements, status pendaftaran),',
+  'merekomendasikan activity, atau melakukan aksi (booking, kirim bukti pembayaran,',
+  'pembatalan) atas permintaan member.',
   'Aturan penting:',
-  '- Hanya gunakan activityId dari daftar yang diberikan; jangan mengarang id.',
-  '- Baris JSON hanya ditulis sekali, di baris paling akhir, tanpa teks lain di baris itu.',
-  '- Jika member hanya bertanya (bukan minta booking), JANGAN tulis JSON apa pun.',
+  '- Untuk pertanyaan data pribadi atau daftar activity, selalu panggil tool yang sesuai dulu — jangan mengarang data.',
+  '- activityId/signupId hanya boleh berasal dari hasil tool sebelumnya.',
+  '- JANGAN pernah menampilkan activityId atau signupId (atau id teknis lain) di pesan balasan ke member — id hanya untuk memanggil tool secara internal.',
+  '- Jika member mengirim gambar bukti pembayaran, panggil submit_payment_proof (cek signupId lewat get_my_signups bila perlu).',
   '- Jangan pernah membahas topik di luar tenis dan Dear Tennis; tolak dengan sopan.',
+  '- Format pesan WA: JANGAN pakai tabel markdown (tidak tampil di WhatsApp).',
+  '  Untuk daftar, pakai bullet/poin per baris atau nomor, satu activity per baris',
+  '  dengan jadwal, lokasi, dan harga setelah judulnya. Hindari juga heading (#)',
+  '  dan tautan markdown — gunakan teks polos dengan *bold* bila perlu.',
 ].join('\n');
 
-/** Extract a trailing {"action":"book","activityId":"…"} line, if present. */
-function parseBookingAction(reply: string): { activityId: string } | null {
-  const lines = reply.trim().split('\n');
-  for (let i = lines.length - 1; i >= Math.max(0, lines.length - 3); i--) {
-    const line = lines[i]?.trim() ?? '';
-    if (!line.startsWith('{')) continue;
-    try {
-      const parsed = JSON.parse(line) as { action?: string; activityId?: string };
-      if (parsed.action === 'book' && parsed.activityId) {
-        return { activityId: String(parsed.activityId) };
-      }
-    } catch {
-      // not JSON — keep scanning upward
-    }
+/** One assistant turn: text, tool calls, or both. */
+type Turn = { text: string | null; toolCalls: { id: string; name: string; args: unknown }[] };
+
+/** Run one Groq round, normalizing the reply shape. Never throws. */
+async function groqTurn(messages: GroqChatMessage[], chatId: string): Promise<Turn> {
+  try {
+    const result = await callGroq(messages, chatId, GROQ_TOOL_DEFS, 'auto');
+    return {
+      text: result.text,
+      toolCalls: result.toolCalls.map((tc) => {
+        let args: unknown = {};
+        try {
+          console.log('wa bot: groq tool call:', tc.function.name, tc.function.arguments);
+          args = JSON.parse(tc.function.arguments || '{}');
+        } catch {
+          args = {};
+        }
+        return { id: tc.id, name: tc.function.name, args };
+      }),
+    };
+  } catch (error) {
+    console.error('wa bot: groq turn failed:', error);
+    return { text: null, toolCalls: [] };
   }
-  return null;
+}
+
+/**
+ * Handle one incoming WhatsApp media message: stash it as a pending payment
+ * proof for the chat and confirm receipt. Called fire-and-forget — never
+ * throws.
+ */
+export async function handleIncomingMedia(
+  chatId: string,
+  mimetype: string,
+  base64: string,
+): Promise<void> {
+  try {
+    await insertWaMessage({
+      chatId,
+      userEmail: '',
+      direction: 'in',
+      body: `[bukti pembayaran terlampir: ${mimetype}]`,
+    });
+    stashPendingProof(chatId, {
+      dataUrl: `data:${mimetype};base64,${base64}`,
+      mimetype,
+      receivedAt: Date.now(),
+    });
+    await sendWahaText(
+      chatId,
+      'Bukti pembayaran diterima! Balas pesan ini untuk memberi tahu pendaftaran mana yang dibayar — sebutkan judul activity-nya ya. 🎾',
+    );
+  } catch (error) {
+    console.error('wa bot: failed to handle incoming media:', error);
+  }
 }
 
 /**
@@ -208,10 +357,8 @@ function parseBookingAction(reply: string): { activityId: string } | null {
 export async function handleIncomingMessage(chatId: string, body: string): Promise<void> {
   try {
     await insertWaMessage({ chatId, userEmail: '', direction: 'in', body });
-    console.log('handleIncomingMessage chatId:', chatId, 'body:', body);
     const user = await resolveUserByPhone(chatId);
     if (!user) {
-      await sendWahaText(chatId, UNREGISTERED_REPLY);
       await insertWaMessage({
         chatId, userEmail: '', direction: 'out', body: UNREGISTERED_REPLY,
       });
@@ -219,38 +366,50 @@ export async function handleIncomingMessage(chatId: string, body: string): Promi
     }
 
     const history = await listWaMessages(chatId, 8);
+    // Surface a stashed payment proof so the model knows it can attach one.
+    const userLine = hasPendingProof(chatId)
+      ? `${body}\n\n[Member baru saja mengirim file bukti pembayaran di chat ini — belum diproses]`
+      : body;
     const messages: GroqChatMessage[] = [
-      { role: 'system', content: `${SYSTEM_PROMPT}\n\n${await buildContext(user)}` },
+      { role: 'system', content: SYSTEM_PROMPT },
       ...history.slice(0, -1).map((m) => ({
         role: (m.direction === 'out' ? 'assistant' : 'user') as GroqChatMessage['role'],
         content: m.body,
       })),
-      { role: 'user', content: body },
+      { role: 'user', content: userLine },
     ];
 
-    const reply = await callGroq(messages, chatId) ?? FALLBACK_REPLY;
-
-    let finalReply = reply;
-    const book = parseBookingAction(reply);
-    if (book) {
-      // Strip trailing JSON action lines from the visible text.
-      finalReply = reply
-        .trimEnd()
-        .split('\n')
-        .map((l) => l.trim())
-        .filter((l) => !l.startsWith('{'))
-        .join('\n')
-        .trimEnd();
-      const result = await registerUserForActivity(user, book.activityId, {
-        message: 'Booking via WhatsApp',
+    // Agentic loop, bounded: keep executing tool calls and feeding results
+    // back until the model answers in text (or the round cap hits).
+    // ponytail: cap 3 rounds — raise if models legitimately chain that far.
+    let finalText: string | null = null;
+    for (let round = 0; round < 3 && finalText === null; round++) {
+      const turn = await groqTurn(messages, chatId);
+      if (turn.toolCalls.length === 0) {
+        finalText = turn.text;
+        break;
+      }
+      messages.push({
+        role: 'assistant',
+        content: turn.text,
+        tool_calls: turn.toolCalls.map((tc) => ({
+          id: tc.id,
+          type: 'function' as const,
+          function: { name: tc.name, arguments: JSON.stringify(tc.args ?? {}) },
+        })),
       });
-      finalReply += result.ok
-        ? result.created
-          ? '\n\nBooking tercatat! Menunggu konfirmasi admin. Setelah disetujui, kamu akan menerima pesan selanjutnya di sini.'
-          : '\n\nKamu sudah terdaftar di activity ini sebelumnya. Cek statusnya di website Dear Tennis.'
-        : `\n\nMaaf, booking gagal: ${result.error}`;
+      for (const tc of turn.toolCalls) {
+        const result = await runBotTool(user, chatId, tc.name, (tc.args ?? {}) as Record<string, unknown>);
+        messages.push({
+          role: 'tool',
+          tool_call_id: tc.id,
+          content: JSON.stringify(result),
+        });
+      }
+      if (turn.text !== null) finalText = turn.text;
     }
 
+    const finalReply = finalText ?? FALLBACK_REPLY;
     const sent = await sendWahaText(chatId, finalReply);
     if (sent) {
       await insertWaMessage({

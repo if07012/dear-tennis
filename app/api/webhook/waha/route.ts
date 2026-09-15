@@ -12,8 +12,13 @@
 // container), not a serverless platform that freezes after the response.
 
 import { NextResponse } from 'next/server';
-import { handleIncomingMessage } from '@/lib/whatsapp-bot';
-import { resolveWahaChatId } from '@/lib/waha-client';
+import { handleIncomingMessage, handleIncomingMedia } from '@/lib/whatsapp-bot';
+import { fetchWahaFile, resolveWahaChatId } from '@/lib/waha-client';
+
+// Same limits as the website proof upload (payment route).
+const MAX_MEDIA_BYTES = 2 * 1024 * 1024;
+const ALLOWED_MEDIA = (mime: string) =>
+  mime.startsWith('image/') || mime === 'application/pdf';
 
 export async function POST(request: Request) {
   const secret = process.env.WAHA_WEBHOOK_SECRET?.trim();
@@ -34,7 +39,13 @@ export async function POST(request: Request) {
 
   let event: {
     event?: string;
-    payload?: { from?: string; body?: string; fromMe?: boolean };
+    payload?: {
+      from?: string;
+      body?: string;
+      fromMe?: boolean;
+      hasMedia?: boolean;
+      media?: { mimetype?: string; url?: string };
+    };
   };
   try {
     event = (await request.json()) as typeof event;
@@ -44,13 +55,29 @@ export async function POST(request: Request) {
 
   if (event.event === 'message' && event.payload && event.payload.fromMe !== true) {
     const from = String(event.payload.from ?? '').trim();
-    const body = String(event.payload.body ?? '').trim();
-    if (from && body) {
+    if (from) {
       // payload.from is often a LID ("…@lid"); member matching needs the
       // phone-number chat id. Resolve before handing off, still ack-fast.
-      void resolveWahaChatId(from)
-        .then((chatId) => handleIncomingMessage(chatId, body))
-        .catch(() => undefined);
+      if (event.payload.hasMedia && event.payload.media?.url) {
+        // Media message: download (image/PDF only, size-capped) and stash
+        // as a pending payment proof for this chat.
+        void resolveWahaChatId(from)
+          .then(async (chatId) => {
+            const file = await fetchWahaFile(event.payload!.media!.url!);
+            if (!file || !ALLOWED_MEDIA(file.mimetype)) return;
+            const bytes = Math.ceil((file.base64.length * 3) / 4);
+            if (bytes > MAX_MEDIA_BYTES) return;
+            handleIncomingMedia(chatId, file.mimetype, file.base64);
+          })
+          .catch(() => undefined);
+      } else {
+        const body = String(event.payload.body ?? '').trim();
+        if (body) {
+          void resolveWahaChatId(from)
+            .then((chatId) => handleIncomingMessage(chatId, body))
+            .catch(() => undefined);
+        }
+      }
     }
   }
   return NextResponse.json({ ok: true });

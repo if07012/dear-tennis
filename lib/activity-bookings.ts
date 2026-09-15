@@ -13,6 +13,7 @@ import {
   requestSignup,
   getSignupCountsByActivity,
 } from '@/lib/activity-signups-store';
+import { notifyAdminNewSignup } from '@/lib/whatsapp-bot';
 import { parsePriceToAmount } from '@/data/activity-signups-types';
 import { getActivitiesContent } from '@/lib/activities-store';
 
@@ -70,5 +71,10 @@ export async function registerUserForActivity(
     originalAmount,
     finalAmount: Math.round(originalAmount * (1 - discountPct / 100)),
   });
+  // Fresh (or re-submitted) pending row → tell the admin with one-click links.
+  console.log('registerUserForActivity: signup result', result);
+  if (result.signup.status === 'pending_approval') {
+    void notifyAdminNewSignup(email, activityId, result.signup.id);
+  }
   return { ok: true, status: result.signup.status, created: result.created };
 }

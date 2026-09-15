@@ -16,14 +16,13 @@
 import { NextResponse } from 'next/server';
 import {
   decidePayment,
-  decideSignup,
+  decideSignupWithActivity,
   getActivityTitles,
   listSignupsForAdmin,
   removeSignup,
 } from '@/lib/activity-signups-store';
-import { parsePriceToAmount } from '@/data/activity-signups-types';
 import { isAdminEmail } from '@/lib/admin';
-import { getSpreadsheetId, listRowsBySheet } from '@/app/lib/supabase';
+import { getSpreadsheetId } from '@/app/lib/supabase';
 import { notifySignupDecision } from '@/lib/whatsapp-bot';
 
 function unauthorized() {
@@ -96,21 +95,6 @@ type PatchBody = {
   reason?: string;
 };
 
-/** Load the activity row behind a signup so decisions can use its settings. */
-async function loadActivity(
-  spreadsheetId: string,
-  activityId: string,
-): Promise<Record<string, unknown> | null> {
-  try {
-    const rows = await listRowsBySheet(spreadsheetId, 'activities_items');
-    return (
-      rows.find((r) => String(r.id ?? '').trim() === activityId) ?? null
-    );
-  } catch {
-    return null;
-  }
-}
-
 export async function PATCH(request: Request) {
   const email = getRequesterEmail(request);
   if (!isAdminEmail(email)) return unauthorized();
@@ -151,35 +135,14 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: true, signup });
     }
 
-    // Registration approve/reject — needs the activity's capacity + payment
-    // settings for slot math.
-    const signups = await listSignupsForAdmin({ pageSize: 1, status: 'all' });
-    void signups;
-    const { readRowById } = await import('@/app/lib/supabase');
-    const row = await readRowById(spreadsheetId, 'activity_signups', body.id);
-    if (!row) return badRequest('Signup not found');
-    const activityId = String(row.activityId ?? '').trim();
-    const activity = await loadActivity(spreadsheetId, activityId);
-
-    const groupSize = String((activity as { groupSize?: unknown } | null)?.groupSize ?? '');
-    const capacityMatch = groupSize.match(/\d+/);
-    const capacity = capacityMatch ? Number.parseInt(capacityMatch[0], 10) : 0;
-    const price = String((activity as { price?: unknown } | null)?.price ?? '');
-    const paymentRequired = parsePriceToAmount(price) > 0;
-    const deadlineRaw = Number(
-      (activity as { paymentDeadlineHours?: unknown } | null)?.paymentDeadlineHours ?? 0,
-    );
-
-    const { signup, error } = await decideSignup(
+    // Registration approve/reject — capacity + payment settings come from the
+    // activity row inside the shared helper (same one the WhatsApp one-click
+    // approval links go through).
+    const { signup, error } = await decideSignupWithActivity(
       spreadsheetId,
       body.id,
       action === 'approve' ? 'approve' : 'reject',
       email ?? '',
-      {
-        capacity: capacity > 0 ? capacity : undefined,
-        paymentRequired,
-        deadlineHours: Number.isFinite(deadlineRaw) ? deadlineRaw : undefined,
-      },
     );
     if (!signup) {
       return error ? badRequest(error) : badRequest('Signup not found');

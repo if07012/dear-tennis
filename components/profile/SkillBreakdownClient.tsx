@@ -112,7 +112,11 @@ function buildDetailsForSkill(
   perSkill: PerSkill | null,
 ): { value: number; details: SkillDetailStat[] } {
   if (!perSkill) {
-    return { value: item.details[0]?.value ?? 0, details: item.details };
+    // No recorded data → zero out every stat instead of showing mock values.
+    return {
+      value: 0,
+      details: item.details.map((d) => ({ ...d, value: 0 })),
+    };
   }
   // Map profile-types SkillKey → store SkillKey (case difference).
   const keyMap: Record<string, SkillKey> = {
@@ -126,7 +130,10 @@ function buildDetailsForSkill(
   const skillKey = keyMap[item.skill] ?? (item.skill.toLowerCase() as SkillKey);
   const entry = perSkill[skillKey];
   if (!entry) {
-    return { value: item.details[0]?.value ?? 0, details: item.details };
+    return {
+      value: 0,
+      details: item.details.map((d) => ({ ...d, value: 0 })),
+    };
   }
   const subs = SKILL_SUB_STATS[skillKey];
   const details: SkillDetailStat[] = subs.map((sub) => ({
@@ -141,9 +148,8 @@ function buildDetailsForSkill(
  * the signed-in user's per-skill sub-stat totals from
  * `/api/profile/skill-points-details` and passes `valueOverride` +
  * `detailsOverride` to each `SkillProgressBar` when the user has any
- * recorded skill rows. Falls back to the bundled `skillBreakdownDefaults`
- * exactly when there's no data so first-visit / no-data users still see
- * the original static layout (visuals unchanged).
+ * recorded skill rows. Without data, bars render at 0 with the static
+ * descriptions (no mock numbers).
  *
  * Admins viewing another user get an inline edit panel: pick an activity,
  * enter +/- deltas per skill, save to /api/admin/activity-skill-points.
