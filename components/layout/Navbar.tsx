@@ -52,6 +52,8 @@ const ADMIN_NAV_GROUPS: { label: string; items: { href: string; label: string }[
       { href: '/admin/users', label: 'Manage Users' },
       { href: '/admin/invite', label: 'Invite Members' },
       { href: '/admin/badges', label: 'Badges' },
+      { href: '/admin/levels', label: 'Levels' },
+      { href: '/admin/levels/badges', label: 'Level Badges' },
     ],
   },
 ];

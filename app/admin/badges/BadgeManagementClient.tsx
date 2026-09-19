@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import type { BadgeCatalogRecord, BadgeGrantRecord, GrantedBadge } from '@/data/tennis-level-types';
 import { BadgesClient } from './BadgesClient';
@@ -29,24 +29,6 @@ export function BadgeManagementClient({ initialBadges }: { initialBadges: BadgeC
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [status, setStatus] = useState<Toast>({ kind: 'idle' });
 
-  // Refresh badge catalog
-  const refreshBadges = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/badges', {
-        headers: { 'x-auth-email': user?.email ?? '' },
-        cache: 'no-store',
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = (await res.json()) as { badges: BadgeCatalogRecord[] };
-      setBadges(body.badges ?? []);
-    } catch (e) {
-      setStatus({
-        kind: 'error',
-        message: e instanceof Error ? e.message : 'Gagal memuat badge',
-      });
-    }
-  }, [user?.email]);
-
   const openAwardDialog = (user: { email: string; name: string }) => {
     setSelectedUser(user);
     setShowAwardDialog(true);
@@ -62,8 +44,12 @@ export function BadgeManagementClient({ initialBadges }: { initialBadges: BadgeC
     if (selectedUser) {
       await loadUserGrants(selectedUser.email);
     }
-    setStatus({ kind: 'saved', at: Date.now() });
+    handleAwardSuccessCb();
   };
+
+  const handleAwardSuccessCb = useCallback(() => {
+    setStatus({ kind: 'saved', at: Date.now() });
+  }, []);
 
   const openRevokeDialog = (grant: GrantedBadge) => {
     setShowRevokeDialog(grant);
@@ -78,8 +64,12 @@ export function BadgeManagementClient({ initialBadges }: { initialBadges: BadgeC
     if (selectedUser) {
       await loadUserGrants(selectedUser.email);
     }
-    setStatus({ kind: 'saved', at: Date.now() });
+    handleRevokeSuccessCb();
   };
+
+  const handleRevokeSuccessCb = useCallback(() => {
+    setStatus({ kind: 'saved', at: Date.now() });
+  }, []);
 
   const openHistoryDialog = async (userEmail: string, userName: string) => {
     setSelectedUser({ email: userEmail, name: userName });
@@ -176,83 +166,7 @@ export function BadgeManagementClient({ initialBadges }: { initialBadges: BadgeC
             </label>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                  <th className="py-3 pr-4">Badge</th>
-                  <th className="py-3 pr-4">Key</th>
-                  <th className="py-3 pr-4">Type</th>
-                  <th className="py-3 pr-4">Kategori</th>
-                  <th className="py-3 pr-4">Status</th>
-                  <th className="py-3 pr-4 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredBadges.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-10 text-center text-dark-gray">
-                      {badges.length === 0
-                        ? 'Belum ada badge. Tambahkan badge pertama.'
-                        : 'Tidak ada hasil untuk pencarian ini.'}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredBadges.map((b) => (
-                    <tr key={b.key} className="border-b border-light-gray/60 last:border-b-0">
-                      <td className="py-3 pr-4 align-middle">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl" aria-hidden="true">
-                            {b.icon || '🏅'}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="font-medium text-hunter-green truncate">{b.label}</p>
-                            {b.description && (
-                              <p className="text-xs text-dark-gray truncate">{b.description}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 pr-4 align-middle font-mono text-xs text-dark-gray">{b.key}</td>
-                      <td className="py-3 pr-4 align-middle">
-                        <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${
-                          b.type === 'skill'
-                            ? 'bg-hunter-green/10 text-hunter-green'
-                            : 'bg-paprika/10 text-paprika'
-                        }`}>
-                          {b.type === 'skill' ? 'Skill' : 'Achievement'}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4 align-middle text-xs text-dark-gray">
-                        {b.category || '—'}
-                      </td>
-                      <td className="py-3 pr-4 align-middle">
-                        {b.archived ? (
-                          <span className="rounded-full bg-dark-gray/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-dark-gray">
-                            Archived
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-hunter-green/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-hunter-green">
-                            Active
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4 align-middle text-right">
-                        <button
-                          type="button"
-                          onClick={() => openAwardDialog({ email: 'placeholder', name: 'placeholder' })}
-                          disabled
-                          className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-hunter-green transition-colors hover:border-hunter-green hover:bg-hunter-green/10 mr-2 opacity-50"
-                        >
-                          Berikan
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <BadgesClient initial={filteredBadges} />
         </section>
 
         <aside className="rounded-2xl border border-light-gray bg-white p-6 shadow-sm">

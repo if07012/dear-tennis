@@ -1,10 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import type { BadgeCatalogRecord } from '@/data/tennis-level-types';
 import { EmojiPicker } from '@/components/ui/EmojiPicker';
-import { XIcon } from '@/components/ui/Icons';
 
 const FIELD_LABEL_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray';
@@ -49,7 +48,7 @@ function slugify(input: string): string {
 
 export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
   const { user } = useAuth();
-  const [badges, setBadges] = useState<BadgeCatalogRecord[]>(initial);
+  const badges = initial;
   const [search, setSearch] = useState('');
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -63,8 +62,8 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
         cache: 'no-store',
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = (await res.json()) as { badges: BadgeCatalogRecord[] };
-      setBadges(body.badges ?? []);
+      await res.json();
+      setStatus({ kind: 'saved', at: Date.now() });
     } catch (e) {
       setStatus({
         kind: 'error',
@@ -72,12 +71,6 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
       });
     }
   }, [user?.email]);
-
-  useEffect(() => {
-    if (status.kind !== 'saved') return;
-    const id = window.setTimeout(() => setStatus({ kind: 'idle' }), 1200);
-    return () => window.clearTimeout(id);
-  }, [status]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -258,10 +251,10 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                           <span className="text-2xl" aria-hidden="true">
                             {b.icon || '🏅'}
                           </span>
-                          <div className="min-w-0">
+                          <div className="min-w-0 max-w-[200px]">
                             <p className="font-medium text-hunter-green truncate">{b.label}</p>
                             {b.description && (
-                              <p className="text-xs text-dark-gray truncate">{b.description}</p>
+                              <p className="text-xs text-dark-gray truncate max-w-[200px]">{b.description}</p>
                             )}
                           </div>
                         </div>

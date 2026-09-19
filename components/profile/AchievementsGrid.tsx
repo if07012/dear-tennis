@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import type { BadgeCatalogRecord, GrantedBadge, PlayerLevelResult } from '@/data/tennis-level-types';
-import { XIcon, CheckIcon, LockIcon } from '@/components/ui/Icons';
+import { XIcon } from '@/components/ui/Icons';
 
 type FetchState<T> =
   | { kind: 'loading' }
@@ -63,14 +63,8 @@ export function AchievementsGrid({
   // Fetch badge catalog
   useEffect(() => {
     if (!hydrated) return;
-    const requester = user?.email ?? selfEmail ?? '';
-    if (!requester) {
-      setCatalogState({ kind: 'ok', data: [] });
-      return;
-    }
     const controller = new AbortController();
-    fetch('/api/admin/badges', {
-      headers: { 'x-auth-email': requester },
+    fetch('/api/profile/badges/catalog', {
       cache: 'no-store',
       signal: controller.signal,
     })
@@ -80,7 +74,7 @@ export function AchievementsGrid({
       })
       .then((body) => {
         if (controller.signal.aborted) return;
-        setCatalogState({ kind: 'ok', data: (body.badges ?? []).filter((b) => !b.archived) });
+        setCatalogState({ kind: 'ok', data: body.badges ?? [] });
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
@@ -90,7 +84,7 @@ export function AchievementsGrid({
         });
       });
     return () => controller.abort();
-  }, [hydrated, user?.email, selfEmail]);
+  }, [hydrated]);
 
   // Fetch player level for next level info
   useEffect(() => {
@@ -185,35 +179,30 @@ export function AchievementsGrid({
                 const isRequiredForNext = levelData.nextLevel
                   ? levelData.missingBadges.includes(badge.key) || (earnedSkillKeys.has(badge.key) && !levelData.missingBadges.includes(badge.key))
                   : false;
-                const grant = grantedBadges.find((g) => g.key === badge.key);
 
                 return (
                   <button
                     key={badge.key}
                     type="button"
                     onClick={() => openBadgeDetail(badge)}
-                    className={`achievement-badge group flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all duration-300 ${
-                      isEarned
+                    className={`achievement-badge group flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all duration-300 ${isEarned
                         ? 'border-hunter-green/30 bg-hunter-green/5'
                         : 'border-light-gray bg-off-white'
-                    }`}
+                      }`}
                   >
                     <span
-                      className={`achievement-icon text-3xl transition-colors duration-300 ${
-                        isEarned ? '' : 'grayscale opacity-50'
-                      }`}
+                      className={`achievement-icon text-3xl transition-colors duration-300 ${isEarned ? '' : 'grayscale opacity-50'
+                        }`}
                       aria-hidden="true"
                     >
                       {badge.icon || '🏅'}
                     </span>
-                    <span className={`achievement-label text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${
-                      isEarned ? 'text-hunter-green' : 'text-dark-gray'
-                    }`}>
+                    <span className={`achievement-label text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${isEarned ? 'text-hunter-green' : 'text-dark-gray'
+                      }`}>
                       {badge.label}
                     </span>
-                    <span className={`text-[0.65rem] font-semibold uppercase tracking-wider ${
-                      isEarned ? 'text-hunter-green' : 'text-dark-gray/50'
-                    }`}>
+                    <span className={`text-[0.65rem] font-semibold uppercase tracking-wider ${isEarned ? 'text-hunter-green' : 'text-dark-gray/50'
+                      }`}>
                       {isEarned ? 'Earned' : 'Locked'}
                     </span>
                     {isRequiredForNext && !isEarned && (
@@ -238,35 +227,30 @@ export function AchievementsGrid({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {achievementBadges.map((badge) => {
                 const isEarned = grantedKeys.has(badge.key);
-                const grant = grantedBadges.find((g) => g.key === badge.key);
 
                 return (
                   <button
                     key={badge.key}
                     type="button"
                     onClick={() => openBadgeDetail(badge)}
-                    className={`achievement-badge group flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all duration-300 ${
-                      isEarned
+                    className={`achievement-badge group flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all duration-300 ${isEarned
                         ? 'border-paprika/30 bg-paprika/5'
                         : 'border-light-gray bg-off-white'
-                    }`}
+                      }`}
                   >
                     <span
-                      className={`achievement-icon text-3xl transition-colors duration-300 ${
-                        isEarned ? '' : 'grayscale opacity-50'
-                      }`}
+                      className={`achievement-icon text-3xl transition-colors duration-300 ${isEarned ? '' : 'grayscale opacity-50'
+                        }`}
                       aria-hidden="true"
                     >
                       {badge.icon || '🏅'}
                     </span>
-                    <span className={`achievement-label text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${
-                      isEarned ? 'text-paprika' : 'text-dark-gray'
-                    }`}>
+                    <span className={`achievement-label text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${isEarned ? 'text-paprika' : 'text-dark-gray'
+                      }`}>
                       {badge.label}
                     </span>
-                    <span className={`text-[0.65rem] font-semibold uppercase tracking-wider ${
-                      isEarned ? 'text-paprika' : 'text-dark-gray/50'
-                    }`}>
+                    <span className={`text-[0.65rem] font-semibold uppercase tracking-wider ${isEarned ? 'text-paprika' : 'text-dark-gray/50'
+                      }`}>
                       {isEarned ? 'Earned' : 'Locked'}
                     </span>
                   </button>
@@ -352,11 +336,10 @@ function BadgeDetailModal({
           <span className="text-5xl" aria-hidden="true">{badge.icon || '🏅'}</span>
           <p className="mt-2 font-serif text-xl font-semibold text-hunter-green">{badge.label}</p>
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-            <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${
-              isSkillBadge
+            <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${isSkillBadge
                 ? 'bg-hunter-green/10 text-hunter-green'
                 : 'bg-paprika/10 text-paprika'
-            }`}>
+              }`}>
               {isSkillBadge ? 'Skill Badge' : 'Achievement Badge'}
             </span>
             {badge.category && (
@@ -364,9 +347,8 @@ function BadgeDetailModal({
                 {badge.category}
               </span>
             )}
-            <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${
-              isEarned ? 'bg-hunter-green/10 text-hunter-green' : 'bg-paprika/10 text-paprika'
-            }`}>
+            <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${isEarned ? 'bg-hunter-green/10 text-hunter-green' : 'bg-paprika/10 text-paprika'
+              }`}>
               {isEarned ? 'Earned' : 'Locked'}
             </span>
           </div>

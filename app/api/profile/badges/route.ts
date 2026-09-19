@@ -14,7 +14,7 @@ import { isAdminEmail } from '@/lib/admin';
 import {
   countGrantedBadgesForUser,
   listGrantedBadgesForUser,
-} from '@/lib/achievements-store';
+} from '@/lib/tennis-level-store';
 
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

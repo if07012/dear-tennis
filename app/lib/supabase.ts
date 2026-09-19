@@ -62,6 +62,7 @@ const TABLES = new Set([
   'activity_signups', 'activity_matches',
   'coupons', 'coupon_claims',
   'badges', 'user_badges',
+  'levels', 'level_badges',
   'user_skill_points', 'user_performance_points',
   'gallery_settings', 'gallery_items',
   'faq_settings', 'faq_items',
