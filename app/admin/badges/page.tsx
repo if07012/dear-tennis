@@ -1,17 +1,7 @@
-import { AdminAuthGate } from '../hero/AdminAuthGate';
-import { BadgesClient } from './BadgesClient';
-import { listBadgeCatalog } from '@/lib/achievements-store';
+import { BadgeManagementClient } from './BadgeManagementClient';
+import { listBadgeCatalog } from '@/lib/tennis-level-store';
 
-export const metadata = {
-  title: 'Admin · Badge Catalog — Dear Tennis',
-  robots: { index: false, follow: false },
-};
-
-export default async function AdminBadgesPage() {
-  const initial = await listBadgeCatalog();
-  return (
-    <AdminAuthGate>
-      <BadgesClient initial={initial} />
-    </AdminAuthGate>
-  );
+export default async function BadgeManagementPage() {
+  const badges = await listBadgeCatalog();
+  return <BadgeManagementClient initialBadges={badges} />;
 }

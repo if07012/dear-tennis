@@ -3,14 +3,19 @@
 // ============================================
 //
 // GET                   → list catalog
-// POST { key, label, icon?, description?, archived? }
+// POST { key, label, icon?, description?, type?, category?, earningCriteria?, archived? }
 //                      → upsert a catalog entry by key
+// DELETE { key }        → delete a badge
 //
 // All endpoints require `x-auth-email` matching ADMIN_EMAIL.
 
 import { NextResponse } from 'next/server';
 import { isAdminEmail } from '@/lib/admin';
-import { listBadgeCatalog, upsertBadge } from '@/lib/achievements-store';
+import {
+  listBadgeCatalog,
+  upsertBadge,
+  deleteBadge,
+} from '@/lib/tennis-level-store';
 
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -58,12 +63,20 @@ export async function POST(request: Request) {
   if (!label) return badRequest('label is required');
   if (key.length > 60) return badRequest('key is too long');
 
+  const type = (String(body.type ?? 'skill').trim().toLowerCase() as 'skill' | 'achievement') || 'skill';
+  if (!['skill', 'achievement'].includes(type)) {
+    return badRequest('type must be "skill" or "achievement"');
+  }
+
   try {
     const badge = await upsertBadge({
       key,
       label,
       icon: String(body.icon ?? '').trim(),
       description: String(body.description ?? '').trim(),
+      type,
+      category: String(body.category ?? '').trim(),
+      earningCriteria: String(body.earningCriteria ?? '').trim(),
       archived: typeof body.archived === 'boolean' ? body.archived : undefined,
     });
     return NextResponse.json({ ok: true, badge });
@@ -71,6 +84,32 @@ export async function POST(request: Request) {
     console.error('Error in POST /api/admin/badges:', error);
     return serverError(
       error instanceof Error ? error.message : 'Failed to save badge',
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  const email = getRequesterEmail(request);
+  if (!isAdminEmail(email)) return unauthorized();
+
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return badRequest('Invalid JSON');
+  }
+
+  const key = String(body.key ?? '').trim().toLowerCase();
+  if (!key) return badRequest('key is required');
+
+  try {
+    const ok = await deleteBadge(key);
+    if (!ok) return badRequest('Badge not found');
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error('Error in DELETE /api/admin/badges:', error);
+    return serverError(
+      error instanceof Error ? error.message : 'Failed to delete badge',
     );
   }
 }

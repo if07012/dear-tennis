@@ -166,6 +166,9 @@ CREATE TABLE IF NOT EXISTS badges (
   "label" text NOT NULL DEFAULT '',
   "icon" text NOT NULL DEFAULT '',
   "description" text NOT NULL DEFAULT '',
+  "type" text NOT NULL DEFAULT 'skill',          -- 'skill' | 'achievement'
+  "category" text NOT NULL DEFAULT '',
+  "earningCriteria" text NOT NULL DEFAULT '',
   "archived" boolean NOT NULL DEFAULT false,
   "createdAt" text NOT NULL DEFAULT '',
   "seq" bigint GENERATED ALWAYS AS IDENTITY
@@ -176,13 +179,37 @@ CREATE TABLE IF NOT EXISTS user_badges (
   "id" text PRIMARY KEY,
   "userEmail" text NOT NULL DEFAULT '',
   "badgeKey" text NOT NULL DEFAULT '',
+  "status" text NOT NULL DEFAULT 'active',      -- 'active' | 'revoked'
   "grantedAt" text NOT NULL DEFAULT '',
   "grantedBy" text NOT NULL DEFAULT '',
+  "revokedAt" text,
+  "revokedBy" text,
   "note" text,
   "seq" bigint GENERATED ALWAYS AS IDENTITY
 );
 CREATE INDEX IF NOT EXISTS user_badges_email_idx ON user_badges ("userEmail");
 CREATE INDEX IF NOT EXISTS user_badges_key_idx ON user_badges ("badgeKey");
+CREATE INDEX IF NOT EXISTS user_badges_status_idx ON user_badges ("status");
+
+-- ============ PLAYER LEVELS ============
+CREATE TABLE IF NOT EXISTS levels (
+  "id" text PRIMARY KEY,
+  "name" text NOT NULL DEFAULT '',
+  "description" text NOT NULL DEFAULT '',
+  "order" integer NOT NULL DEFAULT 0,
+  "isActive" boolean NOT NULL DEFAULT true,
+  "createdAt" text NOT NULL DEFAULT '',
+  "seq" bigint GENERATED ALWAYS AS IDENTITY
+);
+
+CREATE TABLE IF NOT EXISTS level_badges (
+  "id" text PRIMARY KEY,
+  "levelId" text NOT NULL DEFAULT '',
+  "badgeKey" text NOT NULL DEFAULT '',
+  "seq" bigint GENERATED ALWAYS AS IDENTITY
+);
+CREATE INDEX IF NOT EXISTS level_badges_level_idx ON level_badges ("levelId");
+CREATE INDEX IF NOT EXISTS level_badges_badge_idx ON level_badges ("badgeKey");
 
 -- ============ SKILL POINTS ============
 -- Row id is `${email}::${activityId}::${skill}` (see user-skill-points-store).

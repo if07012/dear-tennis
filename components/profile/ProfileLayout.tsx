@@ -15,6 +15,7 @@ import { EventGallery } from './EventGallery';
 import { SkillOverviewChartClient } from './SkillOverviewChartClient';
 import { PerformanceOverviewChart } from './PerformanceOverviewChart';
 import { AdminUserPicker } from './AdminUserPicker';
+import { TennisLevelWidget } from './TennisLevelWidget';
 import { useAuth } from '@/hooks/useAuth';
 import type { UserRecord } from '@/lib/users-store';
 
@@ -328,6 +329,10 @@ export function ProfileLayout({
               viewingEmail={viewingEmail}
               isAdmin={isAdmin}
             />
+          </Reveal>
+
+          <Reveal>
+            <TennisLevelWidget viewingEmail={viewingEmail} selfEmail={selfEmail} />
           </Reveal>
 
           <Reveal>

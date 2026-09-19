@@ -2,8 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import type { BadgeCatalogRecord } from '@/data/achievements-types';
+import type { BadgeCatalogRecord } from '@/data/tennis-level-types';
 import { EmojiPicker } from '@/components/ui/EmojiPicker';
+import { XIcon } from '@/components/ui/Icons';
+
+const FIELD_LABEL_CLS =
+  'text-xs font-semibold uppercase tracking-wider text-dark-gray';
+const INPUT_CLS =
+  'w-full rounded-lg border border-light-gray bg-white px-3 py-2 text-sm focus:border-hunter-green focus:outline-none';
 
 type Toast =
   | { kind: 'idle' }
@@ -15,6 +21,9 @@ type FormState = {
   label: string;
   icon: string;
   description: string;
+  type: 'skill' | 'achievement';
+  category: string;
+  earningCriteria: string;
   archived: boolean;
 };
 
@@ -23,19 +32,12 @@ const EMPTY_FORM: FormState = {
   label: '',
   icon: '🏅',
   description: '',
+  type: 'skill',
+  category: '',
+  earningCriteria: '',
   archived: false,
 };
 
-const FIELD_LABEL_CLS =
-  'text-xs font-semibold uppercase tracking-wider text-dark-gray';
-const INPUT_CLS =
-  'w-full rounded-lg border border-light-gray bg-white px-3 py-2 text-sm focus:border-hunter-green focus:outline-none';
-
-// Turn "Champions League 2026!" into "champions-league-2026".
-// - lower-case
-// - replace any non-[a-z0-9] run with a single hyphen
-// - trim leading/trailing hyphens
-// - cap to 60 chars (server-side max) and re-trim trailing hyphen
 function slugify(input: string): string {
   return input
     .toLowerCase()
@@ -71,8 +73,6 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
     }
   }, [user?.email]);
 
-  // Refresh after a successful save so the server-normalised record
-  // (createdAt, archived coercion) replaces the optimistic form draft.
   useEffect(() => {
     if (status.kind !== 'saved') return;
     const id = window.setTimeout(() => setStatus({ kind: 'idle' }), 1200);
@@ -102,6 +102,9 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
       label: b.label,
       icon: b.icon || '🏅',
       description: b.description,
+      type: b.type,
+      category: b.category,
+      earningCriteria: b.earningCriteria,
       archived: b.archived,
     });
   };
@@ -139,6 +142,9 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
           label,
           icon: form.icon,
           description: form.description,
+          type: form.type,
+          category: form.category,
+          earningCriteria: form.earningCriteria,
           archived: form.archived,
         }),
       });
@@ -159,6 +165,31 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
     }
   };
 
+  const handleDelete = async (key: string) => {
+    if (!window.confirm('Hapus badge ini? Tindakan ini tidak bisa dibatalkan.')) return;
+    try {
+      const res = await fetch('/api/admin/badges', {
+        method: 'DELETE',
+        headers: {
+          'content-type': 'application/json',
+          'x-auth-email': user?.email ?? '',
+        },
+        body: JSON.stringify({ key }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      await refresh();
+      setStatus({ kind: 'saved', at: Date.now() });
+    } catch (e) {
+      setStatus({
+        kind: 'error',
+        message: e instanceof Error ? e.message : 'Gagal menghapus badge',
+      });
+    }
+  };
+
   const editing =
     editingKey !== null &&
     (editingKey === '__new__' || badges.some((b) => b.key === editingKey));
@@ -171,12 +202,12 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
             Badge Catalog
           </h1>
           <p className="text-sm text-dark-gray">
-            Kelola badge yang bisa di授予 admin ke user dari halaman Manage User.
+            Kelola badge yang bisa diberikan admin ke user. Skill badge memengaruhi level, achievement badge tidak.
           </p>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <section className="rounded-2xl border border-light-gray bg-white p-6 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <label className={FIELD_LABEL_CLS}>
@@ -185,7 +216,7 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="key / label / deskripsi"
+                placeholder="key / label / deskripsi / kategori"
                 className={`mt-1 ${INPUT_CLS}`}
               />
             </label>
@@ -204,6 +235,8 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                 <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
                   <th className="py-3 pr-4">Badge</th>
                   <th className="py-3 pr-4">Key</th>
+                  <th className="py-3 pr-4">Type</th>
+                  <th className="py-3 pr-4">Kategori</th>
                   <th className="py-3 pr-4">Status</th>
                   <th className="py-3 pr-4 text-right">Aksi</th>
                 </tr>
@@ -211,10 +244,7 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={4}
-                      className="py-10 text-center text-dark-gray"
-                    >
+                    <td colSpan={6} className="py-10 text-center text-dark-gray">
                       {badges.length === 0
                         ? 'Belum ada badge. Tambahkan badge pertama.'
                         : 'Tidak ada hasil untuk pencarian ini.'}
@@ -222,32 +252,32 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                   </tr>
                 ) : (
                   filtered.map((b) => (
-                    <tr
-                      key={b.key}
-                      className="border-b border-light-gray/60 last:border-b-0"
-                    >
+                    <tr key={b.key} className="border-b border-light-gray/60 last:border-b-0">
                       <td className="py-3 pr-4 align-middle">
                         <div className="flex items-center gap-3">
-                          <span
-                            className="text-2xl"
-                            aria-hidden="true"
-                          >
+                          <span className="text-2xl" aria-hidden="true">
                             {b.icon || '🏅'}
                           </span>
                           <div className="min-w-0">
-                            <p className="font-medium text-hunter-green truncate">
-                              {b.label}
-                            </p>
+                            <p className="font-medium text-hunter-green truncate">{b.label}</p>
                             {b.description && (
-                              <p className="text-xs text-dark-gray truncate">
-                                {b.description}
-                              </p>
+                              <p className="text-xs text-dark-gray truncate">{b.description}</p>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 pr-4 align-middle font-mono text-xs text-dark-gray">
-                        {b.key}
+                      <td className="py-3 pr-4 align-middle font-mono text-xs text-dark-gray">{b.key}</td>
+                      <td className="py-3 pr-4 align-middle">
+                        <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${
+                          b.type === 'skill'
+                            ? 'bg-hunter-green/10 text-hunter-green'
+                            : 'bg-paprika/10 text-paprika'
+                        }`}>
+                          {b.type === 'skill' ? 'Skill' : 'Achievement'}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4 align-middle text-xs text-dark-gray">
+                        {b.category || '—'}
                       </td>
                       <td className="py-3 pr-4 align-middle">
                         {b.archived ? (
@@ -264,9 +294,16 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                         <button
                           type="button"
                           onClick={() => startEdit(b)}
-                          className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-hunter-green transition-colors hover:border-hunter-green hover:bg-hunter-green/10"
+                          className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-hunter-green transition-colors hover:border-hunter-green hover:bg-hunter-green/10 mr-2"
                         >
                           Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(b.key)}
+                          className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:border-paprika hover:bg-paprika/10"
+                        >
+                          Hapus
                         </button>
                       </td>
                     </tr>
@@ -284,8 +321,7 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
           {!editing ? (
             <p className="text-sm text-dark-gray">
               Pilih <strong>Edit</strong> pada baris untuk mengubah badge,
-              atau klik <strong>+ Badge baru</strong> untuk membuat entri
-              baru.
+              atau klik <strong>+ Badge baru</strong> untuk membuat entri baru.
             </p>
           ) : (
             <form
@@ -318,11 +354,6 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                   onChange={(e) => {
                     const nextLabel = e.target.value;
                     setForm((prev) => {
-                      // In create mode, also re-derive the key from the
-                      // description (label is the closest user-facing
-                      // string to a "title"; description is the optional
-                      // long-form text). Fall back to label when the
-                      // description is empty.
                       if (editingKey !== '__new__') {
                         return { ...prev, label: nextLabel };
                       }
@@ -330,11 +361,22 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                       return { ...prev, label: nextLabel, key: slugify(source) };
                     });
                   }}
-                  placeholder="e.g. Champion"
+                  placeholder="e.g. Basic Forehand"
                   maxLength={80}
                   required
                   className={INPUT_CLS}
                 />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className={FIELD_LABEL_CLS}>Tipe</span>
+                <select
+                  value={form.type}
+                  onChange={(e) => setForm((p) => ({ ...p, type: e.target.value as 'skill' | 'achievement' }))}
+                  className={INPUT_CLS}
+                >
+                  <option value="skill">Skill (memengaruhi level)</option>
+                  <option value="achievement">Achievement (tidak memengaruhi level)</option>
+                </select>
               </label>
               <label className="flex flex-col gap-1">
                 <span className={FIELD_LABEL_CLS}>Icon (emoji)</span>
@@ -343,22 +385,25 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                     type="text"
                     value={form.icon}
                     onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        icon: e.target.value.slice(0, 4),
-                      }))
+                      setForm((prev) => ({ ...prev, icon: e.target.value.slice(0, 4) }))
                     }
                     placeholder="🏅"
                     maxLength={4}
                     className={INPUT_CLS}
                   />
-                  <EmojiPicker
-                    value={form.icon}
-                    onChange={(emoji) =>
-                      setForm((prev) => ({ ...prev, icon: emoji }))
-                    }
-                  />
+                  <EmojiPicker value={form.icon} onChange={(emoji) => setForm((prev) => ({ ...prev, icon: emoji }))} />
                 </div>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className={FIELD_LABEL_CLS}>Kategori</span>
+                <input
+                  type="text"
+                  value={form.category}
+                  onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+                  placeholder="e.g. Groundstroke, Serve, Match, Milestone"
+                  maxLength={40}
+                  className={INPUT_CLS}
+                />
               </label>
               <label className="flex flex-col gap-1">
                 <span className={FIELD_LABEL_CLS}>Deskripsi</span>
@@ -370,15 +415,8 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                       if (editingKey !== '__new__') {
                         return { ...prev, description: nextDesc };
                       }
-                      // Auto-derive the key from the description so the
-                      // admin only types once. Falls back to label when
-                      // the description is empty.
                       const source = nextDesc.trim() || prev.label.trim();
-                      return {
-                        ...prev,
-                        description: nextDesc,
-                        key: slugify(source),
-                      };
+                      return { ...prev, description: nextDesc, key: slugify(source) };
                     });
                   }}
                   rows={3}
@@ -386,21 +424,25 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                   className={INPUT_CLS}
                 />
               </label>
+              <label className="flex flex-col gap-1">
+                <span className={FIELD_LABEL_CLS}>Kriteria Perolehan</span>
+                <textarea
+                  value={form.earningCriteria}
+                  onChange={(e) => setForm((p) => ({ ...p, earningCriteria: e.target.value }))}
+                  rows={2}
+                  maxLength={200}
+                  placeholder="e.g. Player mengikuti Basic Forehand Coaching dan dinyatakan memenuhi standar oleh Coach/Admin"
+                  className={INPUT_CLS}
+                />
+              </label>
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={form.archived}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      archived: e.target.checked,
-                    }))
-                  }
+                  onChange={(e) => setForm((p) => ({ ...p, archived: e.target.checked }))}
                   className="h-4 w-4 rounded border-light-gray text-hunter-green focus:ring-hunter-green"
                 />
-                <span className="text-xs text-dark-gray">
-                  Arsipkan (tidak muncul untuk user baru)
-                </span>
+                <span className="text-xs text-dark-gray">Arsipkan (tidak muncul untuk user baru)</span>
               </label>
               <div className="flex justify-end gap-2 pt-2">
                 <button

@@ -644,6 +644,25 @@ export function XIcon({ className, size = 32, strokeWidth = 2 }: IconProps) {
   );
 }
 
+export function LockIcon({ className, size = 16, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg
+      className={base(className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
 export function CheckIcon({ className, size = 16, strokeWidth = 2.5 }: IconProps) {
   return (
     <svg
