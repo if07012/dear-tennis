@@ -248,7 +248,7 @@ export function WhyJoinEditorClient({ initial }: { initial: WhyJoinContent }) {
 
   return (
     <div className="container-base section-padding">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="admin-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
             Admin
@@ -281,7 +281,7 @@ export function WhyJoinEditorClient({ initial }: { initial: WhyJoinContent }) {
           Tag, judul, dan subjudul section
         </p>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="mt-6 admin-form-grid">
           <label className="flex flex-col gap-1">
             <span className={FIELD_LABEL_CLS}>Tag</span>
             <input
@@ -346,7 +346,7 @@ export function WhyJoinEditorClient({ initial }: { initial: WhyJoinContent }) {
                 key={benefit.id}
                 className="rounded-xl border border-light-gray bg-off-white p-4"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex flex-col md:flex-row items-start gap-4">
                   <div className="flex w-14 flex-shrink-0 flex-col items-center gap-1">
                     <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-hunter-green to-teal text-white">
                       <PickerIcon size={26} />
@@ -399,7 +399,7 @@ export function WhyJoinEditorClient({ initial }: { initial: WhyJoinContent }) {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1 md:w-[60px]">
                     <button
                       type="button"
                       onClick={() => moveBenefit(benefit.id, -1)}
@@ -420,14 +420,16 @@ export function WhyJoinEditorClient({ initial }: { initial: WhyJoinContent }) {
                     </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => removeBenefit(benefit.id)}
-                    aria-label="Remove benefit"
-                    className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
-                  >
-                    <XIcon size={18} />
-                  </button>
+                  <div className="flex flex-col items-end gap-1.5 md:w-[60px]">
+                    <button
+                      type="button"
+                      onClick={() => removeBenefit(benefit.id)}
+                      aria-label="Remove benefit"
+                      className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
+                    >
+                      <XIcon size={18} />
+                    </button>
+                  </div>
                 </div>
               </li>
             );

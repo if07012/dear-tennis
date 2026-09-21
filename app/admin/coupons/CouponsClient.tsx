@@ -8,6 +8,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SearchIcon, XIcon } from '@/components/ui/Icons';
 import { useAuth } from '@/hooks/useAuth';
 import type { Coupon, CouponClaim } from '@/data/coupons-types';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 type Props = {
   initialCoupons: Coupon[];
@@ -53,11 +57,146 @@ export function CouponsClient({ initialCoupons, initialClaims, activities }: Pro
   const [claims, setClaims] = useState<CouponClaim[]>(initialClaims);
   const [status, setStatus] = useState<SaveStatus>({ kind: 'idle' });
   const [editing, setEditing] = useState<DraftCoupon | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState('');
 
   const activityTitle = useMemo(() => {
     const m = new Map(activities.map((a) => [a.id, a.title]));
     return (id: string) => m.get(id) ?? id;
   }, [activities]);
+
+  const changePageSize = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
+
+  const filteredCoupons = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return coupons;
+    return coupons.filter(
+      (c) =>
+        c.code.toLowerCase().includes(q) ||
+        c.discountPct.toString().includes(q) ||
+        (c.activityId ? activityTitle(c.activityId).toLowerCase().includes(q) : 'semua activity'.includes(q)) ||
+        (c.userEmail || 'semua member').toLowerCase().includes(q) ||
+        (c.expiresAt || 'selamanya').toLowerCase().includes(q) ||
+        (c.active ? 'aktif' : 'nonaktif').includes(q),
+    );
+  }, [coupons, search, activityTitle]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCoupons.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const pageItems = filteredCoupons.slice(pageStart, pageStart + pageSize);
+
+  const handleChangePage = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  // Column definitions for ResponsiveTable
+  const couponColumns = useMemo(() => [
+    {
+      key: 'code',
+      header: 'Kode',
+      priority: 1 as const,
+      render: (c: Coupon) => (
+        <span className="font-bold uppercase tracking-wider text-hunter-green">{c.code}</span>
+      ),
+    },
+    {
+      key: 'discount',
+      header: 'Diskon',
+      priority: 1 as const,
+      render: (c: Coupon) => (
+        <span className="font-semibold text-paprika">{c.discountPct}%</span>
+      ),
+    },
+    {
+      key: 'activity',
+      header: 'Activity',
+      priority: 2 as const,
+      render: (c: Coupon) => (
+        <span className="text-dark-gray">{c.activityId ? activityTitle(c.activityId) : 'Semua activity'}</span>
+      ),
+    },
+    {
+      key: 'member',
+      header: 'Khusus member',
+      priority: 2 as const,
+      render: (c: Coupon) => (
+        <span className="text-dark-gray">{c.userEmail || 'Semua member'}</span>
+      ),
+    },
+    {
+      key: 'expires',
+      header: 'Kedaluwarsa',
+      priority: 2 as const,
+      render: (c: Coupon) => {
+        const expired =
+          c.expiresAt !== '' &&
+          new Date(c.expiresAt).getTime() + 24 * 60 * 60 * 1000 <= Date.now();
+        return (
+          <span className="text-dark-gray">
+            {c.expiresAt
+              ? new Date(c.expiresAt).toLocaleDateString('en-GB', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                })
+              : 'Selamanya'}
+            {expired && <span className="ml-1 text-xs text-paprika">(Kadaluarsa)</span>}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      priority: 1 as const,
+      render: (c: Coupon) => {
+        const expired =
+          c.expiresAt !== '' &&
+          new Date(c.expiresAt).getTime() + 24 * 60 * 60 * 1000 <= Date.now();
+        return (
+          <span
+            className={[
+              'rounded-full px-2.5 py-0.5 text-xs font-semibold',
+              !c.active || expired
+                ? 'bg-light-gray text-dark-gray'
+                : 'bg-hunter-green/10 text-hunter-green',
+            ].join(' ')}
+          >
+            {expired ? 'Kadaluarsa' : c.active ? 'Aktif' : 'Nonaktif'}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'claims',
+      header: 'Diklaim',
+      priority: 3 as const,
+      render: (c: Coupon) => {
+        const claimCount = claims.filter((cl) => cl.couponId === c.id).length;
+        return <span className="text-dark-gray">{claimCount}×</span>;
+      },
+    },
+  ], [activityTitle, claims]);
+
+  const getRowActions = (coupon: Coupon) => [
+    {
+      label: 'Edit',
+      primary: true,
+      onClick: () => openEdit(coupon),
+    },
+    {
+      label: 'Hapus',
+      primary: false,
+      destructive: true,
+      onClick: () => remove(coupon),
+    },
+  ];
 
   const refresh = useCallback(async () => {
     try {
@@ -168,7 +307,7 @@ export function CouponsClient({ initialCoupons, initialClaims, activities }: Pro
 
   return (
     <div className="container-base section-padding">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="admin-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
             Admin
@@ -191,93 +330,99 @@ export function CouponsClient({ initialCoupons, initialClaims, activities }: Pro
       </header>
 
       <section className="rounded-2xl border border-light-gray bg-white p-6">
-        <h2 className="mb-4 font-serif text-xl font-semibold text-hunter-green">
-          Semua Kupon ({coupons.length})
-        </h2>
-        {coupons.length === 0 ? (
-          <p className="text-sm text-dark-gray">Belum ada kupon.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                  <th className="py-3 pr-4">Kode</th>
-                  <th className="py-3 pr-4">Diskon</th>
-                  <th className="py-3 pr-4">Activity</th>
-                  <th className="py-3 pr-4">Khusus member</th>
-                  <th className="py-3 pr-4">Kedaluwarsa</th>
-                  <th className="py-3 pr-4">Status</th>
-                  <th className="py-3 pr-4">Diklaim</th>
-                  <th className="py-3 pr-4" />
-                </tr>
-              </thead>
-              <tbody>
-                {coupons.map((c) => {
-                  const claimCount = claims.filter((cl) => cl.couponId === c.id).length;
-                  const expired =
-                    c.expiresAt !== '' &&
-                    new Date(c.expiresAt).getTime() + 24 * 60 * 60 * 1000 <= Date.now();
-                  return (
-                    <tr key={c.id} className="border-b border-light-gray/60">
-                      <td className="py-3 pr-4 font-bold uppercase tracking-wider text-hunter-green">
-                        {c.code}
-                      </td>
-                      <td className="py-3 pr-4 font-semibold text-paprika">
-                        {c.discountPct}%
-                      </td>
-                      <td className="py-3 pr-4 text-dark-gray">
-                        {c.activityId ? activityTitle(c.activityId) : 'Semua activity'}
-                      </td>
-                      <td className="py-3 pr-4 text-dark-gray">
-                        {c.userEmail || 'Semua member'}
-                      </td>
-                      <td className="py-3 pr-4 text-dark-gray">
-                        {c.expiresAt
-                          ? new Date(c.expiresAt).toLocaleDateString('en-GB', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                            })
-                          : 'Selamanya'}
-                      </td>
-                      <td className="py-3 pr-4">
-                        <span
-                          className={[
-                            'rounded-full px-2.5 py-0.5 text-xs font-semibold',
-                            !c.active || expired
-                              ? 'bg-light-gray text-dark-gray'
-                              : 'bg-hunter-green/10 text-hunter-green',
-                          ].join(' ')}
-                        >
-                          {expired ? 'Kadaluarsa' : c.active ? 'Aktif' : 'Nonaktif'}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4 text-dark-gray">{claimCount}×</td>
-                      <td className="py-3 pr-4">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEdit(c)}
-                            className="rounded-full border border-hunter-green px-3 py-1 text-xs font-semibold text-hunter-green transition-colors hover:bg-hunter-green hover:text-white"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => remove(c)}
-                            className="rounded-full border border-paprika px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:bg-paprika hover:text-white"
-                          >
-                            Hapus
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <AdminTableToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari kode / diskon / activity / member / status"
+          onAdd={openCreate}
+          addLabel="+ Kupon baru"
+          loading={false}
+        />
+
+        <ResponsiveTable<Coupon>
+          items={pageItems}
+          rowKey={(c) => c.id}
+          columns={couponColumns}
+          actions={getRowActions(filteredCoupons[0] as Coupon)}
+          emptyMessage={coupons.length === 0 ? 'Belum ada kupon. Tambahkan kupon pertama.' : 'Tidak ada hasil untuk pencarian ini.'}
+          loading={false}
+          mobileCardRender={(c) => {
+            const claimCount = claims.filter((cl) => cl.couponId === c.id).length;
+            const expired =
+              c.expiresAt !== '' &&
+              new Date(c.expiresAt).getTime() + 24 * 60 * 60 * 1000 <= Date.now();
+            return (
+              <>
+                <div className="admin-card-header">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="min-w-0">
+                      <h3 className="font-bold uppercase tracking-wider text-hunter-green truncate">{c.code}</h3>
+                      <p className="font-semibold text-paprika">{c.discountPct}%</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="admin-card-body">
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Activity:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{c.activityId ? activityTitle(c.activityId) : 'Semua activity'}</span>
+                  </div>
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Khusus member:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{c.userEmail || 'Semua member'}</span>
+                  </div>
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Kedaluwarsa:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">
+                      {c.expiresAt
+                        ? new Date(c.expiresAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                        : 'Selamanya'}
+                      {expired && <span className="ml-1 text-paprika">(Kadaluarsa)</span>}
+                    </span>
+                  </div>
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Status:</span>
+                    <span className="admin-card-value flex-1 truncate">
+                      <span className={[
+                        'rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                        !c.active || expired
+                          ? 'bg-light-gray text-dark-gray'
+                          : 'bg-hunter-green/10 text-hunter-green',
+                      ].join(' ')}>
+                        {expired ? 'Kadaluarsa' : c.active ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Diklaim:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{claimCount}×</span>
+                  </div>
+                </div>
+                <div className="admin-card-actions">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(c)}
+                    className="admin-card-action-primary admin-touch-target"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(c)}
+                    className="admin-card-action-primary admin-card-action-destructive admin-touch-target"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </>
+            );
+          }}
+        />
+
+        <ResponsivePagination
+          page={safePage}
+          totalPages={totalPages}
+          onPageChange={handleChangePage}
+        />
       </section>
 
       <section className="mt-8 rounded-2xl border border-light-gray bg-white p-6">
@@ -290,45 +435,80 @@ export function CouponsClient({ initialCoupons, initialClaims, activities }: Pro
         {claims.length === 0 ? (
           <p className="text-sm text-dark-gray">Belum ada klaim.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                  <th className="py-3 pr-4">Kode</th>
-                  <th className="py-3 pr-4">Member</th>
-                  <th className="py-3 pr-4">Activity</th>
-                  <th className="py-3 pr-4">Diskon didapat</th>
-                  <th className="py-3 pr-4">Waktu klaim</th>
-                </tr>
-              </thead>
-              <tbody>
-                {claims.map((cl) => (
-                  <tr key={cl.id} className="border-b border-light-gray/60">
-                    <td className="py-3 pr-4 font-bold uppercase tracking-wider text-hunter-green">
-                      {cl.code}
-                    </td>
-                    <td className="py-3 pr-4 text-dark-gray">{cl.userEmail}</td>
-                    <td className="py-3 pr-4 text-dark-gray">
-                      {cl.activityId ? activityTitle(cl.activityId) : '—'}
-                    </td>
-                    <td className="py-3 pr-4 font-semibold text-paprika">
-                      {cl.discountPct}%
-                    </td>
-                    <td className="py-3 pr-4 text-xs text-dark-gray">
-                      {new Date(cl.claimedAt).toLocaleString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false,
-                      })}
-                    </td>
+          <>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
+                    <th className="py-3 pr-4">Kode</th>
+                    <th className="py-3 pr-4">Member</th>
+                    <th className="py-3 pr-4">Activity</th>
+                    <th className="py-3 pr-4">Diskon didapat</th>
+                    <th className="py-3 pr-4">Waktu klaim</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {claims.map((cl) => (
+                    <tr key={cl.id} className="border-b border-light-gray/60">
+                      <td className="py-3 pr-4 font-bold uppercase tracking-wider text-hunter-green">
+                        {cl.code}
+                      </td>
+                      <td className="py-3 pr-4 text-dark-gray">{cl.userEmail}</td>
+                      <td className="py-3 pr-4 text-dark-gray">
+                        {cl.activityId ? activityTitle(cl.activityId) : '—'}
+                      </td>
+                      <td className="py-3 pr-4 font-semibold text-paprika">
+                        {cl.discountPct}%
+                      </td>
+                      <td className="py-3 pr-4 text-xs text-dark-gray">
+                        {new Date(cl.claimedAt).toLocaleString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false,
+                        })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="md:hidden grid gap-3">
+              {claims.map((cl) => (
+                <div key={cl.id} className="rounded-xl border border-light-gray bg-white p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-bold uppercase tracking-wider text-hunter-green">{cl.code}</span>
+                      </div>
+                      <div className="mt-1 text-sm text-dark-gray">{cl.userEmail}</div>
+                      <div className="text-xs text-dark-gray">
+                        {cl.activityId ? activityTitle(cl.activityId) : '—'}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className="font-semibold text-paprika">{cl.discountPct}%</span>
+                      <span className="text-xs text-dark-gray">
+                        {new Date(cl.claimedAt).toLocaleString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="admin-pager border-t border-light-gray pt-4">
+              <p className="text-xs text-dark-gray">{claims.length} klaim</p>
+            </div>
+          </>
         )}
       </section>
 
@@ -382,11 +562,11 @@ function CouponEditDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-graphite/40 sm:items-center sm:p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-graphite/40 p-4"
       onClick={onCancel}
     >
       <form
-        className="w-full max-w-md rounded-t-2xl bg-white p-6 shadow-2xl sm:rounded-2xl"
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl admin-drawer-content"
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
       >

@@ -161,7 +161,7 @@ export function LevelsBadgesClient({
                       <span>{l.name}</span>
                       <span className="font-mono text-xs text-dark-gray">Order {l.order}</span>
                     </div>
-                    <div className="text-xs text-dark-gray/70 truncate mt-0.5">{l.description || '—'}</div>
+                    <div className="text-xs text-dark-gray/70 truncate whitespace-pre-wrap mt-0.5">{l.description || '—'}</div>
                   </button>
                 </li>
               ))
@@ -211,8 +211,8 @@ export function LevelsBadgesClient({
                       />
                       <span className="text-2xl" aria-hidden="true">{b.icon || '🏅'}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-hunter-green truncate">{b.label}</p>
-                        <p className="text-[0.65rem] text-dark-gray/70 truncate">{b.category || '—'}</p>
+                        <p className="font-medium text-hunter-green truncate whitespace-pre-wrap">{b.label}</p>
+                        <p className="text-[0.65rem] text-dark-gray/70 truncate whitespace-pre-wrap">{b.category || '—'}</p>
                       </div>
                     </label>
                   ))

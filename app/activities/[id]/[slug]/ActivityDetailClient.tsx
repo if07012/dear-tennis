@@ -480,7 +480,7 @@ export function ActivityDetailClient({ activity, members, matches, capacity }: P
                         </span>
                       )}
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-hunter-green">
+                        <p className="truncate whitespace-pre-wrap text-sm font-semibold text-hunter-green">
                           {m.name}
                         </p>
                         {m.rank && (
@@ -695,7 +695,7 @@ export function ActivityDetailClient({ activity, members, matches, capacity }: P
                 JPG, PNG, atau PDF — maks 2MB
               </p>
               {uploadFile && (
-                <p className="truncate text-center text-xs text-hunter-green">
+                <p className="truncate whitespace-pre-wrap text-center text-xs text-hunter-green">
                   {uploadFile.type === 'application/pdf' ? 'PDF' : 'Gambar'}: {uploadFile.name}
                 </p>
               )}

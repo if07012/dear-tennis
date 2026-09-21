@@ -294,7 +294,7 @@ export function ClicksClient({ initial, pageSize }: Props) {
               ) : (
                 stats.topButtons7d.map((b) => (
                   <li key={b.buttonText} className="flex justify-between text-sm">
-                    <span className="truncate pr-2 text-graphite">{b.buttonText}</span>
+                    <span className="truncate whitespace-pre-wrap pr-2 text-graphite">{b.buttonText}</span>
                     <span className="font-semibold text-hunter-green">{formatCount(b.count)}</span>
                   </li>
                 ))
@@ -489,13 +489,13 @@ export function ClicksClient({ initial, pageSize }: Props) {
                       {row.timezone}
                     </td>
                     <td
-                      className="max-w-[12rem] truncate py-3 pr-4 text-dark-gray"
+                      className="max-w-[12rem] truncate whitespace-pre-wrap py-3 pr-4 text-dark-gray"
                       title={row.activityTitle}
                     >
                       {row.activityTitle || '—'}
                     </td>
                     <td
-                      className="max-w-[16rem] truncate py-3 pr-4 text-dark-gray"
+                      className="max-w-[16rem] truncate whitespace-pre-wrap py-3 pr-4 text-dark-gray"
                       title={row.targetUrl}
                     >
                       {row.targetUrl || '—'}
@@ -525,7 +525,7 @@ export function ClicksClient({ initial, pageSize }: Props) {
                     <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-paprika/10 text-paprika">
                       <Icon d={ICONS.cursor} />
                     </span>
-                    <span className="min-w-0 truncate font-medium text-hunter-green">
+                    <span className="min-w-0 truncate whitespace-pre-wrap font-medium text-hunter-green">
                       {row.buttonText}
                     </span>
                   </div>
@@ -538,7 +538,7 @@ export function ClicksClient({ initial, pageSize }: Props) {
                 <div className="mt-3 grid grid-cols-1 gap-2 text-sm">
                   <div className="flex items-center gap-2 text-dark-gray">
                     <Icon d={ICONS.user} className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="truncate">
+                    <span className="truncate whitespace-pre-wrap">
                       {row.userName ? `${row.userName} (${row.userEmail})` : row.ip}
                     </span>
                   </div>
@@ -551,13 +551,13 @@ export function ClicksClient({ initial, pageSize }: Props) {
                       d={row.deviceType === 'mobile' ? ICONS.smartphone : ICONS.monitor}
                       className="h-3.5 w-3.5 flex-shrink-0"
                     />
-                    <span className="truncate">{row.deviceType} · {row.timezone}</span>
+                    <span className="truncate whitespace-pre-wrap">{row.deviceType} · {row.timezone}</span>
                   </div>
                   <div className="flex items-center gap-2 text-dark-gray">
                     <Icon d={ICONS.link} className="h-3.5 w-3.5 flex-shrink-0" />
                     <a
                       href={row.targetUrl || undefined}
-                      className="truncate text-hunter-green hover:underline"
+                      className="truncate whitespace-pre-wrap text-hunter-green hover:underline"
                       title={row.targetUrl}
                     >
                       {row.targetUrl || '—'}
@@ -566,7 +566,7 @@ export function ClicksClient({ initial, pageSize }: Props) {
                   {row.activityTitle && (
                     <div className="flex items-center gap-2 text-xs text-dark-gray">
                       <Icon d={ICONS.arrowLeft} className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="truncate" title={row.activityTitle}>
+                      <span className="truncate whitespace-pre-wrap" title={row.activityTitle}>
                         {row.activityTitle}
                       </span>
                     </div>

@@ -16,25 +16,36 @@ type Props = {
 
 export function SlideRow({ slide, index, total, onUpdate, onRemove, onMoveUp, onMoveDown }: Props) {
   return (
-    <li className="rounded-xl border border-light-gray bg-off-white p-4">
-      <div className="flex items-start gap-4">
-        <div className="relative h-20 w-32 flex-shrink-0 overflow-hidden rounded-lg border border-light-gray bg-white">
-          {slide.image ? (
-            <Image
-              src={slide.image}
-              alt={slide.alt || `Slide ${index + 1}`}
-              fill
-              sizes="128px"
-              className="object-cover"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-xs text-dark-gray">
-              No image
-            </div>
-          )}
+    <li className="relative rounded-xl border border-light-gray bg-off-white p-4">
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative w-full md:w-32 flex-shrink-0">
+          <div className="relative h-48 md:h-20 overflow-hidden rounded-lg border border-light-gray bg-white">
+            <button
+              type="button"
+              onClick={onRemove}
+              aria-label="Remove slide"
+              className="absolute top-2 right-2 z-10 rounded-full bg-white/90 backdrop-blur-sm p-1.5 text-paprika transition-colors hover:bg-paprika/10 hover:text-white shadow-lg md:hidden"
+            >
+              <XIcon size={18} />
+            </button>
+            {slide.image ? (
+              <Image
+                src={slide.image}
+                alt={slide.alt || `Slide ${index + 1}`}
+                fill
+                sizes="(max-width: 767px) 100vw, 128px"
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-xs text-dark-gray">
+                No image
+              </div>
+            )}
+
+          </div>
         </div>
 
-        <div className="flex flex-1 flex-col gap-2 min-w-0">
+        <div className="flex flex-1 flex-col gap-2 min-w-0 w-full">
           <input
             type="url"
             value={slide.image}
@@ -51,7 +62,7 @@ export function SlideRow({ slide, index, total, onUpdate, onRemove, onMoveUp, on
           />
         </div>
 
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center gap-1 hidden md:flex">
           <button
             type="button"
             onClick={onMoveUp}
@@ -74,12 +85,12 @@ export function SlideRow({ slide, index, total, onUpdate, onRemove, onMoveUp, on
             <ChevronUp size={16} />
           </button>
         </div>
-
         <button
           type="button"
           onClick={onRemove}
           aria-label="Remove slide"
-          className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
+          className="bg-white/90 backdrop-blur-sm p-1.5 text-paprika transition-colors hover:bg-paprika/10
+               hover:text-white shadow-lg md:block hidden"
         >
           <XIcon size={18} />
         </button>

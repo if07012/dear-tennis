@@ -411,13 +411,13 @@ export function ActivityMatchesDrawer({
       aria-label={`Set matches for ${activityTitle}`}
     >
       <div
-        className="w-full max-w-6xl rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl flex flex-col max-h-[90vh]"
+        className="w-full max-w-6xl rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl flex flex-col max-h-[90vh] sm:max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-start justify-between gap-3 border-b border-light-gray p-6">
+        <header className="flex items-start justify-between gap-3 border-b border-light-gray p-6 flex-shrink-0">
           <div className="min-w-0 flex-1">
             <p className={FIELD_LABEL_CLS}>Activity Matches</p>
-            <h2 className="mt-1 font-serif text-xl font-semibold text-hunter-green truncate">
+            <h2 className="mt-1 font-serif text-xl font-semibold text-hunter-green truncate whitespace-pre-wrap">
               {activityTitle}
             </h2>
             <p className="mt-1 text-xs text-dark-gray">
@@ -829,7 +829,7 @@ function MatchRow({
           ›
         </span>
         <span className={FIELD_LABEL_CLS}>#{match.matchIndex + 1}</span>
-        <span className="min-w-0 flex-1 truncate font-semibold text-graphite">
+        <span className="min-w-0 flex-1 truncate whitespace-pre-wrap font-semibold text-graphite">
           {summary.a}
           <span className="px-1.5 text-dark-gray">vs</span>
           {summary.b}
@@ -847,7 +847,7 @@ function MatchRow({
       </button>
 
       {!expanded && (
-        <p className="-mt-1 truncate px-4 pb-2 text-[0.7rem] text-dark-gray sm:hidden">
+        <p className="-mt-1 truncate whitespace-pre-wrap px-4 pb-2 text-[0.7rem] text-dark-gray sm:hidden">
           {roundLabel} · {match.format.toUpperCase()} · {summary.score}
         </p>
       )}
@@ -1133,7 +1133,7 @@ function MemberDropdown({
     <div className="relative" ref={containerRef}>
       {value ? (
         <div className="flex items-center gap-1.5 rounded-lg border border-hunter-green bg-hunter-green/5 px-2.5 py-1.5 text-sm">
-          <span className="min-w-0 flex-1 truncate font-medium text-graphite">
+          <span className="min-w-0 flex-1 truncate whitespace-pre-wrap font-medium text-graphite">
             {nameOf(value)}
           </span>
           <button
@@ -1207,7 +1207,7 @@ function MemberDropdown({
                       isActive ? 'bg-hunter-green/10' : ''
                     } ${selected ? 'font-semibold text-hunter-green' : 'text-graphite'}`}
                   >
-                    <span className="truncate">{m.name}</span>
+                    <span className="truncate whitespace-pre-wrap">{m.name}</span>
                     {selected && <CheckIcon size={12} />}
                   </li>
                 );

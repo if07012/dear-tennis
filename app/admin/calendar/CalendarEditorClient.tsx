@@ -13,6 +13,10 @@ import type {
   CalendarEvent,
   CalendarSettings,
 } from '@/data/calendar-types';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 type SettingsDraft = Omit<CalendarSettings, 'id' | 'updatedAt'>;
 
@@ -129,7 +133,8 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
   const [page, setPage] = useState(initial.page);
   const [totalPages, setTotalPages] = useState(initial.totalPages);
   const [total, setTotal] = useState(initial.total);
-  const [pageSize] = useState(initial.pageSize);
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+  const [pageSize, setPageSize] = useState(initial.pageSize);
   const [loadedPages, setLoadedPages] = useState<Set<number>>(
     () => new Set([initial.page]),
   );
@@ -197,6 +202,12 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
     },
     [loadedPages, pageSize, user?.email],
   );
+
+  const changePageSize = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+    setLoadedPages(new Set([1]));
+  };
 
   // Keep a ref to loadedPages so ensureAllPagesLoaded always reads the latest
   // value (avoid stale closures on long-running saves).
@@ -450,7 +461,7 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
 
   return (
     <div className="container-base section-padding">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="admin-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
             Admin
@@ -483,7 +494,7 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
           Tag dan judul section Calendar
         </p>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="mt-6 admin-form-grid">
           <label className="flex flex-col gap-1">
             <span className={FIELD_LABEL_CLS}>Tag</span>
             <input
@@ -544,7 +555,7 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
               key={event.id}
               className="rounded-xl border border-light-gray bg-off-white p-4"
             >
-              <div className="flex items-start gap-4">
+              <div className="flex flex-col md:flex-row items-start gap-4">
                 <div className="flex w-20 flex-shrink-0 flex-col items-center gap-1">
                   <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-hunter-green to-teal text-white">
                     <div className="text-center leading-tight">
@@ -580,7 +591,7 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
                     placeholder="Deskripsi singkat"
                     className={INPUT_CLS}
                   />
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="admin-form-grid">
                     <label className="flex flex-col gap-1">
                       <span className={FIELD_LABEL_CLS}>Day</span>
                       <input
@@ -656,7 +667,7 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-1 md:w-[60px]">
                   <button
                     type="button"
                     onClick={() => moveEvent(event.id, -1)}
@@ -677,59 +688,63 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => removeEvent(event.id)}
-                  aria-label="Remove event"
-                  className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
-                >
-                  <XIcon size={18} />
-                </button>
+                <div className="flex flex-col items-end gap-1.5 md:w-[60px]">
+                  <button
+                    type="button"
+                    onClick={() => removeEvent(event.id)}
+                    aria-label="Remove event"
+                    className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
+                  >
+                    <XIcon size={18} />
+                  </button>
+                </div>
               </div>
             </li>
             );
           })}
         </ul>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-light-gray pt-4">
-          <p className="text-xs text-dark-gray">
-            Menampilkan {pageStart + 1}–{Math.min(pageStart + pageSize, total)} dari {total} event · Halaman {safePage} dari {totalPages}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={safePage <= 1}
-              className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-            >
-              <ChevronLeftIcon size={14} />
-              Sebelumnya
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+        <div className="admin-pager border-t border-light-gray pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-dark-gray">
+              Menampilkan {pageStart + 1}–{Math.min(pageStart + pageSize, total)} dari {total} event · Halaman {safePage} dari {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
               <button
-                key={p}
                 type="button"
-                onClick={() => setPage(p)}
-                aria-current={p === safePage ? 'page' : undefined}
-                className={[
-                  'h-8 min-w-8 rounded-md px-2 text-xs font-semibold transition-colors',
-                  p === safePage
-                    ? 'bg-hunter-green text-white'
-                    : 'bg-off-white text-dark-gray hover:bg-light-gray',
-                ].join(' ')}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
               >
-                {p}
+                <ChevronLeftIcon size={14} />
+                Sebelumnya
               </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={safePage >= totalPages}
-              className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-            >
-              Berikutnya
-              <ChevronRightIcon size={14} />
-            </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPage(p)}
+                  aria-current={p === safePage ? 'page' : undefined}
+                  className={[
+                    'h-8 min-w-8 rounded-md px-2 text-xs font-semibold transition-colors',
+                    p === safePage
+                      ? 'bg-hunter-green text-white'
+                      : 'bg-off-white text-dark-gray hover:bg-light-gray',
+                  ].join(' ')}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
+              >
+                Berikutnya
+                <ChevronRightIcon size={14} />
+              </button>
+            </div>
           </div>
         </div>
 

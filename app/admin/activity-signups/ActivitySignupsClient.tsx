@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import type { ActivitySignup, SignupStatus } from '@/data/activity-signups-types';
 import type { PagedSignups } from '@/lib/activity-signups-store';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 
 const FIELD_LABEL_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray';
@@ -70,10 +72,12 @@ type PatchAction =
   | 'approve-payment'
   | 'reject-payment';
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+
 export function ActivitySignupsClient({
   initial,
   initialStatus,
-  pageSize,
+  pageSize: initialPageSize,
   activityId,
 }: Props) {
   const { user } = useAuth();
@@ -97,6 +101,10 @@ export function ActivitySignupsClient({
   const [proofIsPdf, setProofIsPdf] = useState(false);
   const [proofNote, setProofNote] = useState<string | undefined>(undefined);
   const [proofUploadedAt, setProofUploadedAt] = useState<string | undefined>(undefined);
+  // Search state
+  const [search, setSearch] = useState('');
+  // Page size state
+  const [pageSize, setPageSize] = useState(initialPageSize);
 
   const fetchPage = useCallback(
     async (targetPage: number, targetStatus: SignupStatus | 'all') => {
@@ -144,6 +152,11 @@ export function ActivitySignupsClient({
 
   const changeStatus = (next: SignupStatus | 'all') => {
     setStatus(next);
+    setPage(1);
+  };
+
+  const changePageSize = (size: number) => {
+    setPageSize(size);
     setPage(1);
   };
 
@@ -220,7 +233,7 @@ export function ActivitySignupsClient({
 
   return (
     <div className="container-base section-padding">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="admin-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
             Admin
@@ -255,10 +268,10 @@ export function ActivitySignupsClient({
             </Link>
           </div>
         )}
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
             <span className={FIELD_LABEL_CLS}>Filter status</span>
-            <div className="flex flex-wrap gap-2">
+            <div className="admin-filter-chips">
               {STATUS_OPTIONS.map((opt) => (
                 <button
                   key={opt.id}
@@ -300,237 +313,87 @@ export function ActivitySignupsClient({
           </p>
         </div>
 
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                <th className="py-3 pr-4">Aktivitas</th>
-                <th className="py-3 pr-4">Member</th>
-                <th className="py-3 pr-4">Pembayaran</th>
-                <th className="py-3 pr-4">Status</th>
-                <th className="py-3 pr-4">Diajukan</th>
-                <th className="py-3 pr-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && items.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-10 text-center text-dark-gray">
-                    Memuat...
-                  </td>
-                </tr>
-              ) : items.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-10 text-center text-dark-gray">
-                    Belum ada permintaan untuk filter ini.
-                  </td>
-                </tr>
-              ) : (
-                items.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="border-b border-light-gray/60 last:border-b-0 align-top"
-                  >
-                    <td className="py-3 pr-4">
-                      <div className="font-medium text-hunter-green">
-                        {row.activityTitle ?? row.activityId}
-                      </div>
-                      <div className="mt-0.5 text-[0.65rem] uppercase tracking-wider text-dark-gray">
-                        {row.activityId}
-                      </div>
-                      <div className="mt-0.5 max-w-[240px] text-xs text-dark-gray">
-                        {row.message ? (
-                          <span className="line-clamp-2 whitespace-pre-wrap">
-                            {row.message}
-                          </span>
-                        ) : (
-                          <span className="italic">—</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <div className="font-medium text-graphite">{row.userName || row.userEmail}</div>
-                      <div className="text-xs text-dark-gray">{row.userEmail}</div>
-                    </td>
-                    <td className="py-3 pr-4">
-                      {row.originalAmount > 0 ? (
-                        <div className="text-xs">
-                          <div className="text-dark-gray">
-                            Harga: {formatRupiah(row.originalAmount)}
-                          </div>
-                          {row.couponCode && (
-                            <div className="text-teal">
-                              Kupon {row.couponCode} (−{row.discountPct}%)
-                            </div>
-                          )}
-                          <div className="font-semibold text-hunter-green">
-                            Bayar: {formatRupiah(row.finalAmount)}
-                          </div>
-                          {row.paymentProofUrl ? (
-                            <button
-                              type="button"
-                              onClick={() => openProof(row)}
-                              className="mt-1 rounded-full border border-hunter-green px-2 py-0.5 text-[0.65rem] font-semibold text-hunter-green transition-colors hover:bg-hunter-green hover:text-white"
-                            >
-                              Lihat bukti
-                            </button>
-                          ) : (
-                            <div className="mt-1 italic text-dark-gray">
-                              belum ada bukti
-                            </div>
-                          )}
-                          {row.rejectionReason && (
-                            <div className="mt-1 max-w-[220px] text-[0.65rem] text-paprika">
-                              Ditolak: {row.rejectionReason}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs italic text-dark-gray">gratis</span>
-                      )}
-                    </td>
-                    <td className="py-3 pr-4">
-                      <span
-                        className={[
-                          'inline-block rounded-full px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider',
-                          STATUS_BADGE[row.status],
-                        ].join(' ')}
-                      >
-                        {row.status.replace(/_/g, ' ')}
-                      </span>
-                      {row.expiresAt && row.status === 'waiting_payment' && (
-                        <div className="mt-1 text-[0.65rem] text-dark-gray">
-                          Deadline: {formatDate(row.expiresAt)}
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-3 pr-4 text-xs text-dark-gray">
-                      {formatDate(row.requestedAt)}
-                    </td>
-                    <td className="py-3 pr-4">
-                      {row.status === 'pending_approval' ? (
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => decide(row, 'approve')}
-                            disabled={busyId === row.id}
-                            className="rounded-full bg-hunter-green px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-hunter-green-dark disabled:opacity-50"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => decide(row, 'reject')}
-                            disabled={busyId === row.id}
-                            className="rounded-full border border-paprika px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:bg-paprika hover:text-white disabled:opacity-50"
-                          >
-                            Reject
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => remove(row)}
-                            disabled={busyId === row.id}
-                            className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-dark-gray transition-colors hover:border-paprika hover:text-paprika disabled:opacity-50"
-                          >
-                            Hapus
-                          </button>
-                        </div>
-                      ) : row.status === 'payment_submitted' ? (
-                        rejectingId === row.id ? (
-                          <div className="flex w-56 flex-col gap-2">
-                            <textarea
-                              value={rejectReason}
-                              onChange={(e) => setRejectReason(e.target.value)}
-                              placeholder="Alasan penolakan (wajib)"
-                              rows={2}
-                              maxLength={300}
-                              className={INPUT_CLS}
-                            />
-                            <div className="flex justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setRejectingId(null);
-                                  setRejectReason('');
-                                }}
-                                className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-dark-gray"
-                              >
-                                Batal
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => decide(row, 'reject-payment', rejectReason)}
-                                disabled={busyId === row.id || !rejectReason.trim()}
-                                className="rounded-full bg-paprika px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
-                              >
-                                Tolak
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex flex-wrap justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => decide(row, 'approve-payment')}
-                              disabled={busyId === row.id}
-                              className="rounded-full bg-hunter-green px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-hunter-green-dark disabled:opacity-50"
-                            >
-                              Approve Payment
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setRejectingId(row.id);
-                                setRejectReason('');
-                              }}
-                              disabled={busyId === row.id}
-                              className="rounded-full border border-paprika px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:bg-paprika hover:text-white disabled:opacity-50"
-                            >
-                              Reject Payment
-                            </button>
-                          </div>
-                        )
-                      ) : (
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => remove(row)}
-                            disabled={busyId === row.id}
-                            className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-dark-gray transition-colors hover:border-paprika hover:text-paprika disabled:opacity-50"
-                          >
-                            Hapus
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <AdminTableToolbar
+  searchValue={search}
+  onSearchChange={setSearch}
+  searchPlaceholder="Cari berdasarkan nama, email, atau role"
+  onAdd={undefined}
+  loading={loading}
+/>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-light-gray pt-4">
-          <p className="text-xs text-dark-gray">
-            Halaman {page} dari {totalPages}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1 || loading}
-              className={INPUT_CLS + ' !w-auto px-3 py-1.5 text-xs font-semibold text-dark-gray disabled:opacity-40'}
-            >
-              Sebelumnya
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages || loading}
-              className={INPUT_CLS + ' !w-auto px-3 py-1.5 text-xs font-semibold text-dark-gray disabled:opacity-40'}
-            >
-              Berikutnya
-            </button>
+<ResponsiveTable
+  items={items}
+  rowKey={(row) => row.id}
+  columns={[
+    { key: 'activity', header: 'Aktivitas', priority: 1, render: (row) => (
+      <div>
+        <div className="font-medium text-hunter-green whitespace-pre-wrap">{row.activityTitle ?? row.activityId}</div>
+        <div className="mt-0.5 text-[0.65rem] uppercase tracking-wider text-dark-gray">{row.activityId}</div>
+        <div className="mt-0.5 max-w-[240px] text-xs text-dark-gray">
+          {row.message ? <span className="line-clamp-2 whitespace-pre-wrap">{row.message}</span> : <span className="italic">—</span>}
+        </div>
+      </div>
+    )},
+    { key: 'member', header: 'Member', priority: 1, render: (row) => (
+      <div>
+        <div className="font-medium text-graphite">{row.userName || row.userEmail}</div>
+        <div className="text-xs text-dark-gray">{row.userEmail}</div>
+      </div>
+    )},
+    { key: 'payment', header: 'Pembayaran', priority: 1, render: (row) => (
+      row.originalAmount > 0 ? (
+        <div className="text-xs">
+          <div className="text-dark-gray">Harga: {formatRupiah(row.originalAmount)}</div>
+          {row.couponCode && <div className="text-teal">Kupon {row.couponCode} (−{row.discountPct}%)</div>}
+          <div className="font-semibold text-hunter-green">Bayar: {formatRupiah(row.finalAmount)}</div>
+          {row.paymentProofUrl ? (
+            <button type="button" onClick={() => openProof(row)} className="mt-1 rounded-full border border-hunter-green px-2 py-0.5 text-[0.65rem] font-semibold text-hunter-green transition-colors hover:bg-hunter-green hover:text-white">Lihat bukti</button>
+          ) : (
+            <div className="mt-1 italic text-dark-gray">belum ada bukti</div>
+          )}
+          {row.rejectionReason && <div className="mt-1 max-w-[220px] text-[0.65rem] text-paprika">Ditolak: {row.rejectionReason}</div>}
+        </div>
+      ) : (
+        <span className="text-xs italic text-dark-gray">gratis</span>
+      )
+    )},
+    { key: 'status', header: 'Status', priority: 1, render: (row) => (
+      <span className={['inline-block rounded-full px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider', STATUS_BADGE[row.status]].join(' ')}>{row.status.replace(/_/g, ' ')}</span>
+    )},
+    { key: 'requested', header: 'Diajukan', priority: 2, render: (row) => formatDate(row.requestedAt) },
+  ]}
+  actions={[
+    { label: 'Approve', primary: true, onClick: (row) => decide(row, 'approve'), disabled: (row) => row.status !== 'pending_approval' || busyId === row.id },
+    { label: 'Reject', primary: false, destructive: true, onClick: (row) => decide(row, 'reject'), disabled: (row) => row.status !== 'pending_approval' || busyId === row.id },
+    { label: 'Approve Payment', primary: true, onClick: (row) => decide(row, 'approve-payment'), disabled: (row) => row.status !== 'payment_submitted' || busyId === row.id },
+    { label: 'Reject Payment', primary: false, destructive: true, onClick: (row) => { setRejectingId(row.id); setRejectReason(''); }, disabled: (row) => row.status !== 'payment_submitted' || busyId === row.id },
+    { label: 'Hapus', primary: false, destructive: true, onClick: (row) => remove(row), disabled: (row) => busyId === row.id },
+  ]}
+/>
+          
+        <div className="admin-pager border-t border-light-gray pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-dark-gray">
+              Halaman {page} dari {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1 || loading}
+                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
+              >
+                Sebelumnya
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages || loading}
+                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
+              >
+                Berikutnya
+              </button>
+            </div>
           </div>
         </div>
       </section>

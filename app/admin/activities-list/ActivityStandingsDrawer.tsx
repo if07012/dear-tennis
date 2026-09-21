@@ -84,13 +84,13 @@ export function ActivityStandingsDrawer({
       aria-label={`Standings for ${activityTitle}`}
     >
       <div
-        className="w-full max-w-4xl rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl flex flex-col max-h-[90vh]"
+        className="w-full max-w-4xl rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl flex flex-col max-h-[90vh] sm:max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-start justify-between gap-3 border-b border-light-gray p-6">
+        <header className="flex items-start justify-between gap-3 border-b border-light-gray p-6 flex-shrink-0">
           <div className="min-w-0 flex-1">
             <p className={FIELD_LABEL_CLS}>Activity Standings</p>
-            <h2 className="mt-1 font-serif text-xl font-semibold text-hunter-green truncate">
+            <h2 className="mt-1 font-serif text-xl font-semibold text-hunter-green truncate whitespace-pre-wrap">
               {activityTitle}
             </h2>
             <p className="mt-1 text-xs text-dark-gray">
@@ -143,7 +143,7 @@ export function ActivityStandingsDrawer({
 
         {state.kind === 'ok' && standings.length > 0 && (
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="overflow-x-auto rounded-xl border border-light-gray">
+            <div className="hidden md:block overflow-x-auto rounded-xl border border-light-gray">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-off-white text-left text-[0.65rem] font-semibold uppercase tracking-wider text-dark-gray">
@@ -195,6 +195,50 @@ export function ActivityStandingsDrawer({
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="md:hidden grid gap-3">
+              {standings.map((s, idx) => (
+                <div key={s.email} className="rounded-xl border border-light-gray bg-white p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-hunter-green/10 text-hunter-green font-mono font-bold text-sm">
+                        {idx + 1}
+                      </span>
+                      <h3 className="font-medium text-graphite">{s.name}</h3>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+                    <div className="rounded-lg bg-hunter-green/10 p-2">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-hunter-green">W</div>
+                      <div className="font-mono text-sm font-semibold text-hunter-green">{s.wins}</div>
+                    </div>
+                    <div className="rounded-lg bg-paprika/10 p-2">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-paprika">L</div>
+                      <div className="font-mono text-sm font-semibold text-paprika">{s.losses}</div>
+                    </div>
+                    <div className="rounded-lg bg-off-white p-2">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-dark-gray">D</div>
+                      <div className="font-mono text-sm text-dark-gray">{s.draws}</div>
+                    </div>
+                    <div className="rounded-lg bg-off-white p-2">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-graphite">W−L</div>
+                      <div className="font-mono text-sm font-semibold text-graphite">{s.winDiff > 0 ? `+${s.winDiff}` : s.winDiff}</div>
+                    </div>
+                    <div className="rounded-lg bg-off-white p-2 col-span-2">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-graphite">GW</div>
+                      <div className="font-mono text-sm text-graphite">{s.gamesWon}</div>
+                    </div>
+                    <div className="rounded-lg bg-off-white p-2 col-span-2">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-graphite">GL</div>
+                      <div className="font-mono text-sm text-graphite">{s.gamesLost}</div>
+                    </div>
+                    <div className="rounded-lg bg-off-white p-2 col-span-2">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-graphite">GW−GL</div>
+                      <div className="font-mono text-sm font-semibold text-graphite">{s.gameDiff > 0 ? `+${s.gameDiff}` : s.gameDiff}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
             <p className="mt-3 text-xs text-dark-gray">
               Sort: W desc → W−L desc → GW−GL desc → GW desc → nama asc.

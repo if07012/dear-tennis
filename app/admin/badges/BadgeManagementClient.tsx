@@ -140,16 +140,19 @@ export function BadgeManagementClient({ initialBadges }: { initialBadges: BadgeC
 
   return (
     <div className="container-base section-padding">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <header className="admin-header">
         <div>
-          <h1 className="font-serif text-2xl font-semibold text-hunter-green">
+          <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
+            Admin
+          </p>
+          <h1 className="font-serif text-3xl font-bold text-hunter-green">
             Badge Management
           </h1>
-          <p className="text-sm text-dark-gray">
+          <p className="mt-1 text-sm text-dark-gray">
             Kelola badge catalog dan berikan/cabut badge ke player.
           </p>
         </div>
-      </div>
+      </header>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
         <section className="rounded-2xl border border-light-gray bg-white p-6 shadow-sm">
@@ -219,7 +222,7 @@ export function BadgeManagementClient({ initialBadges }: { initialBadges: BadgeC
                         >
                           <span className="text-xl" aria-hidden="true">{g.icon || '🏅'}</span>
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium text-hunter-green truncate">{g.label}</p>
+                            <p className="font-medium text-hunter-green truncate whitespace-pre-wrap">{g.label}</p>
                             <p className="text-[0.65rem] text-dark-gray truncate">
                               {g.type === 'skill' ? 'Skill' : 'Achievement'} · {g.category || '—'}
                             </p>

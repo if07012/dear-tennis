@@ -333,7 +333,7 @@ export function PerformanceOverviewChart({
             aria-expanded={isActivityDropdownOpen}
             aria-label="Pilih activity"
           >
-            <span className="truncate max-w-[200px]">
+            <span className="truncate whitespace-pre-wrap max-w-[200px]">
               {isAllActivitiesSelected
                 ? 'Semua Activity (Rata-rata)'
                 : joinedActivities.find((a) => a.id === selectedActivityId)?.title ?? 'Activity'}
@@ -373,7 +373,7 @@ export function PerformanceOverviewChart({
                 <div className="flex items-center justify-between gap-2">
                   <span className="flex items-center gap-2 min-w-0">
                     <span className="text-lg">📊</span>
-                    <span className="truncate">Semua Activity (Rata-rata)</span>
+                    <span className="truncate whitespace-pre-wrap">Semua Activity (Rata-rata)</span>
                   </span>
                   {isAllActivitiesSelected && (
                     <span className="flex-shrink-0 inline-flex h-4 w-4 items-center justify-center rounded-full bg-hunter-green text-[0.55rem] text-white">✓</span>
@@ -401,7 +401,7 @@ export function PerformanceOverviewChart({
                       <div className="flex items-center justify-between gap-2">
                         <span className="flex items-center gap-2 min-w-0">
                           <span className="text-lg">{activity.icon}</span>
-                          <span className="truncate">{activity.title}</span>
+                          <span className="truncate whitespace-pre-wrap">{activity.title}</span>
                         </span>
                         {selectedActivityId === activity.id && (
                           <span className="flex-shrink-0 inline-flex h-4 w-4 items-center justify-center rounded-full bg-hunter-green text-[0.55rem] text-white">✓</span>

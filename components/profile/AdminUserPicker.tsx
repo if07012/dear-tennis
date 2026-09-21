@@ -177,10 +177,10 @@ export function AdminUserPicker({ isOpen, onClose, onSelect }: Props) {
                       {(u.name || u.email).charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-hunter-green">
+                      <p className="truncate whitespace-pre-wrap text-sm font-semibold text-hunter-green">
                         {u.name || u.email}
                       </p>
-                      <p className="truncate text-xs text-dark-gray">{u.email}</p>
+                      <p className="truncate whitespace-pre-wrap text-xs text-dark-gray">{u.email}</p>
                     </div>
                     <span
                       className={`rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider ${

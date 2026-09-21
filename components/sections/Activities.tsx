@@ -676,7 +676,7 @@ function MembersModal({
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-hunter-green">
+                    <p className="truncate whitespace-pre-wrap text-sm font-semibold text-hunter-green">
                       {m.name}
                     </p>
                   </div>

@@ -97,7 +97,7 @@ export function OurStoryEditorClient({ initial }: { initial: OurStorySettings })
 
   return (
     <div className="container-base section-padding">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="admin-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
             Admin
@@ -132,7 +132,7 @@ export function OurStoryEditorClient({ initial }: { initial: OurStorySettings })
               Teks di atas judul utama About section
             </p>
 
-            <div className="mt-6 grid gap-4">
+            <div className="mt-6 admin-form-grid">
               <label className="flex flex-col gap-1">
                 <span className={FIELD_LABEL_CLS}>Tag (small uppercase label)</span>
                 <input
@@ -153,7 +153,7 @@ export function OurStoryEditorClient({ initial }: { initial: OurStorySettings })
                   placeholder="Built on Love for the Game"
                 />
               </label>
-              <label className="flex flex-col gap-1">
+              <label className="flex flex-col gap-1 sm:col-span-2">
                 <span className={FIELD_LABEL_CLS}>Subtitle (optional)</span>
                 <input
                   type="text"

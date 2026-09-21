@@ -388,7 +388,7 @@ export function StatisticsEditorClient({ initial }: { initial: InitialPage }) {
 
   return (
     <div className="container-base section-padding">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="admin-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
             Admin
@@ -453,62 +453,64 @@ export function StatisticsEditorClient({ initial }: { initial: InitialPage }) {
                 key={item.id}
                 className="rounded-xl border border-light-gray bg-off-white p-4"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex flex-col md:flex-row items-start gap-4">
                   <div className="flex w-16 flex-shrink-0 flex-col items-center gap-1">
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-paprika/10 font-serif text-lg font-bold text-paprika">
                       #{idx + 1}
                     </div>
                   </div>
 
-                  <div className="flex flex-1 grid-cols-1 gap-3 min-w-0 sm:grid sm:grid-cols-12">
-                    <label className="flex flex-col gap-1 sm:col-span-3">
-                      <span className={FIELD_LABEL_CLS}>Value</span>
-                      <input
-                        type="number"
-                        min={0}
-                        step={1}
-                        value={item.value}
-                        onChange={(e) =>
-                          updateItem(item.id, {
-                            value: Math.max(
-                              0,
-                              Math.floor(Number(e.target.value) || 0),
-                            ),
-                          })
-                        }
-                        placeholder="500"
-                        className={INPUT_CLS}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1 sm:col-span-6">
-                      <span className={FIELD_LABEL_CLS}>Label</span>
-                      <input
-                        type="text"
-                        value={item.label}
-                        onChange={(e) =>
-                          updateItem(item.id, { label: e.target.value })
-                        }
-                        placeholder="Active Members"
-                        className={INPUT_CLS}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1 sm:col-span-3">
-                      <span className={FIELD_LABEL_CLS}>Suffix</span>
-                      <input
-                        type="text"
-                        value={item.suffix ?? ''}
-                        onChange={(e) =>
-                          updateItem(item.id, {
-                            suffix: e.target.value,
-                          })
-                        }
-                        placeholder="%"
-                        className={INPUT_CLS}
-                      />
-                    </label>
+                  <div className="flex flex-1 flex-col gap-3 min-w-0">
+                    <div className="admin-form-grid">
+                      <label className="flex flex-col gap-1">
+                        <span className={FIELD_LABEL_CLS}>Value</span>
+                        <input
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={item.value}
+                          onChange={(e) =>
+                            updateItem(item.id, {
+                              value: Math.max(
+                                0,
+                                Math.floor(Number(e.target.value) || 0),
+                              ),
+                            })
+                          }
+                          placeholder="500"
+                          className={INPUT_CLS}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={FIELD_LABEL_CLS}>Label</span>
+                        <input
+                          type="text"
+                          value={item.label}
+                          onChange={(e) =>
+                            updateItem(item.id, { label: e.target.value })
+                          }
+                          placeholder="Active Members"
+                          className={INPUT_CLS}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className={FIELD_LABEL_CLS}>Suffix</span>
+                        <input
+                          type="text"
+                          value={item.suffix ?? ''}
+                          onChange={(e) =>
+                            updateItem(item.id, {
+                              suffix: e.target.value,
+                            })
+                          }
+                          placeholder="%"
+                          className={INPUT_CLS}
+                        />
+                      </label>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1 md:w-[60px]">
                     <button
                       type="button"
                       onClick={() => moveItem(item.id, -1)}
@@ -529,61 +531,65 @@ export function StatisticsEditorClient({ initial }: { initial: InitialPage }) {
                     </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                    aria-label="Remove item"
-                    className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
-                  >
-                    <XIcon size={18} />
-                  </button>
+                  <div className="flex flex-col items-end gap-1.5 md:w-[60px]">
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.id)}
+                      aria-label="Remove item"
+                      className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
+                    >
+                      <XIcon size={18} />
+                    </button>
+                  </div>
                 </div>
               </li>
             );
           })}
         </ul>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-light-gray pt-4">
-          <p className="text-xs text-dark-gray">
-            Menampilkan {total === 0 ? 0 : pageStart + 1}–
-            {Math.min(pageStart + pageSize, total)} dari {total} stat · Halaman{' '}
-            {safePage} dari {totalPages}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={safePage <= 1}
-              className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-            >
-              <ChevronLeftIcon size={14} />
-              Sebelumnya
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+        <div className="admin-pager border-t border-light-gray pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-dark-gray">
+              Menampilkan {total === 0 ? 0 : pageStart + 1}–
+              {Math.min(pageStart + pageSize, total)} dari {total} stat · Halaman{' '}
+              {safePage} dari {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
               <button
-                key={p}
                 type="button"
-                onClick={() => setPage(p)}
-                aria-current={p === safePage ? 'page' : undefined}
-                className={[
-                  'h-8 min-w-8 rounded-md px-2 text-xs font-semibold transition-colors',
-                  p === safePage
-                    ? 'bg-hunter-green text-white'
-                    : 'bg-off-white text-dark-gray hover:bg-light-gray',
-                ].join(' ')}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
               >
-                {p}
+                <ChevronLeftIcon size={14} />
+                Sebelumnya
               </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={safePage >= totalPages}
-              className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-            >
-              Berikutnya
-              <ChevronRightIcon size={14} />
-            </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPage(p)}
+                  aria-current={p === safePage ? 'page' : undefined}
+                  className={[
+                    'h-8 min-w-8 rounded-md px-2 text-xs font-semibold transition-colors',
+                    p === safePage
+                      ? 'bg-hunter-green text-white'
+                      : 'bg-off-white text-dark-gray hover:bg-light-gray',
+                  ].join(' ')}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
+              >
+                Berikutnya
+                <ChevronRightIcon size={14} />
+              </button>
+            </div>
           </div>
         </div>
       </section>

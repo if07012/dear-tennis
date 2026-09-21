@@ -4,6 +4,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import type { BadgeCatalogRecord } from '@/data/tennis-level-types';
 import { EmojiPicker } from '@/components/ui/EmojiPicker';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 const FIELD_LABEL_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray';
@@ -48,8 +52,11 @@ function slugify(input: string): string {
 
 export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
   const { user } = useAuth();
-  const badges = initial;
+  const [badges, setBadges] = useState<BadgeCatalogRecord[]>(initial);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+  const [pageSize, setPageSize] = useState(10);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [status, setStatus] = useState<Toast>({ kind: 'idle' });
@@ -62,7 +69,8 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
         cache: 'no-store',
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      await res.json();
+      const body = (await res.json()) as { badges: BadgeCatalogRecord[] };
+      setBadges(body.badges ?? []);
       setStatus({ kind: 'saved', at: Date.now() });
     } catch (e) {
       setStatus({
@@ -72,6 +80,11 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
     }
   }, [user?.email]);
 
+  const changePageSize = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return badges;
@@ -79,7 +92,8 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
       (b) =>
         b.key.toLowerCase().includes(q) ||
         b.label.toLowerCase().includes(q) ||
-        b.description.toLowerCase().includes(q),
+        b.description.toLowerCase().includes(q) ||
+        b.category.toLowerCase().includes(q),
     );
   }, [badges, search]);
 
@@ -187,80 +201,146 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
     editingKey !== null &&
     (editingKey === '__new__' || badges.some((b) => b.key === editingKey));
 
+  // Column definitions for ResponsiveTable
+  const columns = useMemo(() => [
+    {
+      key: 'badge',
+      header: 'Badge',
+      priority: 1 as const,
+      className: 'w-16',
+      render: (b: BadgeCatalogRecord) => (
+        <div className="flex items-center gap-3">
+          <span className="text-2xl" aria-hidden="true">{b.icon || '🏅'}</span>
+          <div className="min-w-0 max-w-[200px]">
+            <p className="font-medium text-hunter-green truncate whitespace-pre-wrap">{b.label}</p>
+            {b.description && (
+              <p className="text-xs text-dark-gray truncate max-w-[200px]">{b.description}</p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'key',
+      header: 'Key',
+      priority: 1 as const,
+      render: (b: BadgeCatalogRecord) => (
+        <span className="font-mono text-xs text-dark-gray">{b.key}</span>
+      ),
+    },
+    {
+      key: 'type',
+      header: 'Type',
+      priority: 1 as const,
+      render: (b: BadgeCatalogRecord) => (
+        <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${
+          b.type === 'skill'
+            ? 'bg-hunter-green/10 text-hunter-green'
+            : 'bg-paprika/10 text-paprika'
+        }`}>
+          {b.type === 'skill' ? 'Skill' : 'Achievement'}
+        </span>
+      ),
+    },
+    {
+      key: 'category',
+      header: 'Kategori',
+      priority: 2 as const,
+      render: (b: BadgeCatalogRecord) => (
+        <span className="text-xs text-dark-gray">{b.category || '—'}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      priority: 2 as const,
+      render: (b: BadgeCatalogRecord) => (
+        b.archived ? (
+          <span className="rounded-full bg-dark-gray/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-dark-gray">
+            Archived
+          </span>
+        ) : (
+          <span className="rounded-full bg-hunter-green/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-hunter-green">
+            Active
+          </span>
+        )
+      ),
+    },
+  ], []);
+
+  const handleChangePage = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const pageItems = filtered.slice(pageStart, pageStart + pageSize);
+
   return (
     <div className="container-base section-padding">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <header className="admin-header">
         <div>
-          <h1 className="font-serif text-2xl font-semibold text-hunter-green">
+          <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
+            Admin
+          </p>
+          <h1 className="font-serif text-3xl font-bold text-hunter-green">
             Badge Catalog
           </h1>
-          <p className="text-sm text-dark-gray">
+          <p className="mt-1 text-sm text-dark-gray">
             Kelola badge yang bisa diberikan admin ke user. Skill badge memengaruhi level, achievement badge tidak.
           </p>
         </div>
-      </div>
+      </header>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <section className="rounded-2xl border border-light-gray bg-white p-6 shadow-sm">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <label className={FIELD_LABEL_CLS}>
-              Cari
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="key / label / deskripsi / kategori"
-                className={`mt-1 ${INPUT_CLS}`}
-              />
-            </label>
-            <button
-              type="button"
-              onClick={startCreate}
-              className="rounded-full bg-paprika px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-paprika-hover"
-            >
-              + Badge baru
-            </button>
-          </div>
+          <AdminTableToolbar
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Cari key / label / deskripsi / kategori"
+            onAdd={startCreate}
+            addLabel="Badge baru"
+            loading={false}
+          />
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                  <th className="py-3 pr-4">Badge</th>
-                  <th className="py-3 pr-4">Key</th>
-                  <th className="py-3 pr-4">Type</th>
-                  <th className="py-3 pr-4">Kategori</th>
-                  <th className="py-3 pr-4">Status</th>
-                  <th className="py-3 pr-4 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-10 text-center text-dark-gray">
-                      {badges.length === 0
-                        ? 'Belum ada badge. Tambahkan badge pertama.'
-                        : 'Tidak ada hasil untuk pencarian ini.'}
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((b) => (
-                    <tr key={b.key} className="border-b border-light-gray/60 last:border-b-0">
-                      <td className="py-3 pr-4 align-middle">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl" aria-hidden="true">
-                            {b.icon || '🏅'}
-                          </span>
-                          <div className="min-w-0 max-w-[200px]">
-                            <p className="font-medium text-hunter-green truncate">{b.label}</p>
-                            {b.description && (
-                              <p className="text-xs text-dark-gray truncate max-w-[200px]">{b.description}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 pr-4 align-middle font-mono text-xs text-dark-gray">{b.key}</td>
-                      <td className="py-3 pr-4 align-middle">
+          <ResponsiveTable
+            items={pageItems}
+            rowKey={(b) => b.key}
+            columns={columns}
+            actions={[]}
+            emptyMessage={badges.length === 0 ? 'Belum ada badge. Tambahkan badge pertama.' : 'Tidak ada hasil untuk pencarian ini.'}
+            loading={false}
+            mobileCardRender={(b) => {
+              const primaryActions: Array<{
+                label: string;
+                primary: boolean;
+                onClick: (item: BadgeCatalogRecord) => void;
+                destructive?: boolean;
+                disabled?: (item: BadgeCatalogRecord) => boolean;
+              }> = [
+                { label: 'Edit', primary: true, onClick: () => startEdit(b) },
+                { label: 'Hapus', primary: false, destructive: true, onClick: () => handleDelete(b.key) },
+              ];
+              return (
+                <>
+                  <div className="admin-card-header">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-2xl shrink-0" aria-hidden="true">{b.icon || '🏅'}</span>
+                      <div className="min-w-0">
+                        <h3 className="font-medium text-hunter-green truncate whitespace-pre-wrap">{b.label}</h3>
+                        {b.description && <p className="text-xs text-dark-gray truncate whitespace-pre-wrap">{b.description}</p>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="admin-card-body">
+                    <div className="admin-card-row">
+                      <span className="admin-card-label">Key:</span>
+                      <span className="admin-card-value flex-1 truncate whitespace-pre-wrap font-mono text-xs text-dark-gray">{b.key}</span>
+                    </div>
+                    <div className="admin-card-row">
+                      <span className="admin-card-label">Type:</span>
+                      <span className="admin-card-value flex-1 truncate whitespace-pre-wrap">
                         <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${
                           b.type === 'skill'
                             ? 'bg-hunter-green/10 text-hunter-green'
@@ -268,11 +348,15 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                         }`}>
                           {b.type === 'skill' ? 'Skill' : 'Achievement'}
                         </span>
-                      </td>
-                      <td className="py-3 pr-4 align-middle text-xs text-dark-gray">
-                        {b.category || '—'}
-                      </td>
-                      <td className="py-3 pr-4 align-middle">
+                      </span>
+                    </div>
+                    <div className="admin-card-row">
+                      <span className="admin-card-label">Kategori:</span>
+                      <span className="admin-card-value flex-1 truncate whitespace-pre-wrap text-xs text-dark-gray">{b.category || '—'}</span>
+                    </div>
+                    <div className="admin-card-row">
+                      <span className="admin-card-label">Status:</span>
+                      <span className="admin-card-value flex-1 truncate whitespace-pre-wrap">
                         {b.archived ? (
                           <span className="rounded-full bg-dark-gray/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-dark-gray">
                             Archived
@@ -282,29 +366,37 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                             Active
                           </span>
                         )}
-                      </td>
-                      <td className="py-3 pr-4 align-middle text-right">
-                        <button
-                          type="button"
-                          onClick={() => startEdit(b)}
-                          className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-hunter-green transition-colors hover:border-hunter-green hover:bg-hunter-green/10 mr-2"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(b.key)}
-                          className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:border-paprika hover:bg-paprika/10"
-                        >
-                          Hapus
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="admin-card-actions">
+                    {primaryActions.map((action) => (
+                      <button
+                        key={action.label}
+                        type="button"
+                        onClick={() => action.onClick(b)}
+                        disabled={action.disabled?.(b)}
+                        className={[
+                          'admin-card-action-primary admin-touch-target',
+                          action.destructive && 'admin-card-action-destructive',
+                          action.disabled?.(b) && 'opacity-50 pointer-events-none',
+                        ].join(' ')}
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              );
+            }}
+          />
+
+          <ResponsivePagination
+            page={safePage}
+            totalPages={totalPages}
+            onPageChange={handleChangePage}
+            showPageNumbers={true}
+          />
         </section>
 
         <aside className="rounded-2xl border border-light-gray bg-white p-6 shadow-sm">

@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import type { PagedUsers, UserRecord, UserRole } from '@/lib/users-store';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
 import type { BadgeCatalogRecord, GrantedBadge } from '@/data/achievements-types';
 
 const FIELD_LABEL_CLS =
@@ -323,7 +327,7 @@ export function UsersClient({ initial }: { initial: InitialPage }) {
 
   return (
     <div className="container-base section-padding">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="admin-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
             Admin
@@ -374,7 +378,7 @@ export function UsersClient({ initial }: { initial: InitialPage }) {
           </div>
         </div>
 
-        <div className="mt-6 overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
@@ -478,6 +482,88 @@ export function UsersClient({ initial }: { initial: InitialPage }) {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="md:hidden grid gap-3">
+          {loading && users.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-light-gray bg-off-white p-6 text-center text-sm text-dark-gray">
+              Memuat...
+            </div>
+          ) : visibleUsers.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-light-gray bg-off-white p-6 text-center text-sm text-dark-gray">
+              {total === 0
+                ? 'Belum ada user terdaftar.'
+                : 'Tidak ada hasil untuk pencarian ini.'}
+            </div>
+          ) : (
+            visibleUsers.map((u) => (
+              <div
+                key={u.id}
+                className="rounded-xl border border-light-gray bg-white p-4"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-hunter-green">{u.name || u.email}</h3>
+                    <div className="mt-1 text-sm text-dark-gray">{u.email}</div>
+                    <div className="mt-1 text-xs">
+                      <label className="flex items-center gap-2">
+                        <span className="font-semibold text-dark-gray">Role</span>
+                        <select
+                          value={u.role}
+                          disabled={busyId === u.id}
+                          onChange={(e) =>
+                            onChangeRole(u.id, e.target.value as UserRole)
+                          }
+                          className={[
+                            'rounded-md border border-light-gray bg-white px-2 py-1 text-xs font-semibold focus:border-hunter-green focus:outline-none disabled:opacity-50',
+                            u.role === 'admin'
+                              ? 'text-paprika'
+                              : 'text-dark-gray',
+                          ].join(' ')}
+                        >
+                          <option value="member">member</option>
+                          <option value="admin">admin</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div className="mt-1 text-xs text-dark-gray">
+                      Dibuat: {formatDate(u.createdAt)}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => togglePopover(u)}
+                      disabled={busyId === u.id && grantsLoading !== u.id}
+                      aria-expanded={openPopoverFor === u.id}
+                      aria-haspopup="dialog"
+                      className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-graphite transition-colors hover:border-hunter-green hover:bg-hunter-green/10"
+                    >
+                      Badge
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(u)}
+                      disabled={busyId === u.id}
+                      className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:border-paprika hover:bg-paprika/10 disabled:opacity-50"
+                    >
+                      Hapus
+                    </button>
+                    {openPopoverFor === u.id && (
+                      <BadgePopover
+                        user={u}
+                        catalog={badgeCatalog}
+                        grants={grantsByEmail[u.email] ?? []}
+                        loading={grantsLoading === u.id}
+                        busy={busyId === u.id}
+                        onToggle={(key) => void toggleBadge(u, key)}
+                        onClose={() => setOpenPopoverFor(null)}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-light-gray pt-4">
@@ -656,9 +742,9 @@ function BadgePopover({
                   ].join(' ')}
                   aria-pressed={granted}
                 >
-                  <span className="flex items-center gap-2 truncate">
+                  <span className="flex items-center gap-2 truncate whitespace-pre-wrap">
                     <span aria-hidden="true">{b.icon || '🏅'}</span>
-                    <span className="truncate">{b.label}</span>
+                    <span className="truncate whitespace-pre-wrap">{b.label}</span>
                   </span>
                   <span className="shrink-0 text-[0.65rem] font-semibold uppercase tracking-wider">
                     {granted ? 'Granted' : 'Grant'}

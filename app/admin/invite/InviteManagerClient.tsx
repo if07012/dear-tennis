@@ -196,7 +196,7 @@ export function InviteManagerClient({
 
   return (
     <div className="container-base section-padding">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="admin-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
             Admin
@@ -221,7 +221,7 @@ export function InviteManagerClient({
           dengan status <strong>pending</strong>.
         </p>
 
-        <form onSubmit={onCreate} className="mt-6 grid gap-4 sm:grid-cols-6">
+        <form onSubmit={onCreate} className="mt-6 admin-form-grid">
           <label className="flex flex-col gap-1 sm:col-span-3">
             <span className={FIELD_LABEL_CLS}>Email *</span>
             <input
@@ -295,7 +295,7 @@ export function InviteManagerClient({
               key={inv.id}
               className="rounded-xl border border-light-gray bg-off-white p-4"
             >
-              <div className="flex items-start gap-4">
+              <div className="flex flex-col md:flex-row items-start gap-4">
                 <div className="flex w-12 flex-shrink-0 flex-col items-center">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-paprika/10 text-paprika">
                     <svg
@@ -333,7 +333,7 @@ export function InviteManagerClient({
                   </div>
                 </div>
 
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-col items-end gap-2 md:w-[80px]">
                   <label className="flex flex-col items-end gap-1">
                     <span className={FIELD_LABEL_CLS}>Status</span>
                     <select
@@ -370,31 +370,33 @@ export function InviteManagerClient({
           ))}
         </ul>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-light-gray pt-4">
-          <p className="text-xs text-dark-gray">
-            Menampilkan {total === 0 ? 0 : pageStart + 1}–
-            {Math.min(pageStart + pageSize, total)} dari {total} undangan ·
-            Halaman {safePage} dari {totalPages}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => fetchPage(safePage - 1)}
-              disabled={safePage <= 1}
-              className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-            >
-              <ChevronLeftIcon size={14} />
-              Sebelumnya
-            </button>
-            <button
-              type="button"
-              onClick={() => fetchPage(safePage + 1)}
-              disabled={safePage >= totalPages}
-              className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-            >
-              Berikutnya
-              <ChevronRightIcon size={14} />
-            </button>
+        <div className="admin-pager border-t border-light-gray pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-dark-gray">
+              Menampilkan {total === 0 ? 0 : pageStart + 1}–
+              {Math.min(pageStart + pageSize, total)} dari {total} undangan ·
+              Halaman {safePage} dari {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fetchPage(safePage - 1)}
+                disabled={safePage <= 1}
+                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
+              >
+                <ChevronLeftIcon size={14} />
+                Sebelumnya
+              </button>
+              <button
+                type="button"
+                onClick={() => fetchPage(safePage + 1)}
+                disabled={safePage >= totalPages}
+                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
+              >
+                Berikutnya
+                <ChevronRightIcon size={14} />
+              </button>
+            </div>
           </div>
         </div>
       </section>

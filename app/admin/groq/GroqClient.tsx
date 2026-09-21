@@ -1,8 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import type { GroqKeyRecord, GroqLogRecord, PagedGroqLogs } from '@/lib/groq-store';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 const FIELD_LABEL_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray';
@@ -47,6 +51,10 @@ export function GroqClient({ initialKeys, initialLogs }: Props) {
   const [keys, setKeys] = useState<GroqKeyRecord[]>(initialKeys);
   const [newKey, setNewKey] = useState('');
   const [busy, setBusy] = useState(false);
+  const [keySearch, setKeySearch] = useState('');
+  const [keyPage, setKeyPage] = useState(1);
+  const [keyPageSize, setKeyPageSize] = useState(10);
+  const KEY_PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
   // Logs state
   const [logs, setLogs] = useState<PagedGroqLogs>(initialLogs);
@@ -173,6 +181,136 @@ export function GroqClient({ initialKeys, initialLogs }: Props) {
     URL.revokeObjectURL(url);
   };
 
+  const filteredKeys = useMemo(() => {
+    const q = keySearch.trim().toLowerCase();
+    if (!q) return keys;
+    return keys.filter((k) => k.maskedKey.toLowerCase().includes(q));
+  }, [keys, keySearch]);
+
+  const keyPageStart = (keyPage - 1) * keyPageSize;
+  const keyPageItems = useMemo(
+    () => filteredKeys.slice(keyPageStart, keyPageStart + keyPageSize),
+    [filteredKeys, keyPageStart, keyPageSize],
+  );
+  const keyTotalPages = Math.max(1, Math.ceil(filteredKeys.length / keyPageSize));
+
+  const changeKeyPageSize = (newSize: number) => {
+    setKeyPageSize(newSize);
+    setKeyPage(1);
+  };
+
+  const keyColumns = useMemo(() => [
+    {
+      key: 'number',
+      header: '#',
+      priority: 1 as const,
+      className: 'w-12',
+      render: (item: GroqKeyRecord) => {
+        const idx = filteredKeys.findIndex((k) => k.id === item.id);
+        return (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-paprika/10 font-serif text-base font-bold text-paprika">
+            {idx + 1}.
+          </div>
+        );
+      },
+    },
+    {
+      key: 'maskedKey',
+      header: 'Kunci API',
+      priority: 1 as const,
+      render: (item: GroqKeyRecord) => (
+        <code className="font-mono text-sm">{item.maskedKey}</code>
+      ),
+    },
+    {
+      key: 'createdAt',
+      header: 'Dibuat',
+      priority: 2 as const,
+      className: 'w-40',
+      render: (item: GroqKeyRecord) => (
+        <span className="text-xs text-dark-gray whitespace-nowrap">{formatDate(item.createdAt)}</span>
+      ),
+    },
+  ], [filteredKeys, formatDate]);
+
+  const getKeyRowActions = (item: GroqKeyRecord) => [
+    {
+      label: 'Naikkan',
+      primary: false,
+      disabled: () => filteredKeys.findIndex((k) => k.id === item.id) === 0,
+      onClick: () => moveKey(item.id, -1),
+    },
+    {
+      label: 'Turunkan',
+      primary: false,
+      disabled: () => filteredKeys.findIndex((k) => k.id === item.id) === filteredKeys.length - 1,
+      onClick: () => moveKey(item.id, 1),
+    },
+    {
+      label: 'Hapus',
+      primary: false,
+      destructive: true,
+      onClick: () => removeKey(item.id),
+    },
+  ];
+
+  const logColumns = useMemo(() => [
+    {
+      key: 'waktu',
+      header: 'Waktu',
+      priority: 1 as const,
+      className: 'w-40',
+      render: (item: GroqLogRecord) => (
+        <span className="text-xs whitespace-nowrap">{formatDate(item.createdAt)}</span>
+      ),
+    },
+    {
+      key: 'kunci',
+      header: 'Kunci',
+      priority: 1 as const,
+      render: (item: GroqLogRecord) => (
+        <code className="font-mono text-xs">{item.maskedKey}</code>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      priority: 1 as const,
+      className: 'w-32',
+      render: (item: GroqLogRecord) => (
+        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${LOG_BADGE[item.status]}`}>
+          {item.status}
+        </span>
+      ),
+    },
+    {
+      key: 'durasi',
+      header: 'Durasi',
+      priority: 2 as const,
+      className: 'w-28',
+      render: (item: GroqLogRecord) => (
+        <span className="text-xs whitespace-nowrap">{item.durationMs} ms</span>
+      ),
+    },
+    {
+      key: 'chat',
+      header: 'Chat',
+      priority: 2 as const,
+      className: 'w-32',
+      render: (item: GroqLogRecord) => (
+        <code className="font-mono text-xs">{item.chatId || '—'}</code>
+      ),
+    },
+    {
+      key: 'error',
+      header: 'Error',
+      priority: 3 as const,
+      render: (item: GroqLogRecord) => (
+        <span className="max-w-[16rem] truncate text-xs text-dark-gray">{item.errorMessage ?? '—'}</span>
+      ),
+    },
+  ], [LOG_BADGE, formatDate]);
+
   return (
     <div className="container-base section-padding">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -224,158 +362,127 @@ export function GroqClient({ initialKeys, initialLogs }: Props) {
               bot otomatis pindah ke kunci berikutnya.
             </p>
           </div>
-          <div className="flex items-center gap-3 border-b border-light-gray px-5 py-4">
-            <input
-              type="password"
-              value={newKey}
-              onChange={(e) => setNewKey(e.target.value)}
-              placeholder="gsk_…"
-              className={INPUT_CLS}
-              disabled={busy}
-            />
-            <button
-              type="button"
-              onClick={addKey}
-              disabled={busy || !newKey.trim()}
-              className="shrink-0 rounded-full bg-paprika px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-40"
-            >
-              Tambah
-            </button>
-          </div>
-          {keys.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-dark-gray">
-              Belum ada kunci API. Bot tidak bisa memanggil Groq sampai ada
-              minimal satu kunci.
-            </p>
-          ) : (
-            <ul className="divide-y divide-light-gray">
-              {keys.map((k, i) => (
-                <li key={k.id} className="flex items-center gap-3 px-5 py-3">
-                  <span className="w-6 text-xs font-semibold text-dark-gray">
-                    {i + 1}.
-                  </span>
-                  <code className="flex-1 font-mono text-sm">{k.maskedKey}</code>
+          <AdminTableToolbar
+            searchValue={keySearch}
+            onSearchChange={setKeySearch}
+            searchPlaceholder="Cari kunci API"
+            onAdd={addKey}
+            addLabel="Tambah"
+            loading={busy}
+          />
+
+          <ResponsiveTable<GroqKeyRecord>
+            items={keyPageItems}
+            rowKey={(i) => i.id}
+            columns={keyColumns}
+            actions={getKeyRowActions(keyPageItems[0])}
+            emptyMessage={keys.length === 0 ? 'Belum ada kunci API. Bot tidak bisa memanggil Groq sampai ada minimal satu kunci.' : 'Tidak ada hasil untuk pencarian ini.'}
+            loading={false}
+            mobileCardRender={(item) => (
+              <>
+                <div className="admin-card-header">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-paprika/10 font-serif text-base font-bold text-paprika">
+                      {filteredKeys.findIndex((k) => k.id === item.id) + 1}.
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-medium text-hunter-green truncate font-mono text-sm">{item.maskedKey}</h3>
+                      <p className="text-xs text-dark-gray">Dibuat: {formatDate(item.createdAt)}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="admin-card-actions">
                   <button
                     type="button"
-                    onClick={() => moveKey(k.id, -1)}
-                    disabled={i === 0}
-                    aria-label="Naikkan prioritas"
-                    className="rounded-md p-1 text-dark-gray hover:bg-light-gray disabled:opacity-30"
+                    onClick={() => moveKey(item.id, -1)}
+                    disabled={filteredKeys.findIndex((k) => k.id === item.id) === 0}
+                    className="admin-card-action-primary admin-touch-target"
                   >
-                    ↑
+                    Naikkan
                   </button>
                   <button
                     type="button"
-                    onClick={() => moveKey(k.id, 1)}
-                    disabled={i === keys.length - 1}
-                    aria-label="Turunkan prioritas"
-                    className="rounded-md p-1 text-dark-gray hover:bg-light-gray disabled:opacity-30"
+                    onClick={() => moveKey(item.id, 1)}
+                    disabled={filteredKeys.findIndex((k) => k.id === item.id) === filteredKeys.length - 1}
+                    className="admin-card-action-primary admin-touch-target"
                   >
-                    ↓
+                    Turunkan
                   </button>
                   <button
                     type="button"
-                    onClick={() => removeKey(k.id)}
-                    className="text-xs font-semibold text-paprika hover:underline"
+                    onClick={() => removeKey(item.id)}
+                    className="admin-card-action-primary admin-card-action-destructive admin-touch-target"
                   >
                     Hapus
                   </button>
-                </li>
-              ))}
-            </ul>
-          )}
+                </div>
+              </>
+            )}
+          />
+
+          <ResponsivePagination
+            page={keyPage}
+            totalPages={keyTotalPages}
+            onPageChange={setKeyPage}
+          />
         </section>
       )}
 
       {tab === 'logs' && (
         <section className="rounded-2xl border border-light-gray bg-white">
-          <div className="flex flex-wrap items-center gap-3 border-b border-light-gray px-5 py-3">
-            <select
-              value={logFilter}
-              onChange={(e) => {
-                const v = e.target.value as '' | GroqLogRecord['status'];
-                setLogFilter(v);
-                fetchLogs(1, v);
-              }}
-              className={`${INPUT_CLS} w-auto`}
-            >
-              <option value="">Semua status</option>
-              <option value="success">Success</option>
-              <option value="429">429 (rate limit)</option>
-              <option value="error">Error</option>
-            </select>
-            <button
-              type="button"
-              onClick={downloadCsv}
-              className="rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray hover:bg-light-gray"
-            >
-              Unduh CSV (halaman ini)
-            </button>
-            {logsLoading && (
-              <span className="text-xs text-dark-gray">Memuat…</span>
+          <AdminTableToolbar
+            searchValue={logFilter}
+            onSearchChange={(v: string) => setLogFilter(v as '' | GroqLogRecord['status'])}
+            searchPlaceholder="Filter status"
+            addLabel="Unduh CSV (halaman ini)"
+            onAdd={downloadCsv}
+            loading={logsLoading}
+          />
+
+          <ResponsiveTable<GroqLogRecord>
+            items={logs.items}
+            rowKey={(i) => i.id}
+            columns={logColumns}
+            actions={undefined}
+            emptyMessage="Belum ada log."
+            loading={logsLoading}
+            mobileCardRender={(item) => (
+              <>
+                <div className="admin-card-header">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs text-hunter-green">{item.maskedKey}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${LOG_BADGE[item.status]}`}>
+                      {item.status}
+                    </span>
+                  </div>
+                </div>
+                <div className="admin-card-body">
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Waktu:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{formatDate(item.createdAt)}</span>
+                  </div>
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Durasi:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.durationMs} ms</span>
+                  </div>
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Chat:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs font-mono text-dark-gray">{item.chatId || '—'}</span>
+                  </div>
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Error:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.errorMessage ?? '—'}</span>
+                  </div>
+                </div>
+              </>
             )}
-          </div>
-          {logs.items.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-dark-gray">
-              Belum ada log.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-light-gray text-xs uppercase tracking-wider text-dark-gray">
-                  <tr>
-                    <th className="px-5 py-2 font-semibold">Waktu</th>
-                    <th className="px-5 py-2 font-semibold">Kunci</th>
-                    <th className="px-5 py-2 font-semibold">Status</th>
-                    <th className="px-5 py-2 font-semibold">Durasi</th>
-                    <th className="px-5 py-2 font-semibold">Chat</th>
-                    <th className="px-5 py-2 font-semibold">Error</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-light-gray">
-                  {logs.items.map((l) => (
-                    <tr key={l.id}>
-                      <td className="px-5 py-2 whitespace-nowrap">{formatDate(l.createdAt)}</td>
-                      <td className="px-5 py-2 font-mono text-xs">{l.maskedKey}</td>
-                      <td className="px-5 py-2">
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${LOG_BADGE[l.status]}`}>
-                          {l.status}
-                        </span>
-                      </td>
-                      <td className="px-5 py-2 whitespace-nowrap">{l.durationMs} ms</td>
-                      <td className="px-5 py-2 font-mono text-xs">{l.chatId || '—'}</td>
-                      <td className="max-w-[16rem] truncate px-5 py-2 text-xs text-dark-gray">
-                        {l.errorMessage ?? '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {logs.totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-light-gray px-5 py-3 text-sm">
-              <button
-                type="button"
-                onClick={() => fetchLogs(logs.page - 1, logFilter)}
-                disabled={logs.page <= 1 || logsLoading}
-                className="rounded-full border border-light-gray px-3 py-1 disabled:opacity-30"
-              >
-                ← Sebelumnya
-              </button>
-              <span className="text-xs text-dark-gray">
-                Halaman {logs.page} / {logs.totalPages} ({logs.total} log)
-              </span>
-              <button
-                type="button"
-                onClick={() => fetchLogs(logs.page + 1, logFilter)}
-                disabled={logs.page >= logs.totalPages || logsLoading}
-                className="rounded-full border border-light-gray px-3 py-1 disabled:opacity-30"
-              >
-                Berikutnya →
-              </button>
-            </div>
-          )}
+          />
+
+          <ResponsivePagination
+            page={logs.page}
+            totalPages={logs.totalPages}
+            onPageChange={(page) => fetchLogs(page, logFilter)}
+          />
         </section>
       )}
     </div>

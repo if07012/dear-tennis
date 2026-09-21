@@ -313,13 +313,13 @@ export function ActivityPerformanceDrawer({
       aria-label={`Set performance for ${activityTitle}`}
     >
       <div
-        className="w-full max-w-5xl rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl flex flex-col max-h-[90vh]"
+        className="w-full max-w-5xl rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl flex flex-col max-h-[90vh] sm:max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-start justify-between gap-3 border-b border-light-gray p-6">
+        <header className="flex items-start justify-between gap-3 border-b border-light-gray p-6 flex-shrink-0">
           <div className="min-w-0 flex-1">
             <p className={FIELD_LABEL_CLS}>Set Performance</p>
-            <h2 className="mt-1 font-serif text-xl font-semibold text-hunter-green truncate">
+            <h2 className="mt-1 font-serif text-xl font-semibold text-hunter-green truncate whitespace-pre-wrap">
               {activityTitle}
             </h2>
             <p className="mt-1 text-xs text-dark-gray">

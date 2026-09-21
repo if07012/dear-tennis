@@ -4,8 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
   ChevronUp,
   ClockSmallIcon,
   MapPinIcon,
@@ -18,7 +16,10 @@ import { ActivitySkillPointsDrawer } from './ActivitySkillPointsDrawer';
 import { ActivityPerformanceDrawer } from './ActivityPerformanceDrawer';
 import { ActivityMatchesDrawer } from './ActivityMatchesDrawer';
 import { ActivityStandingsDrawer } from './ActivityStandingsDrawer';
-import { RowActionMenu } from './RowActionMenu';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 import type {
   ActivityCategory,
   ActivityItem,
@@ -80,6 +81,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
   const [archiveFilter, setArchiveFilter] = useState<'active' | 'archived' | 'all'>(
     'active',
   );
+  const [search, setSearch] = useState('');
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
 
   const refreshSignupCounts = useCallback(async () => {
@@ -127,19 +129,23 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
   }, [activities, archiveFilter]);
 
   const filtered = useMemo(() => {
-    if (timeScope === 'thisWeek') {
-      // Weekly view is a chronological "what's happening" list — archive and
-      // category chips don't apply here (badge count uses the same predicate).
-      return activities
-        .filter(inThisWeek)
-        .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-    }
-    let out = archiveScoped;
+    let out = timeScope === 'thisWeek'
+      ? activities.filter(inThisWeek).sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())
+      : archiveScoped;
     if (filter !== 'all') {
       out = out.filter((a) => a.category === filter);
     }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      out = out.filter(a =>
+        a.title.toLowerCase().includes(q) ||
+        a.description.toLowerCase().includes(q) ||
+        a.location.toLowerCase().includes(q) ||
+        a.category.toLowerCase().includes(q)
+      );
+    }
     return out;
-  }, [archiveScoped, filter, timeScope, inThisWeek]);
+  }, [archiveScoped, filter, timeScope, inThisWeek, search]);
 
   const thisWeekCount = useMemo(
     () => activities.filter(inThisWeek).length,
@@ -426,20 +432,206 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
     setEditing({ ...item, time: toDatetimeLocal(item.time) });
   };
 
+  // Column definitions for ResponsiveTable
+  const columns = useMemo(() => [
+    {
+      key: 'image',
+      header: 'Image',
+      priority: 1 as const,
+      className: 'w-16 md:w-20',
+      render: (activity: ActivityItem) => (
+        <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-light-gray bg-off-white flex-shrink-0">
+          {activity.image ? (
+            <Image src={activity.image} alt={activity.title} fill sizes="64px" className="object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-xs text-dark-gray">No image</div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'title',
+      header: 'Activity',
+      priority: 1 as const,
+      render: (activity: ActivityItem) => (
+        <div className="min-w-0">
+          <h3 className="font-serif text-base font-semibold text-hunter-green whitespace-pre-wrap">{activity.title || '(tanpa judul)'}</h3>
+          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+            <span className={`px-2 py-0.5 rounded-full text-[0.6rem] font-semibold uppercase tracking-wider ${CATEGORY_TAG_STYLES[activity.category]}`}>
+              {activity.category}
+            </span>
+            {activity.isFull && (
+              <span className="px-2 py-0.5 rounded-full text-[0.6rem] font-semibold uppercase tracking-wider bg-light-gray text-dark-gray">
+                Full
+              </span>
+            )}
+            {activity.archived && (
+              <span className="px-2 py-0.5 rounded-full text-[0.6rem] font-semibold uppercase tracking-wider bg-paprika/10 text-paprika">
+                Archived
+              </span>
+            )}
+          </div>
+          {activity.description && (
+            <p className="mt-1 text-xs text-dark-gray line-clamp-2 whitespace-pre-wrap">{activity.description}</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'details',
+      header: 'Details',
+      priority: 2 as const,
+      render: (activity: ActivityItem) => (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem] text-dark-gray">
+          {activity.duration && <span className="inline-flex items-center gap-1"><ClockSmallIcon className="shrink-0" size={10} />{activity.duration}</span>}
+          {activity.time && <span className="inline-flex items-center gap-1"><ClockSmallIcon className="shrink-0" size={10} />{activity.time}</span>}
+          {activity.location && <span className="inline-flex items-center gap-1"><MapPinIcon className="shrink-0" size={10} />{activity.location}</span>}
+          {activity.groupSize && <span className="inline-flex items-center gap-1"><UsersSmallIcon className="shrink-0" size={10} />{activity.groupSize}</span>}
+        </div>
+      ),
+    },
+    {
+      key: 'signups',
+      header: 'Signups',
+      priority: 3 as const,
+      render: (activity: ActivityItem) => {
+        const isPersisted = isPersistedId(activity.id);
+        if (!isPersisted) return <span className="text-xs text-dark-gray">—</span>;
+        return (
+          <Link
+            href={`/admin/activity-signups?activity=${encodeURIComponent(activity.id)}`}
+            className="inline-flex items-center gap-1 rounded-full bg-hunter-green/10 px-2 py-1 text-[0.6rem] font-semibold uppercase tracking-wider text-hunter-green hover:bg-hunter-green/20"
+            title="Lihat pendaftar"
+          >
+            <UsersSmallIcon size={10} />
+            {signupCounts[activity.id] ?? 0}
+          </Link>
+        );
+      },
+    },
+  ], [signupCounts]);
+
+  // Build row-specific actions
+  const getRowActions = (activity: ActivityItem) => {
+    const realIndex = activities.findIndex((a) => a.id === activity.id);
+    const canUp = realIndex > 0;
+    const canDown = realIndex >= 0 && realIndex < activities.length - 1;
+    const isCompetitive = activity.category === 'competitive';
+    const isPersisted = isPersistedId(activity.id);
+
+    const primaryActions: Array<{
+      label: string;
+      onClick: (item: ActivityItem) => void;
+      primary?: boolean;
+      destructive?: boolean;
+      disabled?: (item: ActivityItem) => boolean;
+    }> = [
+      { label: 'Edit', primary: true, onClick: () => openEdit(activity) },
+      { label: '↑', primary: false, onClick: () => handleMove(activity.id, -1), disabled: () => !canUp },
+      { label: '↓', primary: false, onClick: () => handleMove(activity.id, 1), disabled: () => !canDown },
+    ];
+
+    const secondaryActions: Array<{
+      label: string;
+      onClick: (item: ActivityItem) => void;
+      primary?: boolean;
+      destructive?: boolean;
+      disabled?: (item: ActivityItem) => boolean;
+    }> = [];
+
+    if (isPersisted) {
+      if (!isCompetitive) {
+        secondaryActions.push(
+          { label: 'Set Skill Points', onClick: () => setPointsActivity(activity) },
+          { label: 'Set Performance', onClick: () => setPerformanceActivity(activity) }
+        );
+      } else {
+        secondaryActions.push(
+          { label: 'Matches', onClick: () => setMatchesActivity(activity) },
+          { label: 'Standings', onClick: () => setStandingsActivity(activity) }
+        );
+      }
+      secondaryActions.push(
+        { label: 'Clone', onClick: () => handleClone(activity), disabled: () => status.kind === 'saving' },
+        { label: 'Duplicate weekly…', onClick: () => setRecurringActivity(activity), disabled: () => status.kind === 'saving' || Number.isNaN(new Date(activity.time).getTime()) },
+        { label: activity.archived ? 'Restore' : 'Archive', onClick: () => handleArchiveToggle(activity), disabled: () => status.kind === 'saving' }
+      );
+    }
+
+    secondaryActions.push(
+      { label: 'Hapus', onClick: () => handleDelete(activity.id), destructive: true }
+    );
+
+    return { primaryActions, secondaryActions };
+  };
+
+  const handleChangePage = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const filterChips = useMemo(() => (
+    <>
+      <div className="admin-filter-chips">
+        {(['active', 'archived', 'all'] as const).map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => { setArchiveFilter(key); setPage(1); }}
+            className={[
+              'rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors',
+              archiveFilter === key ? 'bg-paprika text-white' : 'bg-off-white text-dark-gray hover:bg-light-gray',
+            ].join(' ')}
+          >
+            {key === 'active'
+              ? `Active (${archiveScoped.length})`
+              : key === 'archived'
+                ? `Archived (${activities.filter((a) => a.archived === true).length})`
+                : `All (${activities.length})`}
+          </button>
+        ))}
+      </div>
+      <div className="admin-filter-chips">
+        {(['all', 'training', 'social', 'competitive'] as const).map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => { setFilter(key); setPage(1); }}
+            className={[
+              'rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors',
+              filter === key ? 'bg-hunter-green text-white' : 'bg-off-white text-dark-gray hover:bg-light-gray',
+            ].join(' ')}
+          >
+            {key === 'all'
+              ? `All (${archiveScoped.length})`
+              : `${key} (${archiveScoped.filter((a) => a.category === key).length})`}
+          </button>
+        ))}
+      </div>
+      <div className="admin-filter-chips">
+        {(['all', 'thisWeek'] as const).map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => { setTimeScope(key); setPage(1); }}
+            className={[
+              'rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors',
+              timeScope === key ? 'bg-hunter-green text-white' : 'bg-off-white text-dark-gray hover:bg-light-gray',
+            ].join(' ')}
+          >
+            {key === 'all' ? 'All time' : `Event minggu ini (${thisWeekCount})`}
+          </button>
+        ))}
+      </div>
+    </>
+  ), [archiveFilter, activities, archiveScoped, filter, timeScope, thisWeekCount]);
+
   return (
     <div className="container-base section-padding">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="admin-header">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
-            Admin
-          </p>
-          <h1 className="font-serif text-3xl font-bold text-hunter-green">
-            Activities List
-          </h1>
-          <p className="mt-1 text-sm text-dark-gray">
-            Kelola seluruh activity ({activities.length} total). 6 teratas
-            ditampilkan di home page.
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-paprika">Admin</p>
+          <h1 className="font-serif text-3xl font-bold text-hunter-green">Activities List</h1>
+          <p className="mt-1 text-sm text-dark-gray">Kelola seluruh activity ({activities.length} total). 6 teratas ditampilkan di home page.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <SaveBadge status={status} />
@@ -456,324 +648,111 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
 
       <section className="rounded-2xl border border-light-gray bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-light-gray px-5 py-3">
-          <div className="flex flex-wrap gap-2">
-            {(['active', 'archived', 'all'] as const).map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => {
-                  setArchiveFilter(key);
-                  setPage(1);
-                }}
-                className={[
-                  'rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors',
-                  archiveFilter === key
-                    ? 'bg-paprika text-white'
-                    : 'bg-off-white text-dark-gray hover:bg-light-gray',
-                ].join(' ')}
-              >
-                {key === 'active'
-                  ? `Active (${archiveScoped.length})`
-                  : key === 'archived'
-                    ? `Archived (${activities.filter((a) => a.archived === true).length})`
-                    : `All (${activities.length})`}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-light-gray px-5 py-3">
-          <div className="flex flex-wrap gap-2">
-            {(['all', 'training', 'social', 'competitive'] as const).map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => {
-                  setFilter(key);
-                  setPage(1);
-                }}
-                className={[
-                  'rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors',
-                  filter === key
-                    ? 'bg-hunter-green text-white'
-                    : 'bg-off-white text-dark-gray hover:bg-light-gray',
-                ].join(' ')}
-              >
-                {key === 'all'
-                  ? `All (${archiveScoped.length})`
-                  : `${key} (${archiveScoped.filter((a) => a.category === key).length})`}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {(['all', 'thisWeek'] as const).map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => {
-                  setTimeScope(key);
-                  setPage(1);
-                }}
-                className={[
-                  'rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors',
-                  timeScope === key
-                    ? 'bg-hunter-green text-white'
-                    : 'bg-off-white text-dark-gray hover:bg-light-gray',
-                ].join(' ')}
-              >
-                {key === 'all'
-                  ? 'All time'
-                  : `Event minggu ini (${thisWeekCount})`}
-              </button>
-            ))}
-            <p className="text-xs text-dark-gray">
-              Halaman {safePage} dari {totalPages}
-            </p>
-          </div>
+          {filterChips}
         </div>
 
-        <div className="divide-y divide-light-gray">
-          {pageItems.length === 0 && (
-            <div className="px-5 py-12 text-center text-sm text-dark-gray">
-              Belum ada activity untuk filter ini.
-            </div>
-          )}
-          {pageItems.map((activity) => {
-            const realIndex = activities.findIndex((a) => a.id === activity.id);
-            const canUp = realIndex > 0;
-            const canDown = realIndex >= 0 && realIndex < activities.length - 1;
-            const isCompetitive = activity.category === 'competitive';
-            const isPersisted = isPersistedId(activity.id);
+        <AdminTableToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari judul, deskripsi, lokasi, kategori..."
+          onAdd={openCreate}
+          addLabel="Tambah activity"
+          loading={false}
+        />
+
+        <ResponsiveTable
+          items={pageItems}
+          rowKey={(a) => a.id}
+          columns={columns}
+          actions={[]}
+          emptyMessage="Belum ada activity untuk filter ini."
+          loading={false}
+          mobileCardRender={(activity) => {
+            const { primaryActions, secondaryActions } = getRowActions(activity);
             return (
-              <article
-                key={activity.id}
-                className="flex items-start gap-4 px-5 py-4"
-              >
-                <div className="relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-lg border border-light-gray bg-off-white">
-                  {activity.image ? (
-                    <Image
-                      src={activity.image}
-                      alt={activity.title}
-                      fill
-                      sizes="112px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-dark-gray">
-                      No image
+              <>
+                <div className="admin-card-header">
+                  <div className="flex items-start gap-4">
+                    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-light-gray bg-off-white">
+                      {activity.image ? (
+                        <Image src={activity.image} alt={activity.title} fill sizes="64px" className="object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-dark-gray">No image</div>
+                      )}
                     </div>
-                  )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-serif text-base font-semibold text-hunter-green truncate whitespace-pre-wrap whitespace-pre-wrap">{activity.title || '(tanpa judul)'}</h3>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        <span className={`px-2 py-0.5 rounded-full text-[0.6rem] font-semibold uppercase tracking-wider ${CATEGORY_TAG_STYLES[activity.category]}`}>
+                          {activity.category}
+                        </span>
+                        {activity.isFull && <span className="px-2 py-0.5 rounded-full text-[0.6rem] font-semibold uppercase tracking-wider bg-light-gray text-dark-gray">Full</span>}
+                        {activity.archived && <span className="px-2 py-0.5 rounded-full text-[0.6rem] font-semibold uppercase tracking-wider bg-paprika/10 text-paprika">Archived</span>}
+                      </div>
+                      {activity.description && <p className="mt-1 text-xs text-dark-gray line-clamp-2">{activity.description}</p>}
+                    </div>
+                  </div>
                 </div>
-
-                <div className="flex flex-1 flex-col gap-2 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-serif text-base font-semibold text-hunter-green truncate">
-                      {activity.title || '(tanpa judul)'}
-                    </h3>
-                    <span
-                      className={[
-                        'px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider',
-                        CATEGORY_TAG_STYLES[activity.category],
-                      ].join(' ')}
-                    >
-                      {activity.category}
-                    </span>
-                    {activity.isFull && (
-                      <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-light-gray text-dark-gray">
-                        Full
-                      </span>
-                    )}
-                    {activity.archived && (
-                      <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider bg-paprika/10 text-paprika">
-                        Archived
-                      </span>
-                    )}
+                <div className="admin-card-body">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem] text-dark-gray">
+                    {activity.duration && <span className="inline-flex items-center gap-1"><ClockSmallIcon className="shrink-0" size={10} />{activity.duration}</span>}
+                    {activity.time && <span className="inline-flex items-center gap-1"><ClockSmallIcon className="shrink-0" size={10} />{activity.time}</span>}
+                    {activity.location && <span className="inline-flex items-center gap-1"><MapPinIcon className="shrink-0" size={10} />{activity.location}</span>}
+                    {activity.groupSize && <span className="inline-flex items-center gap-1"><UsersSmallIcon className="shrink-0" size={10} />{activity.groupSize}</span>}
                   </div>
-
-                  {activity.description && (
-                    <p className="text-xs text-dark-gray line-clamp-2 text-pretty">
-                      {activity.description}
-                    </p>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[0.7rem] text-dark-gray">
-                    {activity.duration && (
-                      <span className="inline-flex items-center gap-1">
-                        <ClockSmallIcon />
-                        {activity.duration}
-                      </span>
-                    )}
-                    {activity.time && (
-                      <span className="inline-flex items-center gap-1">
-                        <ClockSmallIcon />
-                        {activity.time}
-                      </span>
-                    )}
-                    {activity.location && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPinIcon />
-                        {activity.location}
-                      </span>
-                    )}
-                    {activity.groupSize && (
-                      <span className="inline-flex items-center gap-1">
-                        <UsersSmallIcon />
-                        {activity.groupSize}
-                      </span>
-                    )}
-                  </div>
-
-                  {isPersisted && (
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                  {isPersistedId(activity.id) && (
+                    <div className="mt-2">
                       <Link
                         href={`/admin/activity-signups?activity=${encodeURIComponent(activity.id)}`}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-hunter-green px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-white transition-colors hover:bg-hunter-green/90"
-                        title="Lihat pendaftar activity ini"
+                        className="inline-flex items-center gap-1 rounded-full bg-hunter-green/10 px-2 py-1 text-[0.6rem] font-semibold uppercase tracking-wider text-hunter-green hover:bg-hunter-green/20"
                       >
-                        <UsersSmallIcon size={11} />
+                        <UsersSmallIcon size={10} />
                         {signupCounts[activity.id] ?? 0} members
                       </Link>
                     </div>
                   )}
                 </div>
-
-                <div className="flex flex-col items-center justify-between self-stretch gap-1">
-                  <button
-                    type="button"
-                    onClick={() => handleMove(activity.id, -1)}
-                    disabled={!canUp}
-                    aria-label="Move up"
-                    className="rounded-md p-1 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
-                  >
-                    <ChevronUp size={16} className="rotate-180" />
-                  </button>
-                  <span className="text-[0.65rem] font-bold uppercase tracking-wider text-dark-gray">
-                    #{realIndex + 1}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleMove(activity.id, 1)}
-                    disabled={!canDown}
-                    aria-label="Move down"
-                    className="rounded-md p-1 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
-                  >
-                    <ChevronUp size={16} />
-                  </button>
-                </div>
-
-                <div className="flex flex-col items-end gap-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(activity)}
-                      className="inline-flex items-center justify-center rounded-full bg-hunter-green px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-hunter-green/90"
-                    >
-                      Edit
-                    </button>
-                    {isPersisted && (
-                      <RowActionMenu
-                        label={`More actions for ${activity.title}`}
-                        items={[
-                         ...(!isCompetitive ? [{
-                            key: 'points',
-                            label: 'Set Skill Points',
-                            onSelect: () => setPointsActivity(activity),
-                          },
-                          {
-                            key: 'performance',
-                            label: 'Set Performance',
-                            onSelect: () => setPerformanceActivity(activity),
-                          }] : []),
-                          ...(isCompetitive
-                            ? [
-                              {
-                                key: 'matches',
-                                label: 'Matches',
-                                onSelect: () => setMatchesActivity(activity),
-                              },
-                              {
-                                key: 'standings',
-                                label: 'Standings',
-                                onSelect: () => setStandingsActivity(activity),
-                              },
-                            ]
-                            : []),
-                          { kind: 'divider', key: 'sep-1' },
-                          {
-                            key: 'clone',
-                            label: 'Clone',
-                            onSelect: () => handleClone(activity),
-                            disabled: status.kind === 'saving',
-                          },
-                          {
-                            key: 'recurring',
-                            label: 'Duplicate weekly…',
-                            onSelect: () => setRecurringActivity(activity),
-                            disabled:
-                              status.kind === 'saving' ||
-                              Number.isNaN(new Date(activity.time).getTime()),
-                          },
-                          {
-                            key: 'archive',
-                            label: activity.archived ? 'Restore' : 'Archive',
-                            onSelect: () => handleArchiveToggle(activity),
-                            disabled: status.kind === 'saving',
-                          },
-                          { kind: 'divider', key: 'sep-2' },
-                          {
-                            key: 'delete',
-                            label: 'Hapus',
-                            onSelect: () => handleDelete(activity.id),
-                            destructive: true,
-                          },
-                        ]}
+                {primaryActions.length > 0 || secondaryActions.length > 0 ? (
+                  <div className="admin-card-actions">
+                    {primaryActions.map((action) => (
+                      <button
+                        key={action.label}
+                        type="button"
+                        onClick={() => action.onClick(activity)}
+                        disabled={action.disabled?.(activity)}
+                        className={[
+                          'admin-card-action-primary admin-touch-target',
+                          action.destructive && 'admin-card-action-destructive',
+                          action.disabled?.(activity) && 'opacity-50 pointer-events-none',
+                        ].join(' ')}
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                    {secondaryActions.length > 0 && (
+                      <MobileActionMenu
+                        trigger={<span className="admin-action-menu-button admin-touch-target"><ChevronUp size={16} className="rotate-90" /></span>}
+                        actions={secondaryActions.map((action) => ({
+                          label: action.label,
+                          onClick: () => action.onClick(activity),
+                          destructive: action.destructive,
+                          disabled: action.disabled?.(activity),
+                        }))}
                       />
                     )}
                   </div>
-                </div>
-              </article>
+                ) : null}
+              </>
             );
-          })}
-        </div>
+          }}
+        />
 
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between gap-3 border-t border-light-gray px-5 py-3">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={safePage <= 1}
-              className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-            >
-              <ChevronLeftIcon size={14} />
-              Sebelumnya
-            </button>
-            <div className="flex flex-wrap gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPage(p)}
-                  className={[
-                    'h-8 min-w-8 rounded-md px-2 text-xs font-semibold transition-colors',
-                    p === safePage
-                      ? 'bg-hunter-green text-white'
-                      : 'bg-off-white text-dark-gray hover:bg-light-gray',
-                  ].join(' ')}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={safePage >= totalPages}
-              className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-            >
-              Berikutnya
-              <ChevronRightIcon size={14} />
-            </button>
-          </div>
-        )}
+        <ResponsivePagination
+          page={safePage}
+          totalPages={totalPages}
+          onPageChange={handleChangePage}
+          showPageNumbers={true}
+        />
       </section>
 
       {editing && (
@@ -842,7 +821,7 @@ function EditDrawer({ draft, onCancel, onSave }: EditDrawerProps) {
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (state.title.trim().length === 0) return;
     setSaving(true);
@@ -859,7 +838,7 @@ function EditDrawer({ draft, onCancel, onSave }: EditDrawerProps) {
       onClick={onCancel}
     >
       <form
-        className="w-full max-w-2xl rounded-t-2xl bg-white p-6 shadow-2xl sm:rounded-2xl"
+        className="w-full max-w-2xl rounded-t-2xl bg-white p-6 shadow-2xl sm:rounded-2xl max-h-[90vh] sm:max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
       >
@@ -1107,7 +1086,7 @@ function RecurringDuplicateDrawer({
       )
     : [];
 
-  const submit = (e: React.FormEvent) => {
+  const submit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!confirming) {
       setConfirming(true);
@@ -1122,11 +1101,11 @@ function RecurringDuplicateDrawer({
       onClick={onClose}
     >
       <form
-        className="w-full max-w-md rounded-t-2xl bg-white p-6 shadow-2xl sm:rounded-2xl"
+        className="w-full max-w-md rounded-t-2xl bg-white p-6 shadow-2xl sm:rounded-2xl max-h-[90vh] sm:max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
       >
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between flex-shrink-0">
           <h2 className="font-serif text-xl font-semibold text-hunter-green">
             Duplicate weekly
           </h2>

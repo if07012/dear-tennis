@@ -492,7 +492,7 @@ function SkillBreakdownAdminEdit({
             onClick={() => setIsActivityDropdownOpen((v) => !v)}
             className="flex items-center gap-2 rounded-lg border border-light-gray bg-white px-3 py-1.5 text-xs text-graphite transition-colors hover:border-hunter-green hover:bg-hunter-green/5"
           >
-            <span className="truncate max-w-[200px]">
+            <span className="truncate whitespace-pre-wrap max-w-[200px]">
               {selectedActivity?.title ?? 'Pilih activity'}
             </span>
             <ChevronDown
@@ -545,7 +545,7 @@ function SkillBreakdownAdminEdit({
                     >
                       <div className="flex items-center gap-2">
                         <span aria-hidden="true">{a.icon}</span>
-                        <span className="truncate">{a.title}</span>
+                        <span className="truncate whitespace-pre-wrap">{a.title}</span>
                       </div>
                     </button>
                   ))

@@ -136,16 +136,19 @@ export function LevelsClient({ initial }: { initial: LevelRecord[] }) {
 
   return (
     <div className="container-base section-padding">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <header className="admin-header">
         <div>
-          <h1 className="font-serif text-2xl font-semibold text-hunter-green">
+          <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
+            Admin
+          </p>
+          <h1 className="font-serif text-3xl font-bold text-hunter-green">
             Player Levels
           </h1>
-          <p className="text-sm text-dark-gray">
+          <p className="mt-1 text-sm text-dark-gray">
             Kelola level pemain. Level menentukan kemampuan tenis berdasarkan skill badge.
           </p>
         </div>
-      </div>
+      </header>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <section className="rounded-2xl border border-light-gray bg-white p-6 shadow-sm">
@@ -159,7 +162,7 @@ export function LevelsClient({ initial }: { initial: LevelRecord[] }) {
             </button>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
@@ -186,7 +189,7 @@ export function LevelsClient({ initial }: { initial: LevelRecord[] }) {
                       <td className="py-3 pr-4 align-middle font-medium text-hunter-green">
                         {l.name}
                       </td>
-                      <td className="py-3 pr-4 align-middle text-dark-gray truncate max-w-xs">
+                      <td className="py-3 pr-4 align-middle text-dark-gray truncate whitespace-pre-wrap max-w-xs">
                         {l.description || '—'}
                       </td>
                       <td className="py-3 pr-4 align-middle">
@@ -221,6 +224,57 @@ export function LevelsClient({ initial }: { initial: LevelRecord[] }) {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="md:hidden grid gap-3">
+            {levels.length === 0 ? (
+              <p className="text-center text-dark-gray py-10">Belum ada level. Tambahkan level pertama.</p>
+            ) : (
+              levels.map((l) => (
+                <div
+                  key={l.id}
+                  className="rounded-xl border border-light-gray bg-white p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs text-dark-gray">
+                          #{l.order}
+                        </span>
+                        <h3 className="font-medium text-hunter-green truncate whitespace-pre-wrap">
+                          {l.name}
+                        </h3>
+                      </div>
+                      <p className="mt-1 text-sm text-dark-gray">{l.description || '—'}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      {l.isActive ? (
+                        <span className="rounded-full bg-hunter-green/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-hunter-green">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-dark-gray/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-dark-gray">
+                          Inactive
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => startEdit(l)}
+                        className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-hunter-green transition-colors hover:border-hunter-green hover:bg-hunter-green/10"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(l.id)}
+                        className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:border-paprika hover:bg-paprika/10"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </section>
 

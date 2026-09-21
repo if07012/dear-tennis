@@ -52,7 +52,7 @@ export function HeroEditorForm({
           Teks utama yang tampil di hero section
         </p>
 
-        <div className="mt-6 grid gap-4">
+        <div className="mt-6 admin-form-grid">
           <label className="flex flex-col gap-1">
             <span className={FIELD_LABEL_CLS}>Title (line 1)</span>
             <input
@@ -75,7 +75,7 @@ export function HeroEditorForm({
             />
           </label>
 
-          <label className="flex flex-col gap-1">
+          <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
             <span className={FIELD_LABEL_CLS}>Description</span>
             <textarea
               rows={3}
@@ -96,7 +96,7 @@ export function HeroEditorForm({
           Dua tombol di bawah deskripsi
         </p>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 admin-form-grid">
           <label className="flex flex-col gap-1">
             <span className={FIELD_LABEL_CLS}>Primary label</span>
             <input
@@ -139,7 +139,7 @@ export function HeroEditorForm({
       </section>
 
       <section className="rounded-2xl border border-light-gray bg-white p-6">
-        <header className="flex items-center justify-between gap-4">
+        <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="font-serif text-xl font-semibold text-hunter-green">
               Slides

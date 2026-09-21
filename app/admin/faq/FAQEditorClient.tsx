@@ -10,6 +10,10 @@ import {
 } from '@/components/ui/Icons';
 import { useAuth } from '@/hooks/useAuth';
 import type { FAQ, FAQSettings } from '@/data/faq-types';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 type SettingsDraft = Omit<FAQSettings, 'id' | 'updatedAt'>;
 
@@ -87,7 +91,9 @@ export function FAQEditorClient({ initial }: { initial: InitialPage }) {
   const [page, setPage] = useState(initial.page);
   const [totalPages, setTotalPages] = useState(initial.totalPages);
   const [total, setTotal] = useState(initial.total);
-  const [pageSize] = useState(initial.pageSize);
+  const [pageSize, setPageSize] = useState(initial.pageSize);
+  const [search, setSearch] = useState('');
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
   const [loadedPages, setLoadedPages] = useState<Set<number>>(
     () => new Set([initial.page]),
   );
@@ -99,10 +105,26 @@ export function FAQEditorClient({ initial }: { initial: InitialPage }) {
     () => [...items].sort((a, b) => a.order - b.order),
     [items],
   );
+
+  const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return sortedItems;
+    return sortedItems.filter(
+      (i) =>
+        i.question.toLowerCase().includes(q) ||
+        i.answer.toLowerCase().includes(q),
+    );
+  }, [sortedItems, search]);
+
   const pageItems = useMemo(
-    () => sortedItems.slice(pageStart, pageStart + pageSize),
-    [sortedItems, pageStart, pageSize],
+    () => filteredItems.slice(pageStart, pageStart + pageSize),
+    [filteredItems, pageStart, pageSize],
   );
+
+  const changePageSize = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
 
   const fetchPage = useCallback(
     async (pageToLoad: number) => {
@@ -306,6 +328,61 @@ export function FAQEditorClient({ initial }: { initial: InitialPage }) {
     setStatus({ kind: 'idle' });
   };
 
+  // Column definitions for ResponsiveTable
+  const faqColumns = useMemo(() => [
+    {
+      key: 'number',
+      header: '#',
+      priority: 1 as const,
+      className: 'w-12',
+      render: (item: DraftItem) => {
+        const idx = sortedItems.findIndex((i) => i.id === item.id);
+        return (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-paprika/10 font-serif text-base font-bold text-paprika">
+            #{idx + 1}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'question',
+      header: 'Question',
+      priority: 1 as const,
+      render: (item: DraftItem) => (
+        <input
+          type="text"
+          value={item.question}
+          onChange={(e) => updateItem(item.id, { question: e.target.value })}
+          placeholder="Pertanyaan"
+          className={INPUT_CLS}
+        />
+      ),
+    },
+    {
+      key: 'answer',
+      header: 'Answer',
+      priority: 2 as const,
+      render: (item: DraftItem) => (
+        <textarea
+          value={item.answer}
+          onChange={(e) => updateItem(item.id, { answer: e.target.value })}
+          rows={3}
+          placeholder="Jawaban"
+          className={`${INPUT_CLS} resize-y`}
+        />
+      ),
+    },
+  ], [sortedItems, updateItem]);
+
+  const getRowActions = (item: DraftItem) => [
+    {
+      label: 'Hapus',
+      primary: false,
+      destructive: true,
+      onClick: () => removeItem(item.id),
+    },
+  ];
+
   const onSaveAll = async () => {
     setStatus({ kind: 'saving' });
     try {
@@ -404,7 +481,7 @@ export function FAQEditorClient({ initial }: { initial: InitialPage }) {
 
   return (
     <div className="container-base section-padding">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="admin-header">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-paprika">
             Admin
@@ -437,7 +514,7 @@ export function FAQEditorClient({ initial }: { initial: InitialPage }) {
           Tag, judul, dan subtitle section FAQ
         </p>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 admin-form-grid">
           <label className="flex flex-col gap-1">
             <span className={FIELD_LABEL_CLS}>Tag</span>
             <input
@@ -469,156 +546,61 @@ export function FAQEditorClient({ initial }: { initial: InitialPage }) {
       </section>
 
       <section className="rounded-2xl border border-light-gray bg-white p-6">
-        <header className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="font-serif text-xl font-semibold text-hunter-green">
-              Items
-            </h2>
-            <p className="mt-1 text-sm text-dark-gray">
-              Daftar tanya-jawab yang tampil di section FAQ. Question wajib
-              diisi; answer dapat kosong dan diisi belakangan.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={addItem}
-            className="inline-flex items-center gap-1.5 rounded-full border border-hunter-green px-3 py-1.5 text-xs font-semibold text-hunter-green transition-colors hover:bg-hunter-green hover:text-white"
-          >
-            <PlusIcon size={14} />
-            Tambah FAQ
-          </button>
-        </header>
+        <AdminTableToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari question / answer"
+          onAdd={addItem}
+          addLabel="Tambah FAQ"
+          loading={false}
+        />
 
-        <ul className="mt-6 grid gap-3">
-          {pageItems.length === 0 && total === 0 && (
-            <li className="rounded-xl border border-dashed border-light-gray bg-off-white p-6 text-center text-sm text-dark-gray">
-              Belum ada FAQ. Klik &quot;Tambah FAQ&quot; untuk mulai.
-            </li>
-          )}
-          {pageItems.length === 0 && total > 0 && loadingPage && (
-            <li className="rounded-xl border border-dashed border-light-gray bg-off-white p-6 text-center text-sm text-dark-gray">
-              Memuat halaman {safePage}...
-            </li>
-          )}
-          {pageItems.map((item) => {
+        <ResponsiveTable<DraftItem>
+          items={pageItems}
+          rowKey={(i) => i.id}
+          columns={faqColumns}
+          actions={getRowActions(pageItems[0] as DraftItem)}
+          emptyMessage={total === 0 ? 'Belum ada FAQ. Klik "Tambah FAQ" untuk mulai.' : 'Tidak ada hasil untuk pencarian ini.'}
+          loading={false}
+          mobileCardRender={(item) => {
             const idx = sortedItems.findIndex((i) => i.id === item.id);
             return (
-              <li
-                key={item.id}
-                className="rounded-xl border border-light-gray bg-off-white p-4"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex w-12 flex-shrink-0 flex-col items-center gap-1">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-paprika/10 font-serif text-base font-bold text-paprika">
+              <>
+                <div className="admin-card-header">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-paprika/10 font-serif text-base font-bold text-paprika">
                       #{idx + 1}
                     </div>
+                    <div className="min-w-0">
+                      <h3 className="font-medium text-hunter-green truncate">{item.question || 'Pertanyaan belum diisi'}</h3>
+                    </div>
                   </div>
-
-                  <div className="flex flex-1 flex-col gap-3 min-w-0">
-                    <label className="flex flex-col gap-1">
-                      <span className={FIELD_LABEL_CLS}>Question</span>
-                      <input
-                        type="text"
-                        value={item.question}
-                        onChange={(e) =>
-                          updateItem(item.id, { question: e.target.value })
-                        }
-                        placeholder="Pertanyaan"
-                        className={INPUT_CLS}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className={FIELD_LABEL_CLS}>Answer</span>
-                      <textarea
-                        value={item.answer}
-                        onChange={(e) =>
-                          updateItem(item.id, { answer: e.target.value })
-                        }
-                        rows={4}
-                        placeholder="Jawaban"
-                        className={`${INPUT_CLS} resize-y`}
-                      />
-                    </label>
+                </div>
+                <div className="admin-card-body">
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Answer:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.answer || '—'}</span>
                   </div>
-
-                  <div className="flex flex-col items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => moveItem(item.id, -1)}
-                      disabled={idx === 0}
-                      aria-label="Move up"
-                      className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
-                    >
-                      <ChevronUp size={16} className="rotate-180" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveItem(item.id, 1)}
-                      disabled={idx === sortedItems.length - 1 || idx === total - 1}
-                      aria-label="Move down"
-                      className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
-                    >
-                      <ChevronUp size={16} />
-                    </button>
-                  </div>
-
+                </div>
+                <div className="admin-card-actions">
                   <button
                     type="button"
                     onClick={() => removeItem(item.id)}
-                    aria-label="Remove item"
-                    className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
+                    className="admin-card-action-primary admin-card-action-destructive admin-touch-target"
                   >
-                    <XIcon size={18} />
+                    Hapus
                   </button>
                 </div>
-              </li>
+              </>
             );
-          })}
-        </ul>
+          }}
+        />
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-light-gray pt-4">
-          <p className="text-xs text-dark-gray">
-            Menampilkan {total === 0 ? 0 : pageStart + 1}–
-            {Math.min(pageStart + pageSize, total)} dari {total} FAQ · Halaman{' '}
-            {safePage} dari {totalPages}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={safePage <= 1}
-              className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-            >
-              <ChevronLeftIcon size={14} />
-              Sebelumnya
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPage(p)}
-                aria-current={p === safePage ? 'page' : undefined}
-                className={[
-                  'h-8 min-w-8 rounded-md px-2 text-xs font-semibold transition-colors',
-                  p === safePage
-                    ? 'bg-hunter-green text-white'
-                    : 'bg-off-white text-dark-gray hover:bg-light-gray',
-                ].join(' ')}
-              >
-                {p}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={safePage >= totalPages}
-              className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-            >
-              Berikutnya
-              <ChevronRightIcon size={14} />
-            </button>
-          </div>
-        </div>
+        <ResponsivePagination
+          page={safePage}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       </section>
     </div>
   );
