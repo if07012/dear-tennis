@@ -379,7 +379,7 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                         type="button"
                         onClick={() => action.onClick(b)}
                         className={[
-                          'admin-touch-target flex-1 basis-0',
+                          'inline-flex min-h-[36px] items-center justify-center px-4 py-1.5 text-xs',
                           action.destructive
                             ? 'admin-card-action-destructive'
                             : 'admin-card-action-primary',
