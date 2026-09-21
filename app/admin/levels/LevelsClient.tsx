@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import type { LevelRecord, LevelBadgeRecord, BadgeCatalogRecord } from '@/data/tennis-level-types';
-import { EmojiPicker } from '@/components/ui/EmojiPicker';
+import type { LevelRecord } from '@/data/tennis-level-types';
 import { XIcon, CheckIcon } from '@/components/ui/Icons';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 const FIELD_LABEL_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray';
@@ -28,6 +31,10 @@ export function LevelsClient({ initial }: { initial: LevelRecord[] }) {
   });
   const [status, setStatus] = useState<Toast>({ kind: 'idle' });
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+  const [pageSize, setPageSize] = useState(10);
 
   const refresh = useCallback(async () => {
     try {
@@ -134,6 +141,85 @@ export function LevelsClient({ initial }: { initial: LevelRecord[] }) {
 
   const editing = editingId !== null && (editingId === '__new__' || levels.some((l) => l.id === editingId));
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return levels;
+    return levels.filter(
+      (l) =>
+        l.name.toLowerCase().includes(q) ||
+        (l.description ?? '').toLowerCase().includes(q),
+    );
+  }, [levels, search]);
+
+  const changePageSize = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const pageItems = filtered.slice(pageStart, pageStart + pageSize);
+
+  const columns = useMemo(() => [
+    {
+      key: 'order',
+      header: 'Order',
+      priority: 1 as const,
+      className: 'w-16',
+      render: (l: LevelRecord) => (
+        <span className="font-mono text-xs text-dark-gray">{l.order}</span>
+      ),
+    },
+    {
+      key: 'name',
+      header: 'Level',
+      priority: 1 as const,
+      render: (l: LevelRecord) => (
+        <span className="font-medium text-hunter-green">{l.name}</span>
+      ),
+    },
+    {
+      key: 'description',
+      header: 'Deskripsi',
+      priority: 2 as const,
+      render: (l: LevelRecord) => (
+        <span className="text-dark-gray truncate whitespace-pre-wrap max-w-xs">{l.description || '—'}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      priority: 1 as const,
+      className: 'w-28',
+      render: (l: LevelRecord) => (
+        l.isActive ? (
+          <span className="rounded-full bg-hunter-green/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-hunter-green">
+            Active
+          </span>
+        ) : (
+          <span className="rounded-full bg-dark-gray/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-dark-gray">
+            Inactive
+          </span>
+        )
+      ),
+    },
+  ], []);
+
+  const getRowActions = (item: LevelRecord) => [
+    {
+      label: 'Edit',
+      primary: true,
+      onClick: () => startEdit(item),
+    },
+    {
+      label: 'Hapus',
+      primary: false,
+      destructive: true,
+      onClick: () => handleDelete(item.id),
+    },
+  ];
+
   return (
     <div className="container-base section-padding">
       <header className="admin-header">
@@ -152,101 +238,43 @@ export function LevelsClient({ initial }: { initial: LevelRecord[] }) {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <section className="rounded-2xl border border-light-gray bg-white p-6 shadow-sm">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={startCreate}
-              className="rounded-full bg-paprika px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-paprika-hover"
-            >
-              + Level baru
-            </button>
-          </div>
+          <AdminTableToolbar
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Cari nama / deskripsi"
+            onAdd={startCreate}
+            addLabel="+ Level baru"
+            loading={false}
+            pageSize={pageSize}
+            onPageSizeChange={changePageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+          />
 
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                  <th className="py-3 pr-4">Order</th>
-                  <th className="py-3 pr-4">Level</th>
-                  <th className="py-3 pr-4">Deskripsi</th>
-                  <th className="py-3 pr-4">Status</th>
-                  <th className="py-3 pr-4 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {levels.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-10 text-center text-dark-gray">
-                      Belum ada level. Tambahkan level pertama.
-                    </td>
-                  </tr>
-                ) : (
-                  levels.map((l) => (
-                    <tr key={l.id} className="border-b border-light-gray/60 last:border-b-0">
-                      <td className="py-3 pr-4 align-middle font-mono text-xs text-dark-gray">
-                        {l.order}
-                      </td>
-                      <td className="py-3 pr-4 align-middle font-medium text-hunter-green">
-                        {l.name}
-                      </td>
-                      <td className="py-3 pr-4 align-middle text-dark-gray truncate whitespace-pre-wrap max-w-xs">
-                        {l.description || '—'}
-                      </td>
-                      <td className="py-3 pr-4 align-middle">
-                        {l.isActive ? (
-                          <span className="rounded-full bg-hunter-green/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-hunter-green">
-                            Active
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-dark-gray/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-dark-gray">
-                            Inactive
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4 align-middle text-right">
-                        <button
-                          type="button"
-                          onClick={() => startEdit(l)}
-                          className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-hunter-green transition-colors hover:border-hunter-green hover:bg-hunter-green/10 mr-2"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(l.id)}
-                          className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:border-paprika hover:bg-paprika/10"
-                        >
-                          Hapus
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="md:hidden grid gap-3">
-            {levels.length === 0 ? (
-              <p className="text-center text-dark-gray py-10">Belum ada level. Tambahkan level pertama.</p>
-            ) : (
-              levels.map((l) => (
-                <div
-                  key={l.id}
-                  className="rounded-xl border border-light-gray bg-white p-4"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-dark-gray">
-                          #{l.order}
-                        </span>
-                        <h3 className="font-medium text-hunter-green truncate whitespace-pre-wrap">
-                          {l.name}
-                        </h3>
-                      </div>
-                      <p className="mt-1 text-sm text-dark-gray">{l.description || '—'}</p>
+          <ResponsiveTable
+            items={pageItems}
+            rowKey={(l) => l.id}
+            columns={columns}
+            actions={getRowActions(pageItems[0])}
+            emptyMessage={levels.length === 0 ? 'Belum ada level. Tambahkan level pertama.' : 'Tidak ada hasil untuk pencarian ini.'}
+            loading={false}
+            mobileCardRender={(l) => (
+              <>
+                <div className="admin-card-header">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="font-mono text-xs text-dark-gray shrink-0">#{l.order}</span>
+                    <div className="min-w-0">
+                      <h3 className="font-medium text-hunter-green truncate whitespace-pre-wrap">{l.name}</h3>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  </div>
+                </div>
+                <div className="admin-card-body">
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Deskripsi:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{l.description || '—'}</span>
+                  </div>
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Status:</span>
+                    <span className="admin-card-value flex-1 truncate">
                       {l.isActive ? (
                         <span className="rounded-full bg-hunter-green/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-hunter-green">
                           Active
@@ -256,26 +284,35 @@ export function LevelsClient({ initial }: { initial: LevelRecord[] }) {
                           Inactive
                         </span>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => startEdit(l)}
-                        className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-hunter-green transition-colors hover:border-hunter-green hover:bg-hunter-green/10"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(l.id)}
-                        className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-paprika transition-colors hover:border-paprika hover:bg-paprika/10"
-                      >
-                        Hapus
-                      </button>
-                    </div>
+                    </span>
                   </div>
                 </div>
-              ))
+                <div className="admin-card-actions">
+                  <button
+                    type="button"
+                    onClick={() => startEdit(l)}
+                    className="admin-card-action-primary admin-touch-target"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(l.id)}
+                    className="admin-card-action-primary admin-card-action-destructive admin-touch-target"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </>
             )}
-          </div>
+          />
+
+          <ResponsivePagination
+            page={safePage}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            showPageNumbers={true}
+          />
         </section>
 
         <aside className="rounded-2xl border border-light-gray bg-white p-6 shadow-sm">

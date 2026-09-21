@@ -302,6 +302,9 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
             onAdd={startCreate}
             addLabel="Badge baru"
             loading={false}
+            pageSize={pageSize}
+            onPageSizeChange={changePageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
           />
 
           <ResponsiveTable

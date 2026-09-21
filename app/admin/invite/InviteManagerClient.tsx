@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -13,6 +13,10 @@ import {
   type InviteStatus,
 } from '@/data/invite-types';
 import type { PagedInviteContent } from '@/lib/invite-store';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 type SaveStatus =
   | { kind: 'idle' }
@@ -55,10 +59,12 @@ export function InviteManagerClient({
   const { user } = useAuth();
   const [items, setItems] = useState<Invite[]>(initial.items);
   const [page, setPage] = useState(initial.page);
-  const [pageSize] = useState(initial.pageSize);
+  const [pageSize, setPageSize] = useState(initial.pageSize);
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
   const [totalPages, setTotalPages] = useState(initial.totalPages);
   const [total, setTotal] = useState(initial.total);
   const [loadingPage, setLoadingPage] = useState(false);
+  const [search, setSearch] = useState('');
 
   // Form state
   const [email, setEmail] = useState('');
@@ -194,6 +200,115 @@ export function InviteManagerClient({
   const safePage = Math.min(page, totalPages);
   const pageStart = (safePage - 1) * pageSize;
 
+  const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter(
+      (i) =>
+        i.email.toLowerCase().includes(q) ||
+        (i.name ?? '').toLowerCase().includes(q) ||
+        (i.message ?? '').toLowerCase().includes(q) ||
+        i.status.toLowerCase().includes(q),
+    );
+  }, [items, search]);
+
+  const pageItems = useMemo(
+    () => filteredItems.slice(pageStart, pageStart + pageSize),
+    [filteredItems, pageStart, pageSize],
+  );
+  const totalPagesFiltered = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+
+  const changePageSize = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
+
+  const inviteColumns = useMemo(() => [
+    {
+      key: 'number',
+      header: '#',
+      priority: 1 as const,
+      className: 'w-12',
+      render: (item: Invite) => {
+        const idx = filteredItems.findIndex((i) => i.id === item.id);
+        return (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-paprika/10 font-serif text-base font-bold text-paprika">
+            {idx + 1}.
+          </div>
+        );
+      },
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      priority: 1 as const,
+      render: (item: Invite) => (
+        <div>
+          <span className="font-semibold text-hunter-green">{item.name || item.email}</span>
+          {item.name && <span className="text-xs text-dark-gray ml-2">({item.email})</span>}
+        </div>
+      ),
+    },
+    {
+      key: 'message',
+      header: 'Pesan',
+      priority: 2 as const,
+      className: 'max-w-[200px]',
+      render: (item: Invite) => (
+        <span className="text-sm text-dark-gray truncate whitespace-pre-wrap max-w-full">{item.message || '—'}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      priority: 1 as const,
+      className: 'w-32',
+      render: (item: Invite) => (
+        <select
+          value={item.status}
+          onChange={(e) => onUpdateStatus(item.id, e.target.value as InviteStatus)}
+          className={[
+            'rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider focus:outline-none',
+            STATUS_BADGE_CLS[item.status],
+          ].join(' ')}
+        >
+          {INVITE_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+      ),
+    },
+    {
+      key: 'invitedAt',
+      header: 'Tanggal',
+      priority: 2 as const,
+      className: 'w-40',
+      render: (item: Invite) => (
+        <span className="text-xs text-dark-gray whitespace-nowrap">{formatDate(item.invitedAt)}</span>
+      ),
+    },
+    {
+      key: 'createdBy',
+      header: 'Oleh',
+      priority: 3 as const,
+      className: 'w-32',
+      render: (item: Invite) => (
+        <span className="text-xs text-dark-gray">{item.createdBy || '—'}</span>
+      ),
+    },
+  ], [filteredItems, onUpdateStatus]);
+
+  const getRowActions = (item: Invite) => [
+    {
+      label: 'Hapus',
+      primary: false,
+      destructive: true,
+      onClick: () => onDelete(item.id),
+    },
+  ];
+
   return (
     <div className="container-base section-padding">
       <header className="admin-header">
@@ -267,37 +382,27 @@ export function InviteManagerClient({
       </section>
 
       <section className="rounded-2xl border border-light-gray bg-white p-6">
-        <header className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="font-serif text-xl font-semibold text-hunter-green">
-              Daftar undangan
-            </h2>
-            <p className="mt-1 text-sm text-dark-gray">
-              Urut dari yang terbaru. Klik status untuk mengubah, klik ikon
-              × untuk menghapus.
-            </p>
-          </div>
-        </header>
+        <AdminTableToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari email / nama / status"
+          onAdd={() => onCreate({} as React.FormEvent<HTMLFormElement>)}
+          addLabel="Undang"
+          loading={false}
+        />
 
-        <ul className="mt-6 grid gap-3">
-          {items.length === 0 && !loadingPage && (
-            <li className="rounded-xl border border-dashed border-light-gray bg-off-white p-6 text-center text-sm text-dark-gray">
-              Belum ada undangan. Gunakan form di atas untuk menambah.
-            </li>
-          )}
-          {loadingPage && items.length === 0 && (
-            <li className="rounded-xl border border-dashed border-light-gray bg-off-white p-6 text-center text-sm text-dark-gray">
-              Memuat...
-            </li>
-          )}
-          {items.map((inv) => (
-            <li
-              key={inv.id}
-              className="rounded-xl border border-light-gray bg-off-white p-4"
-            >
-              <div className="flex flex-col md:flex-row items-start gap-4">
-                <div className="flex w-12 flex-shrink-0 flex-col items-center">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-paprika/10 text-paprika">
+        <ResponsiveTable<Invite>
+          items={pageItems}
+          rowKey={(i) => i.id}
+          columns={inviteColumns}
+          actions={getRowActions(pageItems[0])}
+          emptyMessage={items.length === 0 ? 'Belum ada undangan. Gunakan form di atas untuk menambah.' : 'Tidak ada hasil untuk pencarian ini.'}
+          loading={loadingPage}
+          mobileCardRender={(item) => (
+            <>
+              <div className="admin-card-header">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-paprika/10 text-paprika">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
@@ -309,96 +414,56 @@ export function InviteManagerClient({
                       <path d="M3 8l7.89 5.26a2 2 0 0 0 2.22 0L21 8M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
                     </svg>
                   </div>
-                </div>
-
-                <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-serif text-base font-semibold text-hunter-green">
-                      {inv.name || inv.email}
-                    </span>
-                    {inv.name && (
-                      <span className="text-sm text-dark-gray">({inv.email})</span>
-                    )}
+                  <div className="min-w-0">
+                    <h3 className="font-medium text-hunter-green truncate">{item.name || item.email}</h3>
+                    {item.name && <p className="text-xs text-dark-gray">{item.email}</p>}
                   </div>
-                  {inv.message && (
-                    <p className="text-sm text-dark-gray text-pretty whitespace-pre-wrap">
-                      {inv.message}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-dark-gray">
-                    <span>{formatDate(inv.invitedAt)}</span>
-                    {inv.createdBy && (
-                      <span>oleh {inv.createdBy}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-end gap-2 md:w-[80px]">
-                  <label className="flex flex-col items-end gap-1">
-                    <span className={FIELD_LABEL_CLS}>Status</span>
-                    <select
-                      value={inv.status}
-                      onChange={(e) =>
-                        onUpdateStatus(
-                          inv.id,
-                          e.target.value as InviteStatus,
-                        )
-                      }
-                      className={[
-                        'rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider focus:outline-none',
-                        STATUS_BADGE_CLS[inv.status],
-                      ].join(' ')}
-                    >
-                      {INVITE_STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => onDelete(inv.id)}
-                    aria-label="Delete invite"
-                    className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
-                  >
-                    <XIcon size={18} />
-                  </button>
                 </div>
               </div>
-            </li>
-          ))}
-        </ul>
+              <div className="admin-card-body">
+                {item.message && (
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Pesan:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.message}</span>
+                  </div>
+                )}
+                <div className="admin-card-row">
+                  <span className="admin-card-label">Tanggal:</span>
+                  <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{formatDate(item.invitedAt)}</span>
+                </div>
+                {item.createdBy && (
+                  <div className="admin-card-row">
+                    <span className="admin-card-label">Oleh:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.createdBy}</span>
+                  </div>
+                )}
+                <div className="admin-card-row">
+                  <span className="admin-card-label">Status:</span>
+                  <span className="admin-card-value flex-1 truncate">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_BADGE_CLS[item.status]}`}>
+                      {item.status}
+                    </span>
+                  </span>
+                </div>
+              </div>
+              <div className="admin-card-actions">
+                <button
+                  type="button"
+                  onClick={() => onDelete(item.id)}
+                  className="admin-card-action-primary admin-card-action-destructive admin-touch-target"
+                >
+                  Hapus
+                </button>
+              </div>
+            </>
+          )}
+        />
 
-        <div className="admin-pager border-t border-light-gray pt-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-dark-gray">
-              Menampilkan {total === 0 ? 0 : pageStart + 1}–
-              {Math.min(pageStart + pageSize, total)} dari {total} undangan ·
-              Halaman {safePage} dari {totalPages}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => fetchPage(safePage - 1)}
-                disabled={safePage <= 1}
-                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-              >
-                <ChevronLeftIcon size={14} />
-                Sebelumnya
-              </button>
-              <button
-                type="button"
-                onClick={() => fetchPage(safePage + 1)}
-                disabled={safePage >= totalPages}
-                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-              >
-                Berikutnya
-                <ChevronRightIcon size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
+        <ResponsivePagination
+          page={safePage}
+          totalPages={totalPagesFiltered}
+          onPageChange={setPage}
+        />
       </section>
     </div>
   );

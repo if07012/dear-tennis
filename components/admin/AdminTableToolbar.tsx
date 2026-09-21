@@ -22,6 +22,9 @@ type Props = {
   onAdd?: () => void;
   addLabel?: string;
   loading?: boolean;
+  pageSize?: number;
+  onPageSizeChange?: (newSize: number) => void;
+  pageSizeOptions?: number[];
 };
 
 export function AdminTableToolbar({
@@ -37,9 +40,13 @@ export function AdminTableToolbar({
   onAdd,
   addLabel = 'Tambah',
   loading = false,
+  pageSize,
+  onPageSizeChange,
+  pageSizeOptions = [10, 25, 50, 100],
 }: Props) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const [pageSizeOpen, setPageSizeOpen] = useState(false);
 
   return (
     <div className="admin-toolbar">
@@ -158,6 +165,48 @@ export function AdminTableToolbar({
                 )}
               </button>
             ))}
+          </div>
+        )}
+
+        {onPageSizeChange && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setPageSizeOpen(!pageSizeOpen)}
+              aria-expanded={pageSizeOpen}
+              aria-haspopup="listbox"
+              className={[
+                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors admin-touch-target',
+                'bg-white text-dark-gray border-light-gray hover:border-hunter-green hover:text-hunter-green',
+              ].join(' ')}
+            >
+              <ChevronDown size={14} className="rotate-90" />
+              {pageSize ?? 10} / halaman
+              <ChevronDown size={12} />
+            </button>
+            {pageSizeOpen && (
+              <div className="absolute z-50 mt-1 min-w-[180px] rounded-xl border border-light-gray bg-white py-1 shadow-xl">
+                {pageSizeOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => {
+                      onPageSizeChange(opt);
+                      setPageSizeOpen(false);
+                    }}
+                    className={[
+                      'w-full flex items-center justify-between px-3 py-2 text-left text-sm transition-colors',
+                      pageSize === opt
+                        ? 'bg-hunter-green/5 text-hunter-green'
+                        : 'text-graphite hover:bg-hunter-green/5 hover:text-hunter-green',
+                    ].join(' ')}
+                  >
+                    <span>{opt} / halaman</span>
+                    {pageSize === opt && <span className="text-hunter-green">✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
