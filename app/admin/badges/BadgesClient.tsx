@@ -7,7 +7,6 @@ import { EmojiPicker } from '@/components/ui/EmojiPicker';
 import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
-import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 const FIELD_LABEL_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray';
@@ -268,6 +267,20 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
     },
   ], []);
 
+  const rowActions = [
+    {
+      label: 'Edit',
+      primary: true,
+      onClick: (b: BadgeCatalogRecord) => startEdit(b),
+    },
+    {
+      label: 'Hapus',
+      primary: false,
+      destructive: true,
+      onClick: (b: BadgeCatalogRecord) => void handleDelete(b.key),
+    },
+  ];
+
   const handleChangePage = (newPage: number) => {
     setPage(newPage);
   };
@@ -308,20 +321,10 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
             items={pageItems}
             rowKey={(b) => b.key}
             columns={columns}
-            actions={[]}
+            actions={rowActions}
             emptyMessage={badges.length === 0 ? 'Belum ada badge. Tambahkan badge pertama.' : 'Tidak ada hasil untuk pencarian ini.'}
             loading={false}
             mobileCardRender={(b) => {
-              const primaryActions: Array<{
-                label: string;
-                primary: boolean;
-                onClick: (item: BadgeCatalogRecord) => void;
-                destructive?: boolean;
-                disabled?: (item: BadgeCatalogRecord) => boolean;
-              }> = [
-                { label: 'Edit', primary: true, onClick: () => startEdit(b) },
-                { label: 'Hapus', primary: false, destructive: true, onClick: () => handleDelete(b.key) },
-              ];
               return (
                 <>
                   <div className="admin-card-header">
@@ -370,16 +373,16 @@ export function BadgesClient({ initial }: { initial: BadgeCatalogRecord[] }) {
                     </div>
                   </div>
                   <div className="admin-card-actions">
-                    {primaryActions.map((action) => (
+                    {rowActions.map((action) => (
                       <button
                         key={action.label}
                         type="button"
                         onClick={() => action.onClick(b)}
-                        disabled={action.disabled?.(b)}
                         className={[
-                          'admin-card-action-primary admin-touch-target',
-                          action.destructive && 'admin-card-action-destructive',
-                          action.disabled?.(b) && 'opacity-50 pointer-events-none',
+                          'admin-touch-target flex-1 basis-0',
+                          action.destructive
+                            ? 'admin-card-action-destructive'
+                            : 'admin-card-action-primary',
                         ].join(' ')}
                       >
                         {action.label}
