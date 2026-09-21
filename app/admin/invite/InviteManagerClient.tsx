@@ -16,6 +16,7 @@ import type { PagedInviteContent } from '@/lib/invite-store';
 import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { ResponsiveModal } from '@/components/admin/ResponsiveModal';
 import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 type SaveStatus =
@@ -65,6 +66,7 @@ export function InviteManagerClient({
   const [total, setTotal] = useState(initial.total);
   const [loadingPage, setLoadingPage] = useState(false);
   const [search, setSearch] = useState('');
+  const [editingStatus, setEditingStatus] = useState<{ id: string; status: InviteStatus } | null>(null);
 
   // Form state
   const [email, setEmail] = useState('');
@@ -264,20 +266,9 @@ export function InviteManagerClient({
       priority: 1 as const,
       className: 'w-32',
       render: (item: Invite) => (
-        <select
-          value={item.status}
-          onChange={(e) => onUpdateStatus(item.id, e.target.value as InviteStatus)}
-          className={[
-            'rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider focus:outline-none',
-            STATUS_BADGE_CLS[item.status],
-          ].join(' ')}
-        >
-          {INVITE_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_BADGE_CLS[item.status]}`}>
+          {item.status}
+        </span>
       ),
     },
     {
@@ -298,16 +289,24 @@ export function InviteManagerClient({
         <span className="text-xs text-dark-gray">{item.createdBy || '—'}</span>
       ),
     },
-  ], [filteredItems, onUpdateStatus]);
+  ], [filteredItems]);
 
-  const getRowActions = (item: Invite) => [
-    {
-      label: 'Hapus',
-      primary: false,
-      destructive: true,
-      onClick: () => onDelete(item.id),
-    },
-  ];
+  const getRowActions = (item: Invite) => {
+    const actions = [
+      {
+        label: 'Edit Status',
+        primary: true,
+        onClick: () => setEditingStatus({ id: item.id, status: item.status }),
+      },
+      {
+        label: 'Hapus',
+        primary: false,
+        destructive: true,
+        onClick: () => onDelete(item.id),
+      },
+    ];
+    return actions;
+  };
 
   return (
     <div className="container-base section-padding">
@@ -373,7 +372,7 @@ export function InviteManagerClient({
             <button
               type="submit"
               disabled={submitStatus.kind === 'saving'}
-              className="rounded-full bg-paprika px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-paprika-hover disabled:opacity-50"
+              className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-paprika-hover disabled:opacity-50 admin-touch-target"
             >
               {submitStatus.kind === 'saving' ? 'Mengirim...' : 'Undang'}
             </button>
@@ -389,74 +388,99 @@ export function InviteManagerClient({
           onAdd={() => onCreate({} as React.FormEvent<HTMLFormElement>)}
           addLabel="Undang"
           loading={false}
+          pageSize={pageSize}
+          onPageSizeChange={changePageSize}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
         />
 
         <ResponsiveTable<Invite>
           items={pageItems}
           rowKey={(i) => i.id}
           columns={inviteColumns}
-          actions={getRowActions(pageItems[0])}
+          actions={getRowActions}
           emptyMessage={items.length === 0 ? 'Belum ada undangan. Gunakan form di atas untuk menambah.' : 'Tidak ada hasil untuk pencarian ini.'}
           loading={loadingPage}
-          mobileCardRender={(item) => (
-            <>
-              <div className="admin-card-header">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-paprika/10 text-paprika">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="h-5 w-5"
-                    >
-                      <path d="M3 8l7.89 5.26a2 2 0 0 0 2.22 0L21 8M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
-                    </svg>
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-medium text-hunter-green truncate">{item.name || item.email}</h3>
-                    {item.name && <p className="text-xs text-dark-gray">{item.email}</p>}
+          mobileCardRender={(item) => {
+            const { primaryActions, secondaryActions } = getRowActions(item);
+            return (
+              <>
+                <div className="admin-card-header">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-paprika/10 text-paprika">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="h-5 w-5"
+                      >
+                        <path d="M3 8l7.89 5.26a2 2 0 0 0 2.22 0L21 8M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-medium text-hunter-green truncate">{item.name || item.email}</h3>
+                      {item.name && <p className="text-xs text-dark-gray">{item.email}</p>}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="admin-card-body">
-                {item.message && (
+                <div className="admin-card-body">
+                  {item.message && (
+                    <div className="admin-card-row">
+                      <span className="admin-card-label">Pesan:</span>
+                      <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.message}</span>
+                    </div>
+                  )}
                   <div className="admin-card-row">
-                    <span className="admin-card-label">Pesan:</span>
-                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.message}</span>
+                    <span className="admin-card-label">Tanggal:</span>
+                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{formatDate(item.invitedAt)}</span>
                   </div>
-                )}
-                <div className="admin-card-row">
-                  <span className="admin-card-label">Tanggal:</span>
-                  <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{formatDate(item.invitedAt)}</span>
-                </div>
-                {item.createdBy && (
+                  {item.createdBy && (
+                    <div className="admin-card-row">
+                      <span className="admin-card-label">Oleh:</span>
+                      <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.createdBy}</span>
+                    </div>
+                  )}
                   <div className="admin-card-row">
-                    <span className="admin-card-label">Oleh:</span>
-                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.createdBy}</span>
-                  </div>
-                )}
-                <div className="admin-card-row">
-                  <span className="admin-card-label">Status:</span>
-                  <span className="admin-card-value flex-1 truncate">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_BADGE_CLS[item.status]}`}>
-                      {item.status}
+                    <span className="admin-card-label">Status:</span>
+                    <span className="admin-card-value flex-1 truncate">
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_BADGE_CLS[item.status]}`}>
+                        {item.status}
+                      </span>
                     </span>
-                  </span>
+                  </div>
                 </div>
-              </div>
-              <div className="admin-card-actions">
-                <button
-                  type="button"
-                  onClick={() => onDelete(item.id)}
-                  className="admin-card-action-primary admin-card-action-destructive admin-touch-target"
-                >
-                  Hapus
-                </button>
-              </div>
-            </>
-          )}
+                <div className="admin-card-actions">
+                  {primaryActions.map((action) => (
+                    <button
+                      key={action.label}
+                      type="button"
+                      onClick={() => action.onClick(item)}
+                      disabled={action.disabled?.(item)}
+                      className={[
+                        'admin-card-action-primary admin-touch-target',
+                        action.destructive && 'admin-card-action-destructive',
+                        action.disabled?.(item) && 'opacity-50 pointer-events-none',
+                      ].join(' ')}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
+                  {secondaryActions.length > 0 && (
+                    <MobileActionMenu
+                      trigger={<span className="admin-action-menu-button admin-touch-target">•••</span>}
+                      actions={secondaryActions.map((action) => ({
+                        label: action.label,
+                        onClick: () => action.onClick(item),
+                        destructive: action.destructive,
+                        disabled: action.disabled?.(item),
+                      }))}
+                    />
+                  )}
+                </div>
+              </>
+            );
+          }}
         />
 
         <ResponsivePagination
@@ -465,6 +489,56 @@ export function InviteManagerClient({
           onPageChange={setPage}
         />
       </section>
+
+      {editingStatus && (
+        <ResponsiveModal
+          isOpen={editingStatus !== null}
+          onClose={() => setEditingStatus(null)}
+          title="Edit Status Undangan"
+          fullScreenOnMobile={true}
+          maxWidth="sm"
+          footer={
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setEditingStatus(null)}
+                className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray admin-touch-target"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (editingStatus) {
+                    onUpdateStatus(editingStatus.id, editingStatus.status);
+                    setEditingStatus(null);
+                  }
+                }}
+                className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover admin-touch-target"
+              >
+                Simpan
+              </button>
+            </div>
+          }
+        >
+          <div className="space-y-4">
+            <label className="flex flex-col gap-1">
+              <span className={FIELD_LABEL_CLS}>Status</span>
+              <select
+                value={editingStatus.status}
+                onChange={(e) => setEditingStatus({ ...editingStatus, status: e.target.value as InviteStatus })}
+                className={INPUT_CLS}
+              >
+                {INVITE_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </ResponsiveModal>
+      )}
     </div>
   );
 }

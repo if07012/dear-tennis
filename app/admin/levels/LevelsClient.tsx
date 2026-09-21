@@ -7,6 +7,7 @@ import { XIcon, CheckIcon } from '@/components/ui/Icons';
 import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { ResponsiveModal } from '@/components/admin/ResponsiveModal';
 import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 const FIELD_LABEL_CLS =
@@ -206,19 +207,22 @@ export function LevelsClient({ initial }: { initial: LevelRecord[] }) {
     },
   ], []);
 
-  const getRowActions = (item: LevelRecord) => [
-    {
-      label: 'Edit',
-      primary: true,
-      onClick: () => startEdit(item),
-    },
-    {
-      label: 'Hapus',
-      primary: false,
-      destructive: true,
-      onClick: () => handleDelete(item.id),
-    },
-  ];
+  const getRowActions = (item: LevelRecord) => {
+    const actions = [
+      {
+        label: 'Edit',
+        primary: true,
+        onClick: () => startEdit(item),
+      },
+      {
+        label: 'Hapus',
+        primary: false,
+        destructive: true,
+        onClick: () => handleDelete(item.id),
+      },
+    ];
+    return actions;
+  };
 
   return (
     <div className="container-base section-padding">
@@ -254,57 +258,72 @@ export function LevelsClient({ initial }: { initial: LevelRecord[] }) {
             items={pageItems}
             rowKey={(l) => l.id}
             columns={columns}
-            actions={getRowActions(pageItems[0])}
+            actions={getRowActions}
             emptyMessage={levels.length === 0 ? 'Belum ada level. Tambahkan level pertama.' : 'Tidak ada hasil untuk pencarian ini.'}
             loading={false}
-            mobileCardRender={(l) => (
-              <>
-                <div className="admin-card-header">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="font-mono text-xs text-dark-gray shrink-0">#{l.order}</span>
-                    <div className="min-w-0">
-                      <h3 className="font-medium text-hunter-green truncate whitespace-pre-wrap">{l.name}</h3>
+            mobileCardRender={(l) => {
+              const { primaryActions, secondaryActions } = getRowActions(l);
+              return (
+                <>
+                  <div className="admin-card-header">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="font-mono text-xs text-dark-gray shrink-0">#{l.order}</span>
+                      <div className="min-w-0">
+                        <h3 className="font-medium text-hunter-green truncate whitespace-pre-wrap">{l.name}</h3>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="admin-card-body">
-                  <div className="admin-card-row">
-                    <span className="admin-card-label">Deskripsi:</span>
-                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{l.description || '—'}</span>
+                  <div className="admin-card-body">
+                    <div className="admin-card-row">
+                      <span className="admin-card-label">Deskripsi:</span>
+                      <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{l.description || '—'}</span>
+                    </div>
+                    <div className="admin-card-row">
+                      <span className="admin-card-label">Status:</span>
+                      <span className="admin-card-value flex-1 truncate">
+                        {l.isActive ? (
+                          <span className="rounded-full bg-hunter-green/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-hunter-green">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-dark-gray/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-dark-gray">
+                            Inactive
+                          </span>
+                        )}
+                      </span>
+                    </div>
                   </div>
-                  <div className="admin-card-row">
-                    <span className="admin-card-label">Status:</span>
-                    <span className="admin-card-value flex-1 truncate">
-                      {l.isActive ? (
-                        <span className="rounded-full bg-hunter-green/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-hunter-green">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-dark-gray/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-dark-gray">
-                          Inactive
-                        </span>
-                      )}
-                    </span>
+                  <div className="admin-card-actions">
+                    {primaryActions.map((action) => (
+                      <button
+                        key={action.label}
+                        type="button"
+                        onClick={() => action.onClick(l)}
+                        disabled={action.disabled?.(l)}
+                        className={[
+                          'admin-card-action-primary admin-touch-target',
+                          action.destructive && 'admin-card-action-destructive',
+                          action.disabled?.(l) && 'opacity-50 pointer-events-none',
+                        ].join(' ')}
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                    {secondaryActions.length > 0 && (
+                      <MobileActionMenu
+                        trigger={<span className="admin-action-menu-button admin-touch-target">•••</span>}
+                        actions={secondaryActions.map((action) => ({
+                          label: action.label,
+                          onClick: () => action.onClick(l),
+                          destructive: action.destructive,
+                          disabled: action.disabled?.(l),
+                        }))}
+                      />
+                    )}
                   </div>
-                </div>
-                <div className="admin-card-actions">
-                  <button
-                    type="button"
-                    onClick={() => startEdit(l)}
-                    className="admin-card-action-primary admin-touch-target"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(l.id)}
-                    className="admin-card-action-primary admin-card-action-destructive admin-touch-target"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </>
-            )}
+                </>
+              );
+            }}
           />
 
           <ResponsivePagination
@@ -373,19 +392,19 @@ export function LevelsClient({ initial }: { initial: LevelRecord[] }) {
                 />
                 <span className="text-xs text-dark-gray">Aktif (tampil untuk pemain)</span>
               </label>
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={cancel}
                   disabled={saving}
-                  className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-dark-gray transition-colors hover:border-dark-gray disabled:opacity-50"
+                  className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray disabled:opacity-50 admin-touch-target"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-full bg-paprika px-4 py-1 text-xs font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-50"
+                  className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-50 admin-touch-target"
                 >
                   {saving ? 'Menyimpan…' : 'Simpan'}
                 </button>

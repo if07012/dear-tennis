@@ -12,6 +12,7 @@ import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
 import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
+import { ResponsiveModal } from '@/components/admin/ResponsiveModal';
 
 type Props = {
   initialCoupons: Coupon[];
@@ -513,7 +514,7 @@ export function CouponsClient({ initialCoupons, initialClaims, activities }: Pro
       </section>
 
       {editing && (
-        <CouponEditDrawer
+        <CouponEditModal
           draft={editing}
           authEmail={user?.email ?? ''}
           activityTitleFor={activityTitle}
@@ -525,7 +526,7 @@ export function CouponsClient({ initialCoupons, initialClaims, activities }: Pro
   );
 }
 
-function CouponEditDrawer({
+function CouponEditModal({
   draft,
   authEmail,
   activityTitleFor,
@@ -541,14 +542,6 @@ function CouponEditDrawer({
   const [state, setState] = useState(draft);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onCancel]);
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (state.code.trim().length === 0) return;
@@ -561,140 +554,125 @@ function CouponEditDrawer({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-graphite/40 p-4"
-      onClick={onCancel}
-    >
-      <form
-        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl admin-drawer-content"
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={submit}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-serif text-xl font-semibold text-hunter-green">
-            {state.id.startsWith('draft-') ? 'Kupon baru' : `Edit ${draft.code}`}
-          </h2>
+    <ResponsiveModal
+      isOpen={true}
+      onClose={onCancel}
+      title={state.id.startsWith('draft-') ? 'Kupon baru' : `Edit ${draft.code}`}
+      fullScreenOnMobile={true}
+      maxWidth="md"
+      footer={
+        <div className="flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
-            aria-label="Close"
-            className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-light-gray"
-          >
-            <XIcon size={20} />
-          </button>
-        </div>
-
-        <div className="grid gap-3">
-          <label className="flex flex-col gap-1">
-            <span className={FIELD_LABEL_CLS}>Kode</span>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={state.code}
-                onChange={(e) =>
-                  setState((p) => ({ ...p, code: e.target.value.toUpperCase() }))
-                }
-                placeholder="e.g. TENNIS10"
-                className={INPUT_CLS}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setState((p) => ({ ...p, code: generateCode() }))}
-                title="Buat kode acak (10 karakter huruf & angka)"
-                className="shrink-0 rounded-lg border border-hunter-green px-3 py-2 text-xs font-semibold text-hunter-green transition-colors hover:bg-hunter-green hover:text-white"
-              >
-                Generate
-              </button>
-            </div>
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className={FIELD_LABEL_CLS}>Diskon (%)</span>
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={state.discountPct}
-              onChange={(e) =>
-                setState((p) => ({
-                  ...p,
-                  discountPct: Math.max(1, Math.min(100, Number(e.target.value) || 0)),
-                }))
-              }
-              className={INPUT_CLS}
-              required
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className={FIELD_LABEL_CLS}>Kedaluwarsa (opsional)</span>
-            <input
-              type="date"
-              value={state.expiresAt}
-              onChange={(e) => setState((p) => ({ ...p, expiresAt: e.target.value }))}
-              className={INPUT_CLS}
-            />
-            <span className="text-xs text-dark-gray/70">
-              Kosongkan agar kupon berlaku selamanya.
-            </span>
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className={FIELD_LABEL_CLS}>Berlaku untuk</span>
-            <RemoteSearchSelect
-              type="activity"
-              authEmail={authEmail}
-              value={state.activityId}
-              selectedLabel={activityTitleFor(state.activityId)}
-              emptyOption="Semua activity"
-              placeholder="Cari activity..."
-              onChange={(v) => setState((p) => ({ ...p, activityId: v }))}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className={FIELD_LABEL_CLS}>Khusus member (opsional)</span>
-            <RemoteSearchSelect
-              type="member"
-              authEmail={authEmail}
-              value={state.userEmail}
-              selectedLabel={state.userEmail}
-              emptyOption="Semua member"
-              placeholder="Cari nama atau email..."
-              onChange={(v) => setState((p) => ({ ...p, userEmail: v }))}
-            />
-            <span className="text-xs text-dark-gray/70">
-              Pilih member agar kupon hanya bisa diklaim oleh mereka.
-            </span>
-          </label>
-          <label className="mt-1 flex items-center gap-3 rounded-lg border border-light-gray bg-off-white px-3 py-2.5">
-            <input
-              type="checkbox"
-              checked={state.active}
-              onChange={(e) => setState((p) => ({ ...p, active: e.target.checked }))}
-              className="h-4 w-4 cursor-pointer rounded border-light-gray text-paprika focus:ring-paprika"
-            />
-            <span className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
-              Aktif (bisa diklaim member)
-            </span>
-          </label>
-        </div>
-
-        <div className="mt-6 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray"
+            className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray admin-touch-target"
           >
             Batal
           </button>
           <button
-            type="submit"
+            type="button"
+            onClick={submit}
             disabled={saving || state.code.trim().length === 0}
-            className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-50"
+            className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-50 admin-touch-target"
           >
             {saving ? 'Menyimpan...' : 'Simpan'}
           </button>
         </div>
+      }
+    >
+      <form onSubmit={submit} className="space-y-4">
+        <label className="flex flex-col gap-1">
+          <span className={FIELD_LABEL_CLS}>Kode</span>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={state.code}
+              onChange={(e) =>
+                setState((p) => ({ ...p, code: e.target.value.toUpperCase() }))
+              }
+              placeholder="e.g. TENNIS10"
+              className={INPUT_CLS}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setState((p) => ({ ...p, code: generateCode() }))}
+              title="Buat kode acak (10 karakter huruf & angka)"
+              className="shrink-0 rounded-lg border border-hunter-green px-3 py-2 text-xs font-semibold text-hunter-green transition-colors hover:bg-hunter-green hover:text-white admin-touch-target"
+            >
+              Generate
+            </button>
+          </div>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className={FIELD_LABEL_CLS}>Diskon (%)</span>
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={state.discountPct}
+            onChange={(e) =>
+              setState((p) => ({
+                ...p,
+                discountPct: Math.max(1, Math.min(100, Number(e.target.value) || 0)),
+              }))
+            }
+            className={INPUT_CLS}
+            required
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className={FIELD_LABEL_CLS}>Kedaluwarsa (opsional)</span>
+          <input
+            type="date"
+            value={state.expiresAt}
+            onChange={(e) => setState((p) => ({ ...p, expiresAt: e.target.value }))}
+            className={INPUT_CLS}
+          />
+          <span className="text-xs text-dark-gray/70">
+            Kosongkan agar kupon berlaku selamanya.
+          </span>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className={FIELD_LABEL_CLS}>Berlaku untuk</span>
+          <RemoteSearchSelect
+            type="activity"
+            authEmail={authEmail}
+            value={state.activityId}
+            selectedLabel={activityTitleFor(state.activityId)}
+            emptyOption="Semua activity"
+            placeholder="Cari activity..."
+            onChange={(v) => setState((p) => ({ ...p, activityId: v }))}
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className={FIELD_LABEL_CLS}>Khusus member (opsional)</span>
+          <RemoteSearchSelect
+            type="member"
+            authEmail={authEmail}
+            value={state.userEmail}
+            selectedLabel={state.userEmail}
+            emptyOption="Semua member"
+            placeholder="Cari nama atau email..."
+            onChange={(v) => setState((p) => ({ ...p, userEmail: v }))}
+          />
+          <span className="text-xs text-dark-gray/70">
+            Pilih member agar kupon hanya bisa diklaim oleh mereka.
+          </span>
+        </label>
+        <label className="flex items-center gap-3 rounded-lg border border-light-gray bg-off-white px-3 py-2.5">
+          <input
+            type="checkbox"
+            checked={state.active}
+            onChange={(e) => setState((p) => ({ ...p, active: e.target.checked }))}
+            className="h-4 w-4 cursor-pointer rounded border-light-gray text-paprika focus:ring-paprika"
+          />
+          <span className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
+            Aktif (bisa diklaim member)
+          </span>
+        </label>
       </form>
-    </div>
+    </ResponsiveModal>
   );
 }
 

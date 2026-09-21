@@ -3,10 +3,13 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { XIcon } from '@/components/ui/Icons';
 import type { ActivitySignup, SignupStatus } from '@/data/activity-signups-types';
 import type { PagedSignups } from '@/lib/activity-signups-store';
 import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { ResponsiveModal } from '@/components/admin/ResponsiveModal';
 
 const FIELD_LABEL_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray';
@@ -319,6 +322,9 @@ export function ActivitySignupsClient({
   searchPlaceholder="Cari berdasarkan nama, email, atau role"
   onAdd={undefined}
   loading={loading}
+  pageSize={pageSize}
+  onPageSizeChange={changePageSize}
+  pageSizeOptions={PAGE_SIZE_OPTIONS}
 />
 
 <ResponsiveTable
@@ -362,66 +368,33 @@ export function ActivitySignupsClient({
     )},
     { key: 'requested', header: 'Diajukan', priority: 2, render: (row) => formatDate(row.requestedAt) },
   ]}
-  actions={[
-    { label: 'Approve', primary: true, onClick: (row) => decide(row, 'approve'), disabled: (row) => row.status !== 'pending_approval' || busyId === row.id },
-    { label: 'Reject', primary: false, destructive: true, onClick: (row) => decide(row, 'reject'), disabled: (row) => row.status !== 'pending_approval' || busyId === row.id },
-    { label: 'Approve Payment', primary: true, onClick: (row) => decide(row, 'approve-payment'), disabled: (row) => row.status !== 'payment_submitted' || busyId === row.id },
-    { label: 'Reject Payment', primary: false, destructive: true, onClick: (row) => { setRejectingId(row.id); setRejectReason(''); }, disabled: (row) => row.status !== 'payment_submitted' || busyId === row.id },
-    { label: 'Hapus', primary: false, destructive: true, onClick: (row) => remove(row), disabled: (row) => busyId === row.id },
+  actions={(row) => [
+    { label: 'Approve', primary: true, onClick: () => decide(row, 'approve'), disabled: row.status !== 'pending_approval' || busyId === row.id },
+    { label: 'Reject', primary: false, destructive: true, onClick: () => decide(row, 'reject'), disabled: row.status !== 'pending_approval' || busyId === row.id },
+    { label: 'Approve Payment', primary: true, onClick: () => decide(row, 'approve-payment'), disabled: row.status !== 'payment_submitted' || busyId === row.id },
+    { label: 'Reject Payment', primary: false, destructive: true, onClick: () => { setRejectingId(row.id); setRejectReason(''); }, disabled: row.status !== 'payment_submitted' || busyId === row.id || rejectingId !== null },
+    { label: 'Hapus', primary: false, destructive: true, onClick: () => remove(row), disabled: busyId === row.id },
   ]}
 />
-          
-        <div className="admin-pager border-t border-light-gray pt-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-dark-gray">
-              Halaman {page} dari {totalPages}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1 || loading}
-                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-              >
-                Sebelumnya
-              </button>
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages || loading}
-                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-              >
-                Berikutnya
-              </button>
-            </div>
-          </div>
-        </div>
+
+        <ResponsivePagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          disabled={loading}
+          showPageNumbers={false}
+        />
       </section>
 
       {proofUrl && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-graphite/70 p-6"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Bukti pembayaran"
-          onClick={() => setProofUrl(null)}
+        <ResponsiveModal
+          isOpen={proofUrl !== null}
+          onClose={() => setProofUrl(null)}
+          title="Bukti Pembayaran"
+          fullScreenOnMobile={true}
+          maxWidth="2xl"
         >
-          <div
-            className="flex max-h-full w-full max-w-2xl flex-col gap-3 rounded-2xl bg-white p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg font-semibold text-hunter-green">
-                Bukti Pembayaran
-              </h3>
-              <button
-                type="button"
-                onClick={() => setProofUrl(null)}
-                className="rounded-md px-2 py-1 text-sm text-dark-gray hover:bg-light-gray"
-              >
-                Tutup
-              </button>
-            </div>
+          <div className="space-y-4">
             <div className="rounded-lg border border-light-gray bg-off-white px-3 py-2 text-xs text-dark-gray">
               {proofNote && (
                 <p>
@@ -449,7 +422,52 @@ export function ActivitySignupsClient({
               )}
             </div>
           </div>
-        </div>
+        </ResponsiveModal>
+      )}
+
+      {rejectingId && (
+        <ResponsiveModal
+          isOpen={rejectingId !== null}
+          onClose={() => { setRejectingId(null); setRejectReason(''); }}
+          title="Tolak Pembayaran"
+          fullScreenOnMobile={true}
+          maxWidth="sm"
+          footer={
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => { setRejectingId(null); setRejectReason(''); }}
+                className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray admin-touch-target"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const row = items.find((r) => r.id === rejectingId);
+                  if (row) decide(row, 'reject-payment', rejectReason);
+                }}
+                disabled={!rejectReason.trim()}
+                className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-50 admin-touch-target"
+              >
+                Tolak
+              </button>
+            </div>
+          }
+        >
+          <div className="space-y-4">
+            <label className="flex flex-col gap-1">
+              <span className={FIELD_LABEL_CLS}>Alasan penolakan</span>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={3}
+                placeholder="Jelaskan mengapa pembayaran ini ditolak..."
+                className={INPUT_CLS}
+              />
+            </label>
+          </div>
+        </ResponsiveModal>
       )}
     </div>
   );

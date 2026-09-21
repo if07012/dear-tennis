@@ -25,7 +25,7 @@ type Action<T> = {
 type Props<T> = {
   items: T[];
   columns: Column<T>[];
-  actions?: Action<T>[];
+  actions?: Action<T>[] | ((item: T) => Action<T>[]);
   rowKey: (item: T) => string;
   emptyMessage?: string;
   loading?: boolean;
@@ -43,14 +43,21 @@ export function ResponsiveTable<T>({
   mobileCardRender,
   showMobileCardsAt = 768,
 }: Props<T>) {
-  const primaryActions = actions.filter((a) => a.primary);
-  const secondaryActions = actions.filter((a) => !a.primary);
+  const getActionsForItem = (item: T) => {
+    if (typeof actions === 'function') {
+      return actions(item);
+    }
+    return actions;
+  };
 
   // Default card renderer if not provided
   const defaultCardRender = (item: T) => {
     const p1Columns = columns.filter((c) => c.priority === 1);
     const p2Columns = columns.filter((c) => c.priority === 2);
     const p3Columns = columns.filter((c) => c.priority === 3);
+    const itemActions = getActionsForItem(item);
+    const primaryActions = itemActions.filter((a) => a.primary);
+    const secondaryActions = itemActions.filter((a) => !a.primary);
 
     return (
       <>
@@ -77,32 +84,45 @@ export function ResponsiveTable<T>({
             </div>
           ))}
         </div>
-        {actions.length > 0 && (
+        {itemActions.length > 0 && (
           <div className="admin-card-actions">
-            {primaryActions.map((action) => (
-              <button
-                key={action.label}
-                type="button"
-                onClick={() => action.onClick(item)}
-                disabled={action.disabled?.(item)}
-                className={[
-                  'admin-card-action-primary admin-touch-target',
-                  action.destructive && 'admin-card-action-destructive',
-                  action.disabled?.(item) && 'opacity-50 pointer-events-none',
-                ].join(' ')}
-              >
-                {action.label}
-              </button>
-            ))}
+            {primaryActions.map((action) => {
+              const isDisabled =
+                typeof action.disabled === 'function'
+                  ? action.disabled(item)
+                  : action.disabled ?? false;
+              return (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={() => action.onClick(item)}
+                  disabled={isDisabled}
+                  className={[
+                    'admin-card-action-primary admin-touch-target',
+                    action.destructive && 'admin-card-action-destructive',
+                    isDisabled && 'opacity-50 pointer-events-none',
+                  ].join(' ')}
+                >
+                  {action.label}
+                </button>
+              )
+            })}
             {secondaryActions.length > 0 && (
               <MobileActionMenu
                 trigger={<span className="admin-action-menu-button admin-touch-target"><ChevronDown size={16} /></span>}
-                actions={secondaryActions.map((action) => ({
-                  label: action.label,
-                  onClick: () => action.onClick(item),
-                  destructive: action.destructive,
-                  disabled: action.disabled?.(item),
-                }))}
+                actions={secondaryActions.map((action) => {
+                  const isDisabled =
+                    typeof action.disabled === 'function'
+                      ? action.disabled(item)
+                      : action.disabled ?? false;
+
+                  return {
+                    label: action.label,
+                    onClick: () => action.onClick(item),
+                    destructive: action.destructive,
+                    disabled: isDisabled,
+                  };
+                })}
               />
             )}
           </div>
@@ -145,52 +165,73 @@ export function ResponsiveTable<T>({
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
-              <tr key={rowKey(item)} className="border-b border-light-gray/60 last:border-b-0 align-top">
-                {columns.map((col) => (
-                  <td key={col.key} className={['py-3 pr-4', col.className].join(' ')}>
-                    {col.render(item)}
-                  </td>
-                ))}
-                {actions.length > 0 && (
-                  <td className="py-3 pr-4 text-right">
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      {primaryActions.map((action) => (
-                        <button
-                          key={action.label}
-                          type="button"
-                          onClick={() => action.onClick(item)}
-                          disabled={action.disabled?.(item)}
-                          className={[
-                            'rounded-full px-3 py-1 text-xs font-semibold transition-colors admin-touch-target',
-                            action.primary
-                              ? 'bg-paprika text-white hover:bg-paprika-hover'
-                              : 'border border-light-gray text-dark-gray hover:border-hunter-green hover:text-hunter-green',
-                            action.destructive
-                              ? 'border-paprika text-paprika hover:bg-paprika hover:text-white'
-                              : '',
-                            action.disabled?.(item) && 'opacity-50 pointer-events-none',
-                          ].join(' ')}
-                        >
-                          {action.label}
-                        </button>
-                      ))}
-                      {secondaryActions.length > 0 && (
-                        <MobileActionMenu
-                          trigger={<span className="admin-action-menu-button admin-touch-target"><ChevronDown size={16} /></span>}
-                          actions={secondaryActions.map((action) => ({
-                            label: action.label,
-                            onClick: () => action.onClick(item),
-                            destructive: action.destructive,
-                            disabled: action.disabled?.(item),
-                          }))}
-                        />
-                      )}
-                    </div>
-                  </td>
-                )}
-              </tr>
-            ))}
+            {items.map((item) => {
+              const itemActions = getActionsForItem(item);
+              const primaryActions = itemActions.filter((a) => a.primary);
+              const secondaryActions = itemActions.filter((a) => !a.primary);
+
+              return (
+                <tr key={rowKey(item)} className="border-b border-light-gray/60 last:border-b-0 align-top">
+                  {columns.map((col) => (
+                    <td key={col.key} className={['py-3 pr-4', col.className].join(' ')}>
+                      {col.render(item)}
+                    </td>
+                  ))}
+                  {itemActions.length > 0 && (
+                    <td className="py-3 pr-4 text-right">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {primaryActions.map((action) => {
+                          const isDisabled =
+                            typeof action.disabled === 'function'
+                              ? action.disabled(item)
+                              : action.disabled ?? false;
+
+                          return (
+                            <button
+                              key={action.label}
+                              type="button"
+                              onClick={() => action.onClick(item)}
+                              disabled={isDisabled}
+                              className={[
+                                'rounded-full px-3 py-1 text-xs font-semibold transition-colors admin-touch-target',
+                                action.primary
+                                  ? 'bg-paprika text-white hover:bg-paprika-hover'
+                                  : 'border border-light-gray text-dark-gray hover:border-hunter-green hover:text-hunter-green',
+                                action.destructive
+                                  ? 'border-paprika text-paprika hover:bg-paprika hover:text-white'
+                                  : '',
+                                isDisabled && 'opacity-50 pointer-events-none',
+                              ].join(' ')}
+                            >
+                              {action.label}
+                            </button>
+                          )
+                        })}
+                        {secondaryActions.length > 0 && (
+                          <MobileActionMenu
+                            trigger={<span className="admin-action-menu-button admin-touch-target"><ChevronDown size={16} /></span>}
+                            actions={secondaryActions.map((action) => {
+                              const isDisabled =
+                                typeof action.disabled === 'function'
+                                  ? action.disabled(item)
+                                  : action.disabled ?? false;
+
+                              return {
+                                label: action.label,
+                                onClick: () => action.onClick(item),
+                                destructive: action.destructive,
+                                disabled: isDisabled,
+                              };
+                            })}
+                          />
+                        )}
+                      </div>
+                    </td>
+                  )
+                  }
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -203,6 +244,6 @@ export function ResponsiveTable<T>({
           </div>
         ))}
       </div>
-    </div>
+    </div >
   );
 }

@@ -19,6 +19,7 @@ import { ActivityStandingsDrawer } from './ActivityStandingsDrawer';
 import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { ResponsiveModal } from '@/components/admin/ResponsiveModal';
 import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 import type {
   ActivityCategory,
@@ -664,7 +665,7 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
           items={pageItems}
           rowKey={(a) => a.id}
           columns={columns}
-          actions={[]}
+          actions={getRowActions}
           emptyMessage="Belum ada activity untuk filter ini."
           loading={false}
           mobileCardRender={(activity) => {
@@ -833,226 +834,211 @@ function EditDrawer({ draft, onCancel, onSave }: EditDrawerProps) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-graphite/40 sm:items-center sm:p-6"
-      onClick={onCancel}
-    >
-      <form
-        className="w-full max-w-2xl rounded-t-2xl bg-white p-6 shadow-2xl sm:rounded-2xl max-h-[90vh] sm:max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={handleSubmit}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-serif text-xl font-semibold text-hunter-green">
-            {isPersistedId(state.id) ? 'Edit activity' : 'Tambah activity'}
-          </h2>
+    <ResponsiveModal
+      isOpen={true}
+      onClose={onCancel}
+      title={isPersistedId(state.id) ? 'Edit activity' : 'Tambah activity'}
+      fullScreenOnMobile={true}
+      maxWidth="2xl"
+      footer={
+        <div className="flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
-            aria-label="Close"
-            className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-light-gray"
-          >
-            <XIcon size={20} />
-          </button>
-        </div>
-
-        <div className="grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-            <label className="flex flex-col gap-1">
-              <span className={FIELD_LABEL_CLS}>Judul</span>
-              <input
-                type="text"
-                value={state.title}
-                onChange={(e) => update('title', e.target.value)}
-                placeholder="Judul activity"
-                className={INPUT_CLS}
-                required
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className={FIELD_LABEL_CLS}>Category</span>
-              <select
-                value={state.category}
-                onChange={(e) =>
-                  update('category', e.target.value as ActivityCategory)
-                }
-                className={`${INPUT_CLS} w-auto ${CATEGORY_TAG_STYLES[state.category]}`}
-              >
-                {CATEGORY_OPTIONS.map((opt) => (
-                  <option key={opt.key} value={opt.key}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <label className="flex flex-col gap-1">
-            <span className={FIELD_LABEL_CLS}>Deskripsi</span>
-            <textarea
-              rows={3}
-              value={state.description}
-              onChange={(e) => update('description', e.target.value)}
-              placeholder="Deskripsi singkat"
-              className={INPUT_CLS}
-            />
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className={FIELD_LABEL_CLS}>Image URL</span>
-            <input
-              type="url"
-              value={state.image}
-              onChange={(e) => update('image', e.target.value)}
-              placeholder="https://images.unsplash.com/..."
-              className={INPUT_CLS}
-            />
-          </label>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1">
-              <span className={FIELD_LABEL_CLS}>Duration</span>
-              <input
-                type="text"
-                value={state.duration}
-                onChange={(e) => update('duration', e.target.value)}
-                placeholder="e.g. 90 min"
-                className={INPUT_CLS}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className={FIELD_LABEL_CLS}>Group size</span>
-              <input
-                type="text"
-                value={state.groupSize}
-                onChange={(e) => update('groupSize', e.target.value)}
-                placeholder="e.g. 4-6 players"
-                className={INPUT_CLS}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className={FIELD_LABEL_CLS}>Location</span>
-              <input
-                type="text"
-                value={state.location}
-                onChange={(e) => update('location', e.target.value)}
-                placeholder="e.g. Senayan Sports Club"
-                className={INPUT_CLS}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className={FIELD_LABEL_CLS}>Time</span>
-              <input
-                type="datetime-local"
-                value={state.time}
-                onChange={(e) => update('time', e.target.value)}
-                className={INPUT_CLS}
-              />
-            </label>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label className="flex flex-col gap-1">
-              <span className={FIELD_LABEL_CLS}>Price</span>
-              <input
-                type="text"
-                value={state.price ?? ''}
-                onChange={(e) => update('price', e.target.value)}
-                placeholder="e.g. Rp 50.000"
-                className={INPUT_CLS}
-              />
-            </label>
-          </div>
-          <p className="text-[0.7rem] text-dark-gray">
-            Kelola kupon di halaman <strong>Coupons</strong> — potongan
-            harga dihitung otomatis dari kupon yang diklaim member.
-          </p>
-
-          <fieldset className="mt-2">
-            <legend className={FIELD_LABEL_CLS}>Skill yang dilatih</legend>
-            <p className="mb-2 text-[0.7rem] text-dark-gray">
-              Dipakai bot WhatsApp untuk merekomendasikan activity yang melatih
-              skill terlemah member.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {SKILL_KEYS.map((skill) => {
-                const checked = (state.skillTags ?? '').split(',').includes(skill);
-                return (
-                  <label
-                    key={skill}
-                    className="flex cursor-pointer items-center gap-2 rounded-full border border-light-gray bg-white px-3 py-1.5 text-sm has-checked:border-paprika has-checked:bg-paprika/5"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={(e) => {
-                        const set = new Set((state.skillTags ?? '').split(',').filter(Boolean));
-                        if (e.target.checked) set.add(skill);
-                        else set.delete(skill);
-                        update('skillTags', Array.from(set).join(','));
-                      }}
-                      className="h-3.5 w-3.5 cursor-pointer rounded border-light-gray text-paprika focus:ring-paprika"
-                    />
-                    {SKILL_LABELS[skill]}
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
-
-          <label className="mt-1 flex items-center gap-3 rounded-lg border border-light-gray bg-off-white px-3 py-2.5">
-            <input
-              type="checkbox"
-              checked={state.isFull === true}
-              onChange={(e) => update('isFull', e.target.checked)}
-              className="h-4 w-4 cursor-pointer rounded border-light-gray text-paprika focus:ring-paprika"
-            />
-            <span className="flex flex-col">
-              <span className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                Tandai Full Book
-              </span>
-              <span className="text-[0.7rem] text-dark-gray">
-                Tombol Join di home page berubah menjadi &quot;Full Book&quot; (abu-abu, tidak bisa diklik).
-              </span>
-            </span>
-          </label>
-
-          <label className="mt-1 flex items-center gap-3 rounded-lg border border-light-gray bg-off-white px-3 py-2.5">
-            <input
-              type="checkbox"
-              checked={state.archived === true}
-              onChange={(e) => update('archived', e.target.checked)}
-              className="h-4 w-4 cursor-pointer rounded border-light-gray text-paprika focus:ring-paprika"
-            />
-            <span className="flex flex-col">
-              <span className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                Archive activity
-              </span>
-              <span className="text-[0.7rem] text-dark-gray">
-                Tidak tampil di home page. Bisa di-restore kapan saja dari halaman ini.
-              </span>
-            </span>
-          </label>
-        </div>
-
-        <div className="mt-6 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray"
+            className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray admin-touch-target"
           >
             Batal
           </button>
           <button
-            type="submit"
+            type="button"
+            onClick={handleSubmit}
             disabled={saving || state.title.trim().length === 0}
-            className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-50"
+            className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-50 admin-touch-target"
           >
             {saving ? 'Menyimpan...' : 'Simpan'}
           </button>
         </div>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+          <label className="flex flex-col gap-1">
+            <span className={FIELD_LABEL_CLS}>Judul</span>
+            <input
+              type="text"
+              value={state.title}
+              onChange={(e) => update('title', e.target.value)}
+              placeholder="Judul activity"
+              className={INPUT_CLS}
+              required
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className={FIELD_LABEL_CLS}>Category</span>
+            <select
+              value={state.category}
+              onChange={(e) =>
+                update('category', e.target.value as ActivityCategory)
+              }
+              className={`${INPUT_CLS} w-auto ${CATEGORY_TAG_STYLES[state.category]}`}
+            >
+              {CATEGORY_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <label className="flex flex-col gap-1">
+          <span className={FIELD_LABEL_CLS}>Deskripsi</span>
+          <textarea
+            rows={3}
+            value={state.description}
+            onChange={(e) => update('description', e.target.value)}
+            placeholder="Deskripsi singkat"
+            className={INPUT_CLS}
+          />
+        </label>
+
+        <label className="flex flex-col gap-1">
+          <span className={FIELD_LABEL_CLS}>Image URL</span>
+          <input
+            type="url"
+            value={state.image}
+            onChange={(e) => update('image', e.target.value)}
+            placeholder="https://images.unsplash.com/..."
+            className={INPUT_CLS}
+          />
+        </label>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <span className={FIELD_LABEL_CLS}>Duration</span>
+            <input
+              type="text"
+              value={state.duration}
+              onChange={(e) => update('duration', e.target.value)}
+              placeholder="e.g. 90 min"
+              className={INPUT_CLS}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className={FIELD_LABEL_CLS}>Group size</span>
+            <input
+              type="text"
+              value={state.groupSize}
+              onChange={(e) => update('groupSize', e.target.value)}
+              placeholder="e.g. 4-6 players"
+              className={INPUT_CLS}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className={FIELD_LABEL_CLS}>Location</span>
+            <input
+              type="text"
+              value={state.location}
+              onChange={(e) => update('location', e.target.value)}
+              placeholder="e.g. Senayan Sports Club"
+              className={INPUT_CLS}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className={FIELD_LABEL_CLS}>Time</span>
+            <input
+              type="datetime-local"
+              value={state.time}
+              onChange={(e) => update('time', e.target.value)}
+              className={INPUT_CLS}
+            />
+          </label>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <label className="flex flex-col gap-1">
+            <span className={FIELD_LABEL_CLS}>Price</span>
+            <input
+              type="text"
+              value={state.price ?? ''}
+              onChange={(e) => update('price', e.target.value)}
+              placeholder="e.g. Rp 50.000"
+              className={INPUT_CLS}
+            />
+          </label>
+        </div>
+        <p className="text-[0.7rem] text-dark-gray">
+          Kelola kupon di halaman <strong>Coupons</strong> — potongan
+          harga dihitung otomatis dari kupon yang diklaim member.
+        </p>
+
+        <fieldset>
+          <legend className={FIELD_LABEL_CLS}>Skill yang dilatih</legend>
+          <p className="mb-2 text-[0.7rem] text-dark-gray">
+            Dipakai bot WhatsApp untuk merekomendasikan activity yang melatih
+            skill terlemah member.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {SKILL_KEYS.map((skill) => {
+              const checked = (state.skillTags ?? '').split(',').includes(skill);
+              return (
+                <label
+                  key={skill}
+                  className="flex cursor-pointer items-center gap-2 rounded-full border border-light-gray bg-white px-3 py-1.5 text-sm has-checked:border-paprika has-checked:bg-paprika/5"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => {
+                      const set = new Set((state.skillTags ?? '').split(',').filter(Boolean));
+                      if (e.target.checked) set.add(skill);
+                      else set.delete(skill);
+                      update('skillTags', Array.from(set).join(','));
+                    }}
+                    className="h-3.5 w-3.5 cursor-pointer rounded border-light-gray text-paprika focus:ring-paprika"
+                  />
+                  {SKILL_LABELS[skill]}
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <label className="flex items-center gap-3 rounded-lg border border-light-gray bg-off-white px-3 py-2.5">
+          <input
+            type="checkbox"
+            checked={state.isFull === true}
+            onChange={(e) => update('isFull', e.target.checked)}
+            className="h-4 w-4 cursor-pointer rounded border-light-gray text-paprika focus:ring-paprika"
+          />
+          <span className="flex flex-col">
+            <span className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
+              Tandai Full Book
+            </span>
+            <span className="text-[0.7rem] text-dark-gray">
+              Tombol Join di home page berubah menjadi &quot;Full Book&quot; (abu-abu, tidak bisa diklik).
+            </span>
+          </span>
+        </label>
+
+        <label className="flex items-center gap-3 rounded-lg border border-light-gray bg-off-white px-3 py-2.5">
+          <input
+            type="checkbox"
+            checked={state.archived === true}
+            onChange={(e) => update('archived', e.target.checked)}
+            className="h-4 w-4 cursor-pointer rounded border-light-gray text-paprika focus:ring-paprika"
+          />
+          <span className="flex flex-col">
+            <span className="text-xs font-semibold uppercase tracking-wider text-dark-gray">
+              Archive activity
+            </span>
+            <span className="text-[0.7rem] text-dark-gray">
+              Tidak tampil di home page. Bisa di-restore kapan saja dari halaman ini.
+            </span>
+          </span>
+        </label>
       </form>
-    </div>
+    </ResponsiveModal>
   );
 }
 
@@ -1067,14 +1053,6 @@ function RecurringDuplicateDrawer({
 }) {
   const [weeks, setWeeks] = useState(4);
   const [confirming, setConfirming] = useState(false);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
   const base = new Date(activity.time);
   const valid = !Number.isNaN(base.getTime());
@@ -1096,35 +1074,48 @@ function RecurringDuplicateDrawer({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-graphite/40 sm:items-center sm:p-6"
-      onClick={onClose}
-    >
-      <form
-        className="w-full max-w-md rounded-t-2xl bg-white p-6 shadow-2xl sm:rounded-2xl max-h-[90vh] sm:max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={submit}
-      >
-        <div className="mb-4 flex items-center justify-between flex-shrink-0">
-          <h2 className="font-serif text-xl font-semibold text-hunter-green">
-            Duplicate weekly
-          </h2>
+    <ResponsiveModal
+      isOpen={true}
+      onClose={onClose}
+      title="Duplicate weekly"
+      fullScreenOnMobile={true}
+      maxWidth="md"
+      footer={
+        <div className="flex items-center justify-end gap-3">
+          {confirming ? (
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray admin-touch-target"
+            >
+              Batal
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray admin-touch-target"
+            >
+              Batal
+            </button>
+          )}
           <button
             type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-light-gray"
+            onClick={submit}
+            className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover admin-touch-target"
           >
-            <XIcon size={20} />
+            {confirming ? `Ya, buat ${weeks} salinan` : 'Lanjut'}
           </button>
         </div>
-
-        <p className="mb-4 text-sm text-dark-gray">
+      }
+    >
+      <form onSubmit={submit} className="space-y-4">
+        <p className="text-sm text-dark-gray">
           Membuat <strong>{weeks}</strong> salinan &quot;{activity.title}&quot;
           dengan tanggal sama setiap minggu (hari &amp; jam identik).
         </p>
 
-        <label className="mb-4 flex flex-col gap-1">
+        <label className="flex flex-col gap-1">
           <span className={FIELD_LABEL_CLS}>Jumlah minggu</span>
           <input
             type="number"
@@ -1141,7 +1132,7 @@ function RecurringDuplicateDrawer({
         </label>
 
         {preview.length > 0 && (
-          <div className="mb-4 rounded-lg border border-light-gray bg-off-white px-3 py-2">
+          <div className="rounded-lg border border-light-gray bg-off-white px-3 py-2">
             <p className={FIELD_LABEL_CLS}>Contoh tanggal</p>
             <ul className="mt-1 flex flex-col gap-0.5 text-xs text-dark-gray">
               {preview.map((d) => (
@@ -1163,34 +1154,8 @@ function RecurringDuplicateDrawer({
             </ul>
           </div>
         )}
-
-        <div className="flex items-center justify-end gap-3">
-          {confirming ? (
-            <button
-              type="button"
-              onClick={() => setConfirming(false)}
-              className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray"
-            >
-              Batal
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full border border-light-gray px-4 py-2 text-sm font-semibold text-dark-gray transition-colors hover:border-dark-gray"
-            >
-              Batal
-            </button>
-          )}
-          <button
-            type="submit"
-            className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-paprika-hover"
-          >
-            {confirming ? `Ya, buat ${weeks} salinan` : 'Lanjut'}
-          </button>
-        </div>
       </form>
-    </div>
+    </ResponsiveModal>
   );
 }
 

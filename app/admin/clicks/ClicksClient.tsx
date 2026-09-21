@@ -15,6 +15,9 @@ import {
   type ClicksAdminPayload,
   type ClickStats,
 } from '@/data/click-tracking-types';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
 
 const INPUT_CLS =
   'w-full rounded-lg border border-light-gray bg-white px-3 py-2 text-sm focus:border-hunter-green focus:outline-none';
@@ -332,78 +335,13 @@ export function ClicksClient({ initial, pageSize }: Props) {
         </div>
 
         {/* Filter bar — form so Enter in any input applies */}
-        <form
-          className="mt-6 rounded-2xl border border-light-gray bg-white p-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            applyFilters();
-          }}
-        >
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                Cari
-              </label>
-              <input
-                className={`mt-1 ${INPUT_CLS}`}
-                placeholder="Tombol, URL, user, IP…"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                Dari
-              </label>
-              <input
-                type="date"
-                className={`mt-1 ${INPUT_CLS}`}
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-dark-gray">
-                Sampai
-              </label>
-              <input
-                type="date"
-                className={`mt-1 ${INPUT_CLS}`}
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-              />
-            </div>
-            <div className="flex items-end gap-2">
-              <button
-                type="button"
-                className="rounded-lg bg-hunter-green px-4 py-2 text-sm font-medium text-white hover:bg-hunter-green/90"
-                onClick={applyFilters}
-              >
-                Terapkan
-              </button>
-              <button
-                type="button"
-                className="rounded-lg border border-light-gray px-4 py-2 text-sm text-dark-gray hover:bg-off-white"
-                onClick={resetFilters}
-              >
-                Reset
-              </button>
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-dark-gray">Rentang cepat:</span>
-            {DATE_PRESETS.map(({ label, days }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => applyPreset(days)}
-                className="rounded-full border border-light-gray px-3 py-1 text-xs text-dark-gray hover:border-hunter-green hover:text-hunter-green"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </form>
+        <AdminTableToolbar
+          searchValue={q}
+          onSearchChange={setQ}
+          searchPlaceholder="Cari tombol, URL, user, IP…"
+          onAdd={undefined}
+          loading={loading}
+        />
 
         {error && (
           <p className="mt-4 text-sm font-medium text-red-600" role="alert">

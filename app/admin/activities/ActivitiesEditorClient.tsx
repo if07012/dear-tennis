@@ -122,7 +122,7 @@ export function ActivitiesEditorClient({ initial }: { initial: ActivitiesContent
             type="button"
             onClick={onSave}
             disabled={status.kind === 'saving'}
-            className="rounded-full bg-paprika px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-paprika-hover disabled:opacity-50"
+            className="rounded-full bg-paprika px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-paprika-hover disabled:opacity-50 admin-touch-target"
           >
             {status.kind === 'saving' ? 'Menyimpan...' : 'Simpan'}
           </button>
