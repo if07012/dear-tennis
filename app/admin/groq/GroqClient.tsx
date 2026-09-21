@@ -375,7 +375,7 @@ export function GroqClient({ initialKeys, initialLogs }: Props) {
             items={keyPageItems}
             rowKey={(i) => i.id}
             columns={keyColumns}
-            actions={getKeyRowActions(keyPageItems[0])}
+            actions={getKeyRowActions}
             emptyMessage={keys.length === 0 ? 'Belum ada kunci API. Bot tidak bisa memanggil Groq sampai ada minimal satu kunci.' : 'Tidak ada hasil untuk pencarian ini.'}
             loading={false}
             mobileCardRender={(item) => (

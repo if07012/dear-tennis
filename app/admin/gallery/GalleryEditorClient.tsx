@@ -602,7 +602,7 @@ export function GalleryEditorClient({ initial }: { initial: InitialPage }) {
           items={pageItems}
           rowKey={(i) => i.id}
           columns={galleryColumns}
-          actions={getRowActions(pageItems[0] as DraftItem)}
+          actions={getRowActions}
           emptyMessage={total === 0 ? 'Belum ada foto. Klik "Tambah foto" untuk mulai.' : 'Tidak ada hasil untuk pencarian ini.'}
           loading={false}
           mobileCardRender={(item) => {

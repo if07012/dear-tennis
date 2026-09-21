@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { SearchIcon, FilterIcon, ChevronDown } from '@/components/ui/Icons';
+import { AdminButton } from './AdminButton';
 
 type FilterOption = {
   id: string;
@@ -49,7 +50,7 @@ export function AdminTableToolbar({
   const [pageSizeOpen, setPageSizeOpen] = useState(false);
 
   return (
-    <div className="admin-toolbar">
+    <div className="admin-toolbar px-4 py-4 xs:py-2">
       <div className="admin-toolbar-search">
         <label htmlFor="admin-search" className="flex w-full items-center gap-2 rounded-lg border border-light-gray bg-white px-3 py-2 text-sm text-graphite focus-within:border-hunter-green">
           <SearchIcon size={18} className="text-dark-gray" />
@@ -67,17 +68,13 @@ export function AdminTableToolbar({
 
       <div className="admin-toolbar-filters">
         {filters.length > 0 && onFilterChange && (
-          <button
+          <AdminButton
             type="button"
+            variant="filter"
             onClick={() => setFilterOpen(!filterOpen)}
             aria-expanded={filterOpen}
             aria-haspopup="listbox"
-            className={[
-              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors admin-touch-target',
-              activeFilter
-                ? 'bg-hunter-green text-white border-hunter-green'
-                : 'bg-white text-dark-gray border-light-gray hover:border-hunter-green hover:text-hunter-green',
-            ].join(' ')}
+            isActive={!!activeFilter}
           >
             <FilterIcon size={14} />
             Filter
@@ -87,7 +84,7 @@ export function AdminTableToolbar({
               </span>
             )}
             <ChevronDown size={12} />
-          </button>
+          </AdminButton>
         )}
 
         {filterOpen && filters.length > 0 && onFilterChange && (
@@ -124,22 +121,18 @@ export function AdminTableToolbar({
         )}
 
         {sortOptions && sortOptions.length > 0 && onSortChange && (
-          <button
+          <AdminButton
             type="button"
+            variant="filter"
             onClick={() => setSortOpen(!sortOpen)}
             aria-expanded={sortOpen}
             aria-haspopup="listbox"
-            className={[
-              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors admin-touch-target',
-              activeSort
-                ? 'bg-hunter-green text-white border-hunter-green'
-                : 'bg-white text-dark-gray border-light-gray hover:border-hunter-green hover:text-hunter-green',
-            ].join(' ')}
+            isActive={!!activeSort}
           >
             <ChevronDown size={14} className="rotate-90" />
             Urutkan
             <ChevronDown size={12} />
-          </button>
+          </AdminButton>
         )}
 
         {sortOpen && sortOptions && sortOptions.length > 0 && onSortChange && (
@@ -170,20 +163,17 @@ export function AdminTableToolbar({
 
         {onPageSizeChange && (
           <div className="relative">
-            <button
+            <AdminButton
               type="button"
+              variant="filter"
               onClick={() => setPageSizeOpen(!pageSizeOpen)}
               aria-expanded={pageSizeOpen}
               aria-haspopup="listbox"
-              className={[
-                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors admin-touch-target',
-                'bg-white text-dark-gray border-light-gray hover:border-hunter-green hover:text-hunter-green',
-              ].join(' ')}
             >
               <ChevronDown size={14} className="rotate-90" />
               {pageSize ?? 10} / halaman
               <ChevronDown size={12} />
-            </button>
+            </AdminButton>
             {pageSizeOpen && (
               <div className="absolute z-50 mt-1 min-w-[180px] rounded-xl border border-light-gray bg-white py-1 shadow-xl">
                 {pageSizeOptions.map((opt) => (
@@ -212,15 +202,16 @@ export function AdminTableToolbar({
       </div>
 
       <div className="admin-toolbar-actions">
-        {onAdd && (
-          <button
+        {onAdd && addLabel !== 'Tambah' && (
+          <AdminButton
             type="button"
+            variant="primary"
+            size="md"
             onClick={onAdd}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 rounded-full bg-paprika px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-paprika-hover hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 admin-touch-target"
           >
             {addLabel}
-          </button>
+          </AdminButton>
         )}
       </div>
     </div>

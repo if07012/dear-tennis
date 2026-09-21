@@ -612,7 +612,7 @@ export function TestimonialsEditorClient({ initial }: { initial: InitialPage }) 
           items={pageItems}
           rowKey={(i) => i.id}
           columns={testimonialColumns}
-          actions={getRowActions(pageItems[0])}
+          actions={getRowActions}
           emptyMessage={items.length === 0 ? 'Belum ada kutipan. Klik "Tambah kutipan" untuk mulai.' : 'Tidak ada hasil untuk pencarian ini.'}
           loading={loadingPage}
           mobileCardRender={(item) => (

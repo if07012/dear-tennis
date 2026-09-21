@@ -476,7 +476,7 @@ export function HeroEditorClient({ initial }: { initial: InitialPage }) {
           items={pageItems}
           rowKey={(i) => i.id}
           columns={slideColumns}
-          actions={getSlideRowActions(pageItems[0])}
+          actions={getSlideRowActions}
           emptyMessage={slides.length === 0 ? 'Belum ada slide. Klik "Tambah slide" untuk mulai.' : 'Tidak ada hasil untuk pencarian ini.'}
           loading={false}
           mobileCardRender={(item) => {

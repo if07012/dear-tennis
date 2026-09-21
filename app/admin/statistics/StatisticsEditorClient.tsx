@@ -554,7 +554,7 @@ export function StatisticsEditorClient({ initial }: { initial: InitialPage }) {
           items={pageItems}
           rowKey={(i) => i.id}
           columns={statisticColumns}
-          actions={getRowActions(pageItems[0])}
+          actions={getRowActions}
           emptyMessage={items.length === 0 ? 'Belum ada stat. Klik "Tambah stat" untuk mulai.' : 'Tidak ada hasil untuk pencarian ini.'}
           loading={loadingPage}
           mobileCardRender={(item) => (

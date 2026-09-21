@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from '@/components/ui/Icons';
+import { AdminButton } from './AdminButton';
 
 type Props = {
   page: number;
@@ -38,15 +39,16 @@ export function ResponsivePagination({
     <div className="admin-pager border-t border-light-gray pt-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <button
+          <AdminButton
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={() => onPageChange(Math.max(1, page - 1))}
             disabled={page <= 1 || disabled}
-            className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
           >
             <ChevronLeft size={14} />
             Sebelumnya
-          </button>
+          </AdminButton>
           {showPageNumbers && (
             <div className="flex items-center gap-1">
               {pageButtons(page, totalPages).map((p, idx) =>
@@ -78,15 +80,16 @@ export function ResponsivePagination({
               )}
             </div>
           )}
-          <button
+          <AdminButton
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={() => onPageChange(Math.min(totalPages, page + 1))}
             disabled={page >= totalPages || disabled}
-            className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
           >
             Berikutnya
             <ChevronRight size={14} />
-          </button>
+          </AdminButton>
         </div>
       </div>
     </div>

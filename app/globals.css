@@ -59,66 +59,145 @@
 }
 
 @keyframes kenburns {
-  0% { transform: scale(1) translate(0, 0); }
-  100% { transform: scale(1.15) translate(-2%, -1%); }
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+
+  100% {
+    transform: scale(1.15) translate(-2%, -1%);
+  }
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes floatParticle {
-  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-100vh) rotate(720deg);
+    opacity: 0;
+  }
 }
 
 @keyframes shakeInput {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  75% { transform: translateX(6px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-6px);
+  }
+
+  75% {
+    transform: translateX(6px);
+  }
 }
 
 @keyframes successPulse {
-  0% { box-shadow: 0 0 0 0 rgba(44, 95, 75, 0.4); }
-  100% { box-shadow: 0 0 0 16px rgba(44, 95, 75, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(44, 95, 75, 0.4);
+  }
+
+  100% {
+    box-shadow: 0 0 0 16px rgba(44, 95, 75, 0);
+  }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes drawCheck {
-  to { stroke-dashoffset: 0; }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 @keyframes checkBounce {
-  0% { transform: scale(0); }
-  60% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0);
+  }
+
+  60% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes borderGlow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pageFadeIn {
-  from { opacity: 0; transform: scaleY(0); }
-  to { opacity: 1; transform: scaleY(1); }
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
 }
 
 /* ============================================
@@ -144,7 +223,12 @@
     line-height: 1.6;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-serif);
     color: var(--color-hunter-green);
     line-height: 1.2;
@@ -168,7 +252,10 @@
 
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
@@ -231,6 +318,7 @@
   }
 
   @media (max-width: 639px) {
+
     .admin-table th,
     .admin-table td {
       @apply py-2 pr-2 text-xs;
@@ -318,6 +406,7 @@
   }
 
   @media (max-width: 639px) {
+
     .admin-table-responsive th,
     .admin-table-responsive td {
       @apply py-2 pr-2 text-xs;
@@ -366,15 +455,15 @@
   }
 
   .admin-card-action-primary {
-    @apply rounded-full bg-paprika px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-paprika-hover;
+    @apply bg-paprika px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-paprika-hover;
   }
 
   .admin-card-action-secondary {
-    @apply rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green;
+    @apply border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green;
   }
 
   .admin-card-action-destructive {
-    @apply rounded-full border border-paprika px-3 py-1.5 text-xs font-semibold text-paprika transition-colors hover:bg-paprika hover:text-white;
+    @apply border border-paprika px-3 py-1.5 text-xs font-semibold text-paprika transition-colors hover:bg-paprika hover:text-white;
   }
 
   /* Mobile action menu (dropdown for secondary actions) */
@@ -420,6 +509,7 @@
   }
 
   @media (max-width: 767px) {
+
     .admin-toolbar-filters,
     .admin-toolbar-actions {
       @apply w-full justify-end;
@@ -507,14 +597,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(
-      135deg,
-      #1a3d3a 0%,
-      #2C5F4B 25%,
-      #3d7a63 50%,
-      #1e4234 75%,
-      #2C5F4B 100%
-    );
+    background: linear-gradient(135deg,
+        #1a3d3a 0%,
+        #2C5F4B 25%,
+        #3d7a63 50%,
+        #1e4234 75%,
+        #2C5F4B 100%);
     background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
     overflow: hidden;
@@ -596,12 +684,10 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.4) 0%,
-      transparent 50%,
-      rgba(255, 255, 255, 0.2) 100%
-    );
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.4) 0%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.2) 100%);
     pointer-events: none;
   }
 
@@ -694,8 +780,8 @@
     z-index: 2;
   }
 
-  .form-group input:focus + .floating-label,
-  .form-group input:not(:placeholder-shown) + .floating-label,
+  .form-group input:focus+.floating-label,
+  .form-group input:not(:placeholder-shown)+.floating-label,
   .form-group.focused .floating-label {
     top: 0;
     left: 44px;
@@ -707,7 +793,7 @@
     border-radius: 4px;
   }
 
-  .form-group input:focus ~ .input-icon,
+  .form-group input:focus~.input-icon,
   .form-group.focused .input-icon {
     color: var(--color-hunter-green);
     transform: translateY(-50%) scale(1.1);
@@ -794,7 +880,7 @@
     transform: translateY(-50%) scale(1.1);
   }
 
-  .checkbox-label input[type='checkbox']:checked ~ .checkbox-custom {
+  .checkbox-label input[type='checkbox']:checked~.checkbox-custom {
     background: var(--color-hunter-green);
     border-color: var(--color-hunter-green);
     animation: checkBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -813,7 +899,7 @@
     transform: rotate(45deg);
   }
 
-  .checkbox-label input[type='checkbox']:checked ~ .checkbox-custom::after {
+  .checkbox-label input[type='checkbox']:checked~.checkbox-custom::after {
     display: block;
   }
 
@@ -1007,12 +1093,10 @@
 
   /* Skill bar gradient sheen (drawn over the fill). */
   .skill-bar-fill {
-    background-image: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.2) 0%,
-      rgba(255, 255, 255, 0) 50%,
-      rgba(255, 255, 255, 0.1) 100%
-    );
+    background-image: linear-gradient(90deg,
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(255, 255, 255, 0) 50%,
+        rgba(255, 255, 255, 0.1) 100%);
   }
 
   .skill-bar-details {
@@ -1104,8 +1188,12 @@
 
   /* Lightbox animations. */
   @keyframes lightbox-fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
 }
-

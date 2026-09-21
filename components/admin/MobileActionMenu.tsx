@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Fragment } from 'react';
 import { XIcon } from '@/components/ui/Icons';
+import { AdminButton } from './AdminButton';
 
 type ActionItem = {
   label: string;
@@ -50,14 +51,14 @@ export function MobileActionMenu({ trigger, actions }: Props) {
   };
 
   return (
-    <div className="admin-action-menu">
+    <div className="relative inline-block">
       <button
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="admin-action-menu-button"
+        className="text-dark-gray box-border border border-light-gray bg-white hover:border-hunter-green hover:text-hunter-green focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-full text-sm focus:outline-none admin-touch-target"
       >
         {trigger}
       </button>
@@ -65,12 +66,12 @@ export function MobileActionMenu({ trigger, actions }: Props) {
         <div
           ref={menuRef}
           role="menu"
-          className="admin-action-menu-content"
+          className="absolute right-0 top-full mt-2 z-50 min-w-[180px] rounded-xl border border-light-gray bg-white py-2 shadow-xl"
         >
           {actions.map((action, idx) => (
             <Fragment key={idx}>
               {idx > 0 && actions[idx - 1].destructive !== action.destructive && (
-                <div className="admin-action-menu-divider" role="separator" />
+                <div className="my-1 border-t border-light-gray" role="separator" />
               )}
               <button
                 type="button"
@@ -78,8 +79,11 @@ export function MobileActionMenu({ trigger, actions }: Props) {
                 onClick={() => handleAction(action)}
                 disabled={action.disabled}
                 className={[
-                  'admin-action-menu-item',
-                  action.destructive && 'admin-action-menu-item-destructive',
+                  'w-full px-4 py-2 text-left text-sm font-medium transition-colors',
+                  action.destructive 
+                    ? 'text-paprika hover:bg-paprika/5' 
+                    : 'text-graphite hover:bg-hunter-green/5 hover:text-hunter-green',
+                  action.disabled && 'opacity-50 cursor-not-allowed',
                 ].join(' ')}
               >
                 {action.label}

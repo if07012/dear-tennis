@@ -344,7 +344,7 @@ export function CouponsClient({ initialCoupons, initialClaims, activities }: Pro
           items={pageItems}
           rowKey={(c) => c.id}
           columns={couponColumns}
-          actions={getRowActions(filteredCoupons[0] as Coupon)}
+          actions={getRowActions}
           emptyMessage={coupons.length === 0 ? 'Belum ada kupon. Tambahkan kupon pertama.' : 'Tidak ada hasil untuk pencarian ini.'}
           loading={false}
           mobileCardRender={(c) => {

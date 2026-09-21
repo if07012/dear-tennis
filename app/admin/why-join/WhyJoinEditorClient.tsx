@@ -514,7 +514,7 @@ export function WhyJoinEditorClient({ initial }: { initial: WhyJoinContent }) {
           items={pageItems}
           rowKey={(b) => b.id}
           columns={benefitColumns}
-          actions={getRowActions(pageItems[0])}
+          actions={getRowActions}
           emptyMessage={benefits.length === 0 ? 'Belum ada benefit. Klik "Tambah benefit" untuk mulai.' : 'Tidak ada hasil untuk pencarian ini.'}
           loading={false}
           mobileCardRender={(benefit) => {

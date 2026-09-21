@@ -368,13 +368,39 @@ export function ActivitySignupsClient({
     )},
     { key: 'requested', header: 'Diajukan', priority: 2, render: (row) => formatDate(row.requestedAt) },
   ]}
-  actions={(row) => [
-    { label: 'Approve', primary: true, onClick: () => decide(row, 'approve'), disabled: row.status !== 'pending_approval' || busyId === row.id },
-    { label: 'Reject', primary: false, destructive: true, onClick: () => decide(row, 'reject'), disabled: row.status !== 'pending_approval' || busyId === row.id },
-    { label: 'Approve Payment', primary: true, onClick: () => decide(row, 'approve-payment'), disabled: row.status !== 'payment_submitted' || busyId === row.id },
-    { label: 'Reject Payment', primary: false, destructive: true, onClick: () => { setRejectingId(row.id); setRejectReason(''); }, disabled: row.status !== 'payment_submitted' || busyId === row.id || rejectingId !== null },
-    { label: 'Hapus', primary: false, destructive: true, onClick: () => remove(row), disabled: busyId === row.id },
-  ]}
+  actions={(row) => {
+    const baseActions: Array<{ label: string; primary?: boolean; destructive?: boolean; onClick: () => void; disabled: (item: Row) => boolean }> = [];
+    if (row.status === 'pending_approval') {
+      baseActions.push(
+        { label: 'Approve', primary: true, onClick: () => decide(row, 'approve'), disabled: (item: Row) => busyId === item.id },
+        { label: 'Reject', primary: false, destructive: true, onClick: () => decide(row, 'reject'), disabled: (item: Row) => busyId === item.id }
+      );
+    }
+    if (row.status === 'payment_submitted') {
+      baseActions.push(
+        { label: 'Approve Payment', primary: true, onClick: () => decide(row, 'approve-payment'), disabled: (item: Row) => busyId === item.id },
+        { label: 'Reject Payment', primary: false, destructive: true, onClick: () => { setRejectingId(row.id); setRejectReason(''); }, disabled: (item: Row) => busyId === item.id || rejectingId !== null }
+      );
+    }
+    if (row.status === 'pending_approval' || row.status === 'waiting_payment' || row.status === 'joined') {
+      baseActions.push(
+        { label: 'Hapus', primary: false, destructive: true, onClick: () => remove(row), disabled: (item: Row) => busyId === item.id }
+      );
+    }
+
+    // Adjust primary property based on total count
+    // If only 1 action, make it primary (no dropdown needed)
+    // If more than 3 actions, only make the first one primary
+    if (baseActions.length === 1) {
+      baseActions[0].primary = true;
+    } else if (baseActions.length > 3) {
+      baseActions.forEach((action, index) => {
+        action.primary = index === 0;
+      });
+    }
+
+    return baseActions;
+  }}
 />
 
         <ResponsivePagination

@@ -559,7 +559,7 @@ export function FAQEditorClient({ initial }: { initial: InitialPage }) {
           items={pageItems}
           rowKey={(i) => i.id}
           columns={faqColumns}
-          actions={getRowActions(pageItems[0] as DraftItem)}
+          actions={getRowActions}
           emptyMessage={total === 0 ? 'Belum ada FAQ. Klik "Tambah FAQ" untuk mulai.' : 'Tidak ada hasil untuk pencarian ini.'}
           loading={false}
           mobileCardRender={(item) => {

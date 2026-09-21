@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ChevronDown } from '@/components/ui/Icons';
 import { MobileActionMenu } from './MobileActionMenu';
+import { AdminButton } from './AdminButton';
 
 type ColumnPriority = 1 | 2 | 3;
 
@@ -45,9 +46,10 @@ export function ResponsiveTable<T>({
 }: Props<T>) {
   const getActionsForItem = (item: T) => {
     if (typeof actions === 'function') {
-      return actions(item);
+      const itemActions = actions(item);
+      return Array.isArray(itemActions) ? itemActions : [];
     }
-    return actions;
+    return Array.isArray(actions) ? actions : [];
   };
 
   // Default card renderer if not provided
@@ -92,19 +94,20 @@ export function ResponsiveTable<T>({
                   ? action.disabled(item)
                   : action.disabled ?? false;
               return (
-                <button
+                <AdminButton
                   key={action.label}
                   type="button"
+                  variant={action.destructive ? 'destructive' : 'primary'}
+                  size="xs"
                   onClick={() => action.onClick(item)}
                   disabled={isDisabled}
                   className={[
-                    'admin-card-action-primary admin-touch-target',
+                    'admin-card-action-primary',
                     action.destructive && 'admin-card-action-destructive',
-                    isDisabled && 'opacity-50 pointer-events-none',
                   ].join(' ')}
                 >
                   {action.label}
-                </button>
+                </AdminButton>
               )
             })}
             {secondaryActions.length > 0 && (
@@ -150,7 +153,7 @@ export function ResponsiveTable<T>({
   return (
     <div>
       {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto mx-4">
         <table className="admin-table-responsive">
           <thead>
             <tr className="border-b border-light-gray text-left text-xs font-semibold uppercase tracking-wider text-dark-gray">
@@ -167,6 +170,7 @@ export function ResponsiveTable<T>({
           <tbody>
             {items.map((item) => {
               const itemActions = getActionsForItem(item);
+
               const primaryActions = itemActions.filter((a) => a.primary);
               const secondaryActions = itemActions.filter((a) => !a.primary);
 
@@ -186,25 +190,23 @@ export function ResponsiveTable<T>({
                               ? action.disabled(item)
                               : action.disabled ?? false;
 
+                          const variant = action.destructive
+                            ? 'destructive'
+                            : action.primary
+                              ? 'primary'
+                              : 'secondary';
+
                           return (
-                            <button
+                            <AdminButton
                               key={action.label}
                               type="button"
+                              variant={variant}
+                              size="xs"
                               onClick={() => action.onClick(item)}
                               disabled={isDisabled}
-                              className={[
-                                'rounded-full px-3 py-1 text-xs font-semibold transition-colors admin-touch-target',
-                                action.primary
-                                  ? 'bg-paprika text-white hover:bg-paprika-hover'
-                                  : 'border border-light-gray text-dark-gray hover:border-hunter-green hover:text-hunter-green',
-                                action.destructive
-                                  ? 'border-paprika text-paprika hover:bg-paprika hover:text-white'
-                                  : '',
-                                isDisabled && 'opacity-50 pointer-events-none',
-                              ].join(' ')}
                             >
                               {action.label}
-                            </button>
+                            </AdminButton>
                           )
                         })}
                         {secondaryActions.length > 0 && (
@@ -237,7 +239,7 @@ export function ResponsiveTable<T>({
       </div>
 
       {/* Mobile Card Layout */}
-      <div className="admin-card-list">
+      <div className="admin-card-list mx-4">
         {items.map((item) => (
           <div key={rowKey(item)} className="admin-card">
             {mobileCardRender ? mobileCardRender(item) : defaultCardRender(item)}

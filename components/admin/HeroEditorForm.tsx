@@ -3,6 +3,7 @@
 import { SlideRow } from './SlideRow';
 import { ChevronUp, PlusIcon } from '@/components/ui/Icons';
 import type { HeroSettings, HeroSlideData } from '@/data/hero-types';
+import { AdminButton } from './AdminButton';
 
 type SettingsDraft = Pick<
   HeroSettings,
@@ -148,14 +149,16 @@ export function HeroEditorForm({
               Gambar background yang tampil di carousel
             </p>
           </div>
-          <button
+          <AdminButton
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={onSlideAdd}
-            className="inline-flex items-center gap-1.5 rounded-full border border-hunter-green px-3 py-1.5 text-xs font-semibold text-hunter-green transition-colors hover:bg-hunter-green hover:text-white"
+            className="border-hunter-green text-hunter-green hover:bg-hunter-green hover:text-white"
           >
             <PlusIcon size={14} />
             Tambah slide
-          </button>
+          </AdminButton>
         </header>
 
         <ul className="mt-6 flex flex-col gap-3">

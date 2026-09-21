@@ -705,7 +705,7 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
           items={pageItems}
           rowKey={(e) => e.id}
           columns={eventColumns}
-          actions={getRowActions(pageItems[0])}
+          actions={getRowActions}
           emptyMessage={events.length === 0 ? 'Belum ada event. Klik "Tambah event" untuk mulai.' : 'Tidak ada hasil untuk pencarian ini.'}
           loading={loadingPage}
           mobileCardRender={(event) => {

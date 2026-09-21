@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { XIcon } from '@/components/ui/Icons';
+import { AdminButton } from './AdminButton';
 
 type Props = {
   isOpen: boolean;
@@ -98,14 +99,16 @@ export function ResponsiveModal({
           <h2 id="modal-title" className="admin-modal-fullscreen-title">
             {title}
           </h2>
-          <button
+          <AdminButton
             type="button"
+            variant="ghost"
+            size="md"
             onClick={onClose}
             aria-label="Close"
-            className="admin-modal-fullscreen-close admin-touch-target"
+            className="admin-modal-fullscreen-close"
           >
             <XIcon size={20} />
-          </button>
+          </AdminButton>
         </header>
         <div className="admin-modal-fullscreen-body">{children}</div>
         {footer && <footer className="admin-modal-fullscreen-footer">{footer}</footer>}

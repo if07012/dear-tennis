@@ -657,7 +657,6 @@ export function ActivitiesListClient({ initialActivities, pageSize }: Props) {
           onSearchChange={setSearch}
           searchPlaceholder="Cari judul, deskripsi, lokasi, kategori..."
           onAdd={openCreate}
-          addLabel="Tambah activity"
           loading={false}
         />
 

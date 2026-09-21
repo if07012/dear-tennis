@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import type { BadgeCatalogRecord, BadgeGrantRecord, GrantedBadge } from '@/data/tennis-level-types';
+import { AdminButton } from './AdminButton';
 
 const FIELD_LABEL_CLS =
   'text-xs font-semibold uppercase tracking-wider text-dark-gray';
@@ -91,15 +92,16 @@ export function AwardBadgeDialog({
           <h2 className="font-serif text-lg font-semibold text-hunter-green">
             Berikan Badge: {user.name || user.email}
           </h2>
-          <button
+          <AdminButton
             type="button"
+            variant="ghost"
+            size="md"
             onClick={onClose}
             disabled={saving}
-            className="rounded-md p-1 text-dark-gray transition-colors hover:bg-light-gray disabled:opacity-50"
             aria-label="Tutup"
           >
             ✕
-          </button>
+          </AdminButton>
         </div>
 
         {error && (
@@ -149,22 +151,24 @@ export function AwardBadgeDialog({
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
-          <button
+          <AdminButton
             type="button"
+            variant="secondary"
+            size="xs"
             onClick={onClose}
             disabled={saving}
-            className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-dark-gray transition-colors hover:border-dark-gray disabled:opacity-50"
           >
             Batal
-          </button>
-          <button
+          </AdminButton>
+          <AdminButton
             type="button"
+            variant="primary"
+            size="xs"
             onClick={handleAward}
             disabled={saving || !selectedBadgeKey}
-            className="rounded-full bg-paprika px-4 py-1 text-xs font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-50"
           >
             {saving ? 'Menyimpan…' : 'Berikan Badge'}
-          </button>
+          </AdminButton>
         </div>
       </div>
     </div>
@@ -239,15 +243,16 @@ export function RevokeBadgeDialog({
           <h2 className="font-serif text-lg font-semibold text-paprika">
             Cabut Badge
           </h2>
-          <button
+          <AdminButton
             type="button"
+            variant="ghost"
+            size="md"
             onClick={onClose}
             disabled={saving}
-            className="rounded-md p-1 text-dark-gray transition-colors hover:bg-light-gray disabled:opacity-50"
             aria-label="Tutup"
           >
             ✕
-          </button>
+          </AdminButton>
         </div>
 
         <div className="mb-4 flex items-center gap-3 p-3 rounded-lg border border-light-gray bg-off-white">
@@ -288,22 +293,24 @@ export function RevokeBadgeDialog({
         </p>
 
         <div className="mt-6 flex justify-end gap-2">
-          <button
+          <AdminButton
             type="button"
+            variant="secondary"
+            size="xs"
             onClick={onClose}
             disabled={saving}
-            className="rounded-full border border-light-gray px-3 py-1 text-xs font-semibold text-dark-gray transition-colors hover:border-dark-gray disabled:opacity-50"
           >
             Batal
-          </button>
-          <button
+          </AdminButton>
+          <AdminButton
             type="button"
+            variant="paprika-destructive"
+            size="xs"
             onClick={handleRevoke}
             disabled={saving}
-            className="rounded-full bg-paprika px-4 py-1 text-xs font-semibold text-white transition-colors hover:bg-paprika-hover disabled:opacity-50"
           >
             {saving ? 'Mencabut…' : 'Cabut Badge'}
-          </button>
+          </AdminButton>
         </div>
       </div>
     </div>
@@ -335,14 +342,15 @@ export function BadgeHistoryDialog({
       <div className="w-full max-w-lg mx-4 rounded-2xl border border-light-gray bg-white p-6 shadow-xl max-h-[80vh] flex flex-col">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-serif text-lg font-semibold text-hunter-green">Riwayat Badge</h2>
-          <button
+          <AdminButton
             type="button"
+            variant="ghost"
+            size="md"
             onClick={onClose}
-            className="rounded-md p-1 text-dark-gray transition-colors hover:bg-light-gray"
             aria-label="Tutup"
           >
             ✕
-          </button>
+          </AdminButton>
         </div>
 
         {sorted.length === 0 ? (
