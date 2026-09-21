@@ -572,14 +572,26 @@ export function FAQEditorClient({ initial }: { initial: InitialPage }) {
                       #{idx + 1}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-medium text-hunter-green truncate">{item.question || 'Pertanyaan belum diisi'}</h3>
+                      <input
+                        type="text"
+                        value={item.question}
+                        onChange={(e) => updateItem(item.id, { question: e.target.value })}
+                        className="font-medium text-hunter-green bg-transparent border-0 focus:outline-none focus:ring-0 w-full"
+                        placeholder="Pertanyaan"
+                      />
                     </div>
                   </div>
                 </div>
-                <div className="admin-card-body">
-                  <div className="admin-card-row">
-                    <span className="admin-card-label">Answer:</span>
-                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.answer || '—'}</span>
+                <div className="admin-card-body space-y-3">
+                  <div className="admin-card-row flex flex-col items-start gap-1">
+                    <span className="admin-card-label">Answer</span>
+                    <textarea
+                      value={item.answer}
+                      onChange={(e) => updateItem(item.id, { answer: e.target.value })}
+                      rows={3}
+                      className={`${INPUT_CLS} w-full resize-y`}
+                      placeholder="Jawaban"
+                    />
                   </div>
                 </div>
                 <div className="admin-card-actions">

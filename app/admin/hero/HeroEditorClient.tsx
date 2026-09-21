@@ -77,7 +77,7 @@ export function HeroEditorClient({ initial }: { initial: InitialPage }) {
   // Hydrate from local draft once
   useEffect(() => {
     const draft = readDraft();
-    if (draft) {
+    if (draft && Array.isArray(draft.items)) {
       setSettings(draft.settings);
       setSlides(draft.items);
     }
@@ -504,14 +504,26 @@ export function HeroEditorClient({ initial }: { initial: InitialPage }) {
                     </div>
                   </div>
                 </div>
-                <div className="admin-card-body">
-                  <div className="admin-card-row">
-                    <span className="admin-card-label">Image URL:</span>
-                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.image || '—'}</span>
+                <div className="admin-card-body space-y-3">
+                  <div className="admin-card-row flex flex-col items-start gap-1">
+                    <span className="admin-card-label">Image URL</span>
+                    <input
+                      type="url"
+                      value={item.image}
+                      onChange={(e) => updateSlide(item.id, { image: e.target.value, alt: item.alt })}
+                      placeholder="https://images.unsplash.com/..."
+                      className={INPUT_CLS}
+                    />
                   </div>
-                  <div className="admin-card-row">
-                    <span className="admin-card-label">Alt text:</span>
-                    <span className="admin-card-value flex-1 truncate text-xs text-dark-gray">{item.alt || '—'}</span>
+                  <div className="admin-card-row flex flex-col items-start gap-1">
+                    <span className="admin-card-label">Alt text</span>
+                    <input
+                      type="text"
+                      value={item.alt}
+                      onChange={(e) => updateSlide(item.id, { image: item.image, alt: e.target.value })}
+                      placeholder="Alt text (describe the photo)"
+                      className={INPUT_CLS}
+                    />
                   </div>
                 </div>
                 <div className="admin-card-actions">

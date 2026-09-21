@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronUp,
   PlusIcon,
@@ -25,6 +25,10 @@ import type {
   WhyJoinContent,
   WhyJoinSettings,
 } from '@/data/why-join-types';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 const ICON_PICKER: Array<{ key: BenefitIconKey; label: string; Icon: typeof UsersIcon }> = [
   { key: 'users', label: 'Users', Icon: UsersIcon },
@@ -72,13 +76,66 @@ function writeDraft(draft: Draft | null) {
 }
 
 function isPersistedBenefitId(id: string) {
-  // UUIDs are 36 chars; first persisted creation yields a UUID.
   return id.length > 24;
 }
 
 const FIELD_LABEL_CLS = 'text-xs font-semibold uppercase tracking-wider text-dark-gray';
 const INPUT_CLS =
   'w-full rounded-lg border border-light-gray bg-white px-3 py-2 text-sm focus:border-hunter-green focus:outline-none';
+
+function IconPicker({ value, onChange }: { value: BenefitIconKey; onChange: (key: BenefitIconKey) => void }) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || !dropdownRef.current) return;
+    const rect = dropdownRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    if (rect.right > viewportWidth - 8) {
+      dropdownRef.current.style.left = 'auto';
+      dropdownRef.current.style.right = '0';
+    }
+  }, [open]);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        className="w-full rounded-lg border border-light-gray bg-white px-2 py-1.5 text-left text-sm hover:border-hunter-green focus:border-hunter-green focus:outline-none"
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen(!open);
+        }}
+      >
+        <span className="capitalize">{value}</span>
+      </button>
+      {open && (
+        <div
+          ref={dropdownRef}
+          className="absolute z-50 mt-1 w-56 max-h-48 overflow-y-auto rounded-xl border border-light-gray bg-white shadow-xl left-0 text-left"
+        >
+          {ICON_PICKER.map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => {
+                onChange(opt.key);
+                setOpen(false);
+              }}
+              className={[
+                'w-full flex items-center justify-start gap-2 px-3 py-2 text-left text-sm transition-colors',
+                value === opt.key ? 'bg-hunter-green/5 text-hunter-green' : 'text-dark-gray hover:bg-hunter-green/5',
+              ].join(' ')}
+            >
+              <opt.Icon size={18} className="shrink-0" />
+              <span className="capitalize text-base flex-1 min-w-0 text-left">{opt.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function WhyJoinEditorClient({ initial }: { initial: WhyJoinContent }) {
   const { user } = useAuth();
@@ -90,6 +147,10 @@ export function WhyJoinEditorClient({ initial }: { initial: WhyJoinContent }) {
   const [benefits, setBenefits] = useState<BenefitItem[]>(initial.benefits);
   const [status, setStatus] = useState<SaveStatus>({ kind: 'idle' });
   const [hydrated, setHydrated] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const d = readDraft();
@@ -246,6 +307,111 @@ export function WhyJoinEditorClient({ initial }: { initial: WhyJoinContent }) {
     }
   };
 
+  const filteredBenefits = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return benefits;
+    return benefits.filter(
+      (b) =>
+        b.title.toLowerCase().includes(q) ||
+        b.description.toLowerCase().includes(q),
+    );
+  }, [benefits, search]);
+
+  const changePageSize = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(filteredBenefits.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const pageItems = filteredBenefits.slice(pageStart, pageStart + pageSize);
+
+  const benefitColumns = useMemo(() => [
+    {
+      key: 'icon',
+      header: 'Icon',
+      priority: 1 as const,
+      className: 'w-20',
+      render: (benefit: BenefitItem) => {
+        const PickerIcon = ICON_PICKER.find((p) => p.key === benefit.icon)?.Icon ?? UsersIcon;
+        return (
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-hunter-green to-teal text-white">
+              <PickerIcon size={18} />
+            </div>
+            <IconPicker
+              value={benefit.icon}
+              onChange={(iconKey) => updateBenefit(benefit.id, { icon: iconKey })}
+            />
+          </div>
+        );
+      },
+    },
+    {
+      key: 'title',
+      header: 'Judul',
+      priority: 1 as const,
+      render: (benefit: BenefitItem) => (
+        <input
+          type="text"
+          value={benefit.title}
+          onChange={(e) => updateBenefit(benefit.id, { title: e.target.value })}
+          className={INPUT_CLS}
+          placeholder="Judul benefit"
+        />
+      ),
+    },
+    {
+      key: 'description',
+      header: 'Deskripsi',
+      priority: 2 as const,
+      render: (benefit: BenefitItem) => (
+        <input
+          type="text"
+          value={benefit.description}
+          onChange={(e) => updateBenefit(benefit.id, { description: e.target.value })}
+          className={INPUT_CLS}
+          placeholder="Deskripsi benefit"
+        />
+      ),
+    },
+    {
+      key: 'order',
+      header: 'Urutan',
+      priority: 3 as const,
+      className: 'w-20',
+      render: (benefit: BenefitItem) => {
+        const idx = benefits.findIndex((b) => b.id === benefit.id);
+        return <span className="font-mono text-xs text-dark-gray">#{idx + 1}</span>;
+      },
+    },
+  ], [benefits, updateBenefit]);
+
+  const getRowActions = (benefit: BenefitItem) => {
+    const idx = benefits.findIndex((b) => b.id === benefit.id);
+    return [
+      {
+        label: '↑',
+        primary: false,
+        onClick: () => moveBenefit(benefit.id, -1),
+        disabled: () => idx === 0,
+      },
+      {
+        label: '↓',
+        primary: false,
+        onClick: () => moveBenefit(benefit.id, 1),
+        disabled: () => idx === benefits.length - 1,
+      },
+      {
+        label: 'Hapus',
+        primary: false,
+        destructive: true,
+        onClick: () => removeBenefit(benefit.id),
+      },
+    ];
+  };
+
   return (
     <div className="container-base section-padding">
       <header className="admin-header">
@@ -332,109 +498,115 @@ export function WhyJoinEditorClient({ initial }: { initial: WhyJoinContent }) {
           </button>
         </header>
 
-        <ul className="mt-6 grid gap-3">
-          {benefits.length === 0 && (
-            <li className="rounded-xl border border-dashed border-light-gray bg-off-white p-6 text-center text-sm text-dark-gray">
-              Belum ada benefit. Klik "Tambah benefit" untuk mulai.
-            </li>
-          )}
-          {benefits.map((benefit, idx) => {
-            const PickerIcon =
-              ICON_PICKER.find((p) => p.key === benefit.icon)?.Icon ?? UsersIcon;
+        <AdminTableToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari judul / deskripsi benefit"
+          onAdd={addBenefit}
+          addLabel="Tambah benefit"
+          loading={false}
+          pageSize={pageSize}
+          onPageSizeChange={changePageSize}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+        />
+
+        <ResponsiveTable
+          items={pageItems}
+          rowKey={(b) => b.id}
+          columns={benefitColumns}
+          actions={getRowActions(pageItems[0])}
+          emptyMessage={benefits.length === 0 ? 'Belum ada benefit. Klik "Tambah benefit" untuk mulai.' : 'Tidak ada hasil untuk pencarian ini.'}
+          loading={false}
+          mobileCardRender={(benefit) => {
+            const idx = benefits.findIndex((b) => b.id === benefit.id);
+            const PickerIcon = ICON_PICKER.find((p) => p.key === benefit.icon)?.Icon ?? UsersIcon;
+            const { primaryActions, secondaryActions } = {
+              primaryActions: getRowActions(benefit).filter(a => a.primary),
+              secondaryActions: getRowActions(benefit).filter(a => !a.primary)
+            };
             return (
-              <li
-                key={benefit.id}
-                className="rounded-xl border border-light-gray bg-off-white p-4"
-              >
-                <div className="flex flex-col md:flex-row items-start gap-4">
-                  <div className="flex w-14 flex-shrink-0 flex-col items-center gap-1">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-hunter-green to-teal text-white">
+              <>
+                <div className="admin-card-header">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-hunter-green to-teal text-white">
                       <PickerIcon size={26} />
                     </div>
-                    <span className="text-[0.65rem] font-bold uppercase tracking-wider text-dark-gray">
-                      #{idx + 1}
-                    </span>
+                    <div className="min-w-0">
+                      <h3 className="font-medium text-hunter-green truncate">{benefit.title || '—'}</h3>
+                      <p className="text-xs text-dark-gray">#{idx + 1}</p>
+                    </div>
                   </div>
-
-                  <div className="flex flex-1 flex-col gap-3 min-w-0">
+                </div>
+                <div className="admin-card-body space-y-3">
+                  <div className="admin-card-row flex flex-col items-start gap-1">
+                    <span className="admin-card-label">Icon</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-hunter-green to-teal text-white">
+                        <PickerIcon size={18} />
+                      </div>
+                      <IconPicker
+                        value={benefit.icon}
+                        onChange={(iconKey) => updateBenefit(benefit.id, { icon: iconKey })}
+                      />
+                    </div>
+                  </div>
+                  <div className="admin-card-row flex flex-col items-start gap-1">
+                    <span className="admin-card-label">Judul</span>
                     <input
                       type="text"
                       value={benefit.title}
-                      onChange={(e) =>
-                        updateBenefit(benefit.id, { title: e.target.value })
-                      }
+                      onChange={(e) => updateBenefit(benefit.id, { title: e.target.value })}
+                      className={INPUT_CLS}
                       placeholder="Judul benefit"
-                      className={INPUT_CLS}
                     />
-                    <textarea
-                      rows={2}
+                  </div>
+                  <div className="admin-card-row flex flex-col items-start gap-1">
+                    <span className="admin-card-label">Deskripsi</span>
+                    <input
+                      type="text"
                       value={benefit.description}
-                      onChange={(e) =>
-                        updateBenefit(benefit.id, { description: e.target.value })
-                      }
-                      placeholder="Deskripsi singkat"
+                      onChange={(e) => updateBenefit(benefit.id, { description: e.target.value })}
                       className={INPUT_CLS}
+                      placeholder="Deskripsi benefit"
                     />
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-dark-gray mr-1">
-                        Icon:
-                      </span>
-                      {ICON_PICKER.map(({ key, label, Icon }) => (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => updateBenefit(benefit.id, { icon: key })}
-                          aria-pressed={benefit.icon === key}
-                          aria-label={`Icon: ${label}`}
-                          title={label}
-                          className={
-                            benefit.icon === key
-                              ? 'inline-flex h-8 w-8 items-center justify-center rounded-lg bg-hunter-green text-white shadow-sm transition-all'
-                              : 'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-light-gray bg-white text-graphite transition-all hover:border-hunter-green hover:text-hunter-green'
-                          }
-                        >
-                          <Icon size={16} />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 md:w-[60px]">
-                    <button
-                      type="button"
-                      onClick={() => moveBenefit(benefit.id, -1)}
-                      disabled={idx === 0}
-                      aria-label="Move up"
-                      className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
-                    >
-                      <ChevronUp size={16} className="rotate-180" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveBenefit(benefit.id, 1)}
-                      disabled={idx === benefits.length - 1}
-                      aria-label="Move down"
-                      className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
-                    >
-                      <ChevronUp size={16} />
-                    </button>
-                  </div>
-
-                  <div className="flex flex-col items-end gap-1.5 md:w-[60px]">
-                    <button
-                      type="button"
-                      onClick={() => removeBenefit(benefit.id)}
-                      aria-label="Remove benefit"
-                      className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
-                    >
-                      <XIcon size={18} />
-                    </button>
                   </div>
                 </div>
-              </li>
+                <div className="admin-card-actions">
+                  <button
+                    type="button"
+                    onClick={() => moveBenefit(benefit.id, -1)}
+                    disabled={idx === 0}
+                    className="admin-card-action-primary admin-touch-target"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveBenefit(benefit.id, 1)}
+                    disabled={idx === benefits.length - 1}
+                    className="admin-card-action-primary admin-touch-target"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeBenefit(benefit.id)}
+                    className="admin-card-action-primary admin-card-action-destructive admin-touch-target"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </>
             );
-          })}
-        </ul>
+          }}
+        />
+
+        <ResponsivePagination
+          page={safePage}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          showPageNumbers={true}
+        />
       </section>
     </div>
   );

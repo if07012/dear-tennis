@@ -10,6 +10,10 @@ import {
 } from '@/components/ui/Icons';
 import { useAuth } from '@/hooks/useAuth';
 import type { Statistic } from '@/data/statistics-types';
+import { AdminTableToolbar } from '@/components/admin/AdminTableToolbar';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { ResponsivePagination } from '@/components/admin/ResponsivePagination';
+import { MobileActionMenu } from '@/components/admin/MobileActionMenu';
 
 type SaveStatus =
   | { kind: 'idle' }
@@ -80,11 +84,13 @@ export function StatisticsEditorClient({ initial }: { initial: InitialPage }) {
   const [page, setPage] = useState(initial.page);
   const [totalPages, setTotalPages] = useState(initial.totalPages);
   const [total, setTotal] = useState(initial.total);
-  const [pageSize] = useState(initial.pageSize);
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+  const [pageSize, setPageSize] = useState(initial.pageSize);
   const [loadedPages, setLoadedPages] = useState<Set<number>>(
     () => new Set([initial.page]),
   );
   const [loadingPage, setLoadingPage] = useState(false);
+  const [search, setSearch] = useState('');
 
   const safePage = Math.min(page, totalPages);
   const pageStart = (safePage - 1) * pageSize;
@@ -92,10 +98,22 @@ export function StatisticsEditorClient({ initial }: { initial: InitialPage }) {
     () => [...items].sort((a, b) => a.order - b.order),
     [items],
   );
+
+  const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return sortedItems;
+    return sortedItems.filter(
+      (i) =>
+        i.label.toLowerCase().includes(q) ||
+        i.suffix?.toLowerCase().includes(q),
+    );
+  }, [sortedItems, search]);
+
   const pageItems = useMemo(
-    () => sortedItems.slice(pageStart, pageStart + pageSize),
-    [sortedItems, pageStart, pageSize],
+    () => filteredItems.slice(pageStart, pageStart + pageSize),
+    [filteredItems, pageStart, pageSize],
   );
+  const totalPagesFiltered = Math.max(1, Math.ceil(filteredItems.length / pageSize));
 
   const fetchPage = useCallback(
     async (pageToLoad: number) => {
@@ -386,6 +404,91 @@ export function StatisticsEditorClient({ initial }: { initial: InitialPage }) {
     }
   };
 
+  const statisticColumns = useMemo(() => [
+    {
+      key: 'number',
+      header: '#',
+      priority: 1 as const,
+      className: 'w-12',
+      render: (item: DraftItem) => {
+        const idx = sortedItems.findIndex((i) => i.id === item.id);
+        return (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-paprika/10 font-serif text-base font-bold text-paprika">
+            {idx + 1}.
+          </div>
+        );
+      },
+    },
+    {
+      key: 'value',
+      header: 'Value',
+      priority: 1 as const,
+      className: 'w-24',
+      render: (item: DraftItem) => (
+        <input
+          type="number"
+          value={item.value}
+          onChange={(e) => updateItem(item.id, { value: Number(e.target.value) })}
+          className={INPUT_CLS}
+          min="0"
+        />
+      ),
+    },
+    {
+      key: 'label',
+      header: 'Label',
+      priority: 1 as const,
+      render: (item: DraftItem) => (
+        <input
+          type="text"
+          value={item.label}
+          onChange={(e) => updateItem(item.id, { label: e.target.value })}
+          className={INPUT_CLS}
+          placeholder="Label"
+        />
+      ),
+    },
+    {
+      key: 'suffix',
+      header: 'Suffix',
+      priority: 2 as const,
+      className: 'w-16',
+      render: (item: DraftItem) => (
+        <input
+          type="text"
+          value={item.suffix ?? ''}
+          onChange={(e) => updateItem(item.id, { suffix: e.target.value })}
+          className={INPUT_CLS}
+          placeholder="Suffix"
+        />
+      ),
+    },
+  ], [updateItem]);
+
+  const getRowActions = (item: DraftItem) => {
+    const idx = sortedItems.findIndex((i) => i.id === item.id);
+    return [
+      {
+        label: '↑',
+        primary: false,
+        onClick: () => moveItem(item.id, -1),
+        disabled: () => idx === 0,
+      },
+      {
+        label: '↓',
+        primary: false,
+        onClick: () => moveItem(item.id, 1),
+        disabled: () => idx === sortedItems.length - 1,
+      },
+      {
+        label: 'Hapus',
+        primary: false,
+        destructive: true,
+        onClick: () => removeItem(item.id),
+      },
+    ];
+  };
+
   return (
     <div className="container-base section-padding">
       <header className="admin-header">
@@ -422,7 +525,7 @@ export function StatisticsEditorClient({ initial }: { initial: InitialPage }) {
             <p className="mt-1 text-sm text-dark-gray">
               Setiap kartu menampilkan angka yang beranimasi ketika scroll
               masuk. Label wajib diisi; suffix bersifat opsional (mis.
-              &quot;%&quot; untuk Satisfaction).
+              " %" untuk Satisfaction).
             </p>
           </div>
           <button
@@ -435,163 +538,111 @@ export function StatisticsEditorClient({ initial }: { initial: InitialPage }) {
           </button>
         </header>
 
-        <ul className="mt-6 grid gap-3">
-          {pageItems.length === 0 && total === 0 && (
-            <li className="rounded-xl border border-dashed border-light-gray bg-off-white p-6 text-center text-sm text-dark-gray">
-              Belum ada stat. Klik &quot;Tambah stat&quot; untuk mulai.
-            </li>
-          )}
-          {pageItems.length === 0 && total > 0 && loadingPage && (
-            <li className="rounded-xl border border-dashed border-light-gray bg-off-white p-6 text-center text-sm text-dark-gray">
-              Memuat halaman {safePage}...
-            </li>
-          )}
-          {pageItems.map((item) => {
-            const idx = sortedItems.findIndex((i) => i.id === item.id);
-            return (
-              <li
-                key={item.id}
-                className="rounded-xl border border-light-gray bg-off-white p-4"
-              >
-                <div className="flex flex-col md:flex-row items-start gap-4">
-                  <div className="flex w-16 flex-shrink-0 flex-col items-center gap-1">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-paprika/10 font-serif text-lg font-bold text-paprika">
-                      #{idx + 1}
-                    </div>
-                  </div>
+        <AdminTableToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari label / suffix"
+          onAdd={addItem}
+          addLabel="Tambah stat"
+          loading={loadingPage}
+          pageSize={pageSize}
+          onPageSizeChange={(newSize) => { setPageSize(newSize); setPage(1); }}
+          pageSizeOptions={[10, 25, 50, 100]}
+        />
 
-                  <div className="flex flex-1 flex-col gap-3 min-w-0">
-                    <div className="admin-form-grid">
-                      <label className="flex flex-col gap-1">
-                        <span className={FIELD_LABEL_CLS}>Value</span>
-                        <input
-                          type="number"
-                          min={0}
-                          step={1}
-                          value={item.value}
-                          onChange={(e) =>
-                            updateItem(item.id, {
-                              value: Math.max(
-                                0,
-                                Math.floor(Number(e.target.value) || 0),
-                              ),
-                            })
-                          }
-                          placeholder="500"
-                          className={INPUT_CLS}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={FIELD_LABEL_CLS}>Label</span>
-                        <input
-                          type="text"
-                          value={item.label}
-                          onChange={(e) =>
-                            updateItem(item.id, { label: e.target.value })
-                          }
-                          placeholder="Active Members"
-                          className={INPUT_CLS}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">
-                        <span className={FIELD_LABEL_CLS}>Suffix</span>
-                        <input
-                          type="text"
-                          value={item.suffix ?? ''}
-                          onChange={(e) =>
-                            updateItem(item.id, {
-                              suffix: e.target.value,
-                            })
-                          }
-                          placeholder="%"
-                          className={INPUT_CLS}
-                        />
-                      </label>
-                    </div>
+        <ResponsiveTable
+          items={pageItems}
+          rowKey={(i) => i.id}
+          columns={statisticColumns}
+          actions={getRowActions(pageItems[0])}
+          emptyMessage={items.length === 0 ? 'Belum ada stat. Klik "Tambah stat" untuk mulai.' : 'Tidak ada hasil untuk pencarian ini.'}
+          loading={loadingPage}
+          mobileCardRender={(item) => (
+            <>
+              <div className="admin-card-header">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-paprika/10 text-paprika">
+                    <span className="font-serif text-lg font-bold">#{sortedItems.findIndex((i) => i.id === item.id) + 1}</span>
                   </div>
-
-                  <div className="flex flex-col items-center gap-1 md:w-[60px]">
-                    <button
-                      type="button"
-                      onClick={() => moveItem(item.id, -1)}
-                      disabled={idx === 0}
-                      aria-label="Move up"
-                      className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
-                    >
-                      <ChevronUp size={16} className="rotate-180" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveItem(item.id, 1)}
-                      disabled={idx === sortedItems.length - 1 || idx === total - 1}
-                      aria-label="Move down"
-                      className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
-                    >
-                      <ChevronUp size={16} />
-                    </button>
-                  </div>
-
-                  <div className="flex flex-col items-end gap-1.5 md:w-[60px]">
-                    <button
-                      type="button"
-                      onClick={() => removeItem(item.id)}
-                      aria-label="Remove item"
-                      className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
-                    >
-                      <XIcon size={18} />
-                    </button>
+                  <div className="min-w-0">
+                    <input
+                      type="text"
+                      value={item.label}
+                      onChange={(e) => updateItem(item.id, { label: e.target.value })}
+                      className="font-medium text-hunter-green bg-transparent border-0 focus:outline-none focus:ring-0 w-full"
+                      placeholder="Label"
+                    />
+                    <p className="text-xs text-dark-gray">Value: {item.value}{item.suffix ? ` ${item.suffix}` : ''}</p>
                   </div>
                 </div>
-              </li>
-            );
-          })}
-        </ul>
-
-        <div className="admin-pager border-t border-light-gray pt-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-dark-gray">
-              Menampilkan {total === 0 ? 0 : pageStart + 1}–
-              {Math.min(pageStart + pageSize, total)} dari {total} stat · Halaman{' '}
-              {safePage} dari {totalPages}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={safePage <= 1}
-                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-              >
-                <ChevronLeftIcon size={14} />
-                Sebelumnya
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              </div>
+              <div className="admin-card-body space-y-3">
+                <div className="admin-card-row flex flex-col items-start gap-1">
+                  <span className="admin-card-label">Value</span>
+                  <input
+                    type="number"
+                    value={item.value}
+                    onChange={(e) => updateItem(item.id, { value: Number(e.target.value) })}
+                    className={INPUT_CLS}
+                    min="0"
+                  />
+                </div>
+                <div className="admin-card-row flex flex-col items-start gap-1">
+                  <span className="admin-card-label">Label</span>
+                  <input
+                    type="text"
+                    value={item.label}
+                    onChange={(e) => updateItem(item.id, { label: e.target.value })}
+                    className={INPUT_CLS}
+                    placeholder="Label"
+                  />
+                </div>
+                <div className="admin-card-row flex flex-col items-start gap-1">
+                  <span className="admin-card-label">Suffix</span>
+                  <input
+                    type="text"
+                    value={item.suffix ?? ''}
+                    onChange={(e) => updateItem(item.id, { suffix: e.target.value })}
+                    className={INPUT_CLS}
+                    placeholder="Suffix"
+                  />
+                </div>
+              </div>
+              <div className="admin-card-actions">
                 <button
-                  key={p}
                   type="button"
-                  onClick={() => setPage(p)}
-                  aria-current={p === safePage ? 'page' : undefined}
-                  className={[
-                    'h-8 min-w-8 rounded-md px-2 text-xs font-semibold transition-colors',
-                    p === safePage
-                      ? 'bg-hunter-green text-white'
-                      : 'bg-off-white text-dark-gray hover:bg-light-gray',
-                  ].join(' ')}
+                  onClick={() => moveItem(item.id, -1)}
+                  disabled={sortedItems.findIndex((i) => i.id === item.id) === 0}
+                  className="admin-card-action-primary admin-touch-target"
                 >
-                  {p}
+                  ↑
                 </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safePage >= totalPages}
-                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-              >
-                Berikutnya
-                <ChevronRightIcon size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
+                <button
+                  type="button"
+                  onClick={() => moveItem(item.id, 1)}
+                  disabled={sortedItems.findIndex((i) => i.id === item.id) === sortedItems.length - 1}
+                  className="admin-card-action-primary admin-touch-target"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeItem(item.id)}
+                  className="admin-card-action-primary admin-card-action-destructive admin-touch-target"
+                >
+                  Hapus
+                </button>
+              </div>
+            </>
+          )}
+        />
+
+        <ResponsivePagination
+          page={safePage}
+          totalPages={totalPagesFiltered}
+          onPageChange={setPage}
+          showPageNumbers={true}
+        />
       </section>
     </div>
   );

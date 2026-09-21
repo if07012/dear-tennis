@@ -139,17 +139,53 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
     () => new Set([initial.page]),
   );
   const [loadingPage, setLoadingPage] = useState(false);
+  const [search, setSearch] = useState('');
 
   const safePage = Math.min(page, totalPages);
   const pageStart = (safePage - 1) * pageSize;
+
+  const filteredEvents = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return events;
+    return events.filter(
+      (e) =>
+        e.title.toLowerCase().includes(q) ||
+        e.description.toLowerCase().includes(q) ||
+        e.location.toLowerCase().includes(q) ||
+        e.day.toLowerCase().includes(q) ||
+        e.month.toLowerCase().includes(q),
+    );
+  }, [events, search]);
+
   const pageItems = useMemo(
-    // Only render events we already have in memory. The server may have more
-    // rows than `events.length` for pages we haven't loaded yet — until we
-    // fetch them, those slots stay empty (the "fetch on page change" effect
-    // below handles that).
-    () => events.slice(pageStart, pageStart + pageSize),
-    [events, pageStart, pageSize],
+    () => filteredEvents.slice(pageStart, pageStart + pageSize),
+    [filteredEvents, pageStart, pageSize],
   );
+  const totalPagesFiltered = Math.max(1, Math.ceil(filteredEvents.length / pageSize));
+
+  const getRowActions = (event: DraftEvent) => {
+    const idx = filteredEvents.findIndex((e) => e.id === event.id);
+    return [
+      {
+        label: '↑',
+        primary: false,
+        onClick: () => moveEvent(event.id, -1),
+        disabled: () => idx === 0,
+      },
+      {
+        label: '↓',
+        primary: false,
+        onClick: () => moveEvent(event.id, 1),
+        disabled: () => idx === filteredEvents.length - 1,
+      },
+      {
+        label: 'Hapus',
+        primary: false,
+        destructive: true,
+        onClick: () => removeEvent(event.id),
+      },
+    ];
+  };
 
   // Fetch a page from the API and merge into local state without trampling
   // unsaved edits. Edits live keyed by id; the merge only inserts rows that
@@ -264,6 +300,129 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
     writeDraft({ settings, events });
   }, [hydrated, settings, events]);
 
+  const updateEvent = (id: string, patch: Partial<DraftEvent>) => {
+    setEvents((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+    );
+    setStatus({ kind: 'idle' });
+  };
+
+  const eventColumns = useMemo(() => [
+    {
+      key: 'date',
+      header: 'Tanggal',
+      priority: 1 as const,
+      className: 'w-28',
+      render: (event: DraftEvent) => (
+        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-hunter-green to-teal text-white">
+          <div className="text-center leading-tight">
+            <input
+              type="text"
+              value={event.day}
+              onChange={(e) => updateEvent(event.id, { day: e.target.value })}
+              className="font-serif text-lg font-bold text-white bg-transparent border-0 focus:outline-none focus:ring-0 w-auto text-center"
+              placeholder="DD"
+            />
+            <input
+              type="text"
+              value={event.month}
+              onChange={(e) => updateEvent(event.id, { month: e.target.value })}
+              className="text-[0.6rem] uppercase tracking-widest opacity-90 text-white bg-transparent border-0 focus:outline-none focus:ring-0 w-auto text-center"
+              placeholder="MMM"
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'title',
+      header: 'Judul',
+      priority: 1 as const,
+      render: (event: DraftEvent) => (
+        <input
+          type="text"
+          value={event.title}
+          onChange={(e) => updateEvent(event.id, { title: e.target.value })}
+          className={INPUT_CLS}
+          placeholder="Judul event"
+        />
+      ),
+    },
+    {
+      key: 'description',
+      header: 'Deskripsi',
+      priority: 2 as const,
+      render: (event: DraftEvent) => (
+        <textarea
+          value={event.description}
+          onChange={(e) => updateEvent(event.id, { description: e.target.value })}
+          rows={2}
+          className={`${INPUT_CLS} resize-y`}
+          placeholder="Deskripsi"
+        />
+      ),
+    },
+    {
+      key: 'location',
+      header: 'Lokasi',
+      priority: 2 as const,
+      render: (event: DraftEvent) => (
+        <input
+          type="text"
+          value={event.location}
+          onChange={(e) => updateEvent(event.id, { location: e.target.value })}
+          className={INPUT_CLS}
+          placeholder="Lokasi"
+        />
+      ),
+    },
+    {
+      key: 'time',
+      header: 'Waktu',
+      priority: 3 as const,
+      className: 'w-36',
+      render: (event: DraftEvent) => (
+        <input
+          type="text"
+          value={event.time}
+          onChange={(e) => updateEvent(event.id, { time: e.target.value })}
+          className={INPUT_CLS}
+          placeholder="Waktu"
+        />
+      ),
+    },
+    {
+      key: 'ctaLabel',
+      header: 'CTA Label',
+      priority: 3 as const,
+      className: 'w-32',
+      render: (event: DraftEvent) => (
+        <input
+          type="text"
+          value={event.ctaLabel}
+          onChange={(e) => updateEvent(event.id, { ctaLabel: e.target.value })}
+          className={INPUT_CLS}
+          placeholder="Label tombol"
+        />
+      ),
+    },
+    {
+      key: 'ctaHref',
+      header: 'CTA Link',
+      priority: 3 as const,
+      className: 'w-32',
+      render: (event: DraftEvent) => (
+        <input
+          type="text"
+          value={event.ctaHref}
+          onChange={(e) => updateEvent(event.id, { ctaHref: e.target.value })}
+          className={INPUT_CLS}
+          placeholder="/path"
+        />
+      ),
+    },
+  ], [updateEvent]);
+
   const apiFetch = useCallback(
     async (
       kind: 'settings' | 'event' | 'reorder' | 'delete',
@@ -319,13 +478,6 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
     setTotal(nextTotal);
     setTotalPages(nextTotalPages);
     setPage(nextTotalPages);
-    setStatus({ kind: 'idle' });
-  };
-
-  const updateEvent = (id: string, patch: Partial<DraftEvent>) => {
-    setEvents((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, ...patch } : e)),
-    );
     setStatus({ kind: 'idle' });
   };
 
@@ -537,216 +689,150 @@ export function CalendarEditorClient({ initial }: { initial: InitialPage }) {
           </button>
         </header>
 
-        <ul className="mt-6 grid gap-3">
-          {pageItems.length === 0 && total === 0 && (
-            <li className="rounded-xl border border-dashed border-light-gray bg-off-white p-6 text-center text-sm text-dark-gray">
-              Belum ada event. Klik &quot;Tambah event&quot; untuk mulai.
-            </li>
-          )}
-          {pageItems.length === 0 && total > 0 && loadingPage && (
-            <li className="rounded-xl border border-dashed border-light-gray bg-off-white p-6 text-center text-sm text-dark-gray">
-              Memuat halaman {safePage}...
-            </li>
-          )}
-          {pageItems.map((event) => {
-            const idx = events.findIndex((e) => e.id === event.id);
+        <AdminTableToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari judul / lokasi / deskripsi"
+          onAdd={addEvent}
+          addLabel="Tambah event"
+          loading={loadingPage}
+          pageSize={pageSize}
+          onPageSizeChange={changePageSize}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+        />
+
+        <ResponsiveTable
+          items={pageItems}
+          rowKey={(e) => e.id}
+          columns={eventColumns}
+          actions={getRowActions(pageItems[0])}
+          emptyMessage={events.length === 0 ? 'Belum ada event. Klik "Tambah event" untuk mulai.' : 'Tidak ada hasil untuk pencarian ini.'}
+          loading={loadingPage}
+          mobileCardRender={(event) => {
+            const idx = filteredEvents.findIndex((e) => e.id === event.id);
             return (
-            <li
-              key={event.id}
-              className="rounded-xl border border-light-gray bg-off-white p-4"
-            >
-              <div className="flex flex-col md:flex-row items-start gap-4">
-                <div className="flex w-20 flex-shrink-0 flex-col items-center gap-1">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-hunter-green to-teal text-white">
-                    <div className="text-center leading-tight">
-                      <div className="font-serif text-lg font-bold">
-                        {event.day || '—'}
-                      </div>
-                      <div className="text-[0.6rem] uppercase tracking-widest opacity-90">
-                        {event.month || '—'}
+              <>
+                <div className="admin-card-header">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-14 w-14 shrink-0 items-center
+                     justify-center rounded-xl bg-gradient-to-br from-hunter-green to-teal text-white">
+                      <div className="text-center leading-tight">
+                        <input
+                          type="text"
+                          value={event.day}
+                          onChange={(e) => updateEvent(event.id, { day: e.target.value })}
+                          className="font-serif text-lg font-bold text-white bg-transparent border-0 focus:outline-none focus:ring-0 w-auto text-center"
+                          placeholder="DD"
+                        />
+                        <input
+                          type="text"
+                          value={event.month}
+                          onChange={(e) => updateEvent(event.id, { month: e.target.value })}
+                          className="text-[0.6rem] uppercase tracking-widest opacity-90 text-white bg-transparent border-0 focus:outline-none focus:ring-0 w-auto text-center"
+                          placeholder="MMM"
+                        />
                       </div>
                     </div>
-                  </div>
-                  <span className="text-[0.65rem] font-bold uppercase tracking-wider text-dark-gray">
-                    #{idx + 1}
-                  </span>
-                </div>
-
-                <div className="flex flex-1 flex-col gap-3 min-w-0">
-                  <input
-                    type="text"
-                    value={event.title}
-                    onChange={(e) =>
-                      updateEvent(event.id, { title: e.target.value })
-                    }
-                    placeholder="Judul event"
-                    className={INPUT_CLS}
-                  />
-                  <textarea
-                    rows={2}
-                    value={event.description}
-                    onChange={(e) =>
-                      updateEvent(event.id, { description: e.target.value })
-                    }
-                    placeholder="Deskripsi singkat"
-                    className={INPUT_CLS}
-                  />
-                  <div className="admin-form-grid">
-                    <label className="flex flex-col gap-1">
-                      <span className={FIELD_LABEL_CLS}>Day</span>
+                    <div className="min-w-0">
                       <input
                         type="text"
-                        value={event.day}
-                        onChange={(e) =>
-                          updateEvent(event.id, { day: e.target.value })
-                        }
-                        placeholder="e.g. 15"
-                        className={INPUT_CLS}
+                        value={event.title}
+                        onChange={(e) => updateEvent(event.id, { title: e.target.value })}
+                        className="font-medium text-hunter-green bg-transparent border-0 focus:outline-none focus:ring-0 w-full"
+                        placeholder="Judul event"
                       />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className={FIELD_LABEL_CLS}>Month</span>
-                      <input
-                        type="text"
-                        value={event.month}
-                        onChange={(e) =>
-                          updateEvent(event.id, { month: e.target.value })
-                        }
-                        placeholder="e.g. JAN"
-                        className={INPUT_CLS}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className={FIELD_LABEL_CLS}>Location</span>
-                      <input
-                        type="text"
-                        value={event.location}
-                        onChange={(e) =>
-                          updateEvent(event.id, { location: e.target.value })
-                        }
-                        placeholder="e.g. Central Park Courts"
-                        className={INPUT_CLS}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className={FIELD_LABEL_CLS}>Time</span>
-                      <input
-                        type="text"
-                        value={event.time}
-                        onChange={(e) =>
-                          updateEvent(event.id, { time: e.target.value })
-                        }
-                        placeholder="e.g. 9:00 AM – 5:00 PM"
-                        className={INPUT_CLS}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className={FIELD_LABEL_CLS}>CTA label</span>
-                      <input
-                        type="text"
-                        value={event.ctaLabel}
-                        onChange={(e) =>
-                          updateEvent(event.id, { ctaLabel: e.target.value })
-                        }
-                        placeholder="e.g. Register Now"
-                        className={INPUT_CLS}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className={FIELD_LABEL_CLS}>CTA URL</span>
-                      <input
-                        type="text"
-                        value={event.ctaHref}
-                        onChange={(e) =>
-                          updateEvent(event.id, { ctaHref: e.target.value })
-                        }
-                        placeholder="e.g. /#cta"
-                        className={INPUT_CLS}
-                      />
-                    </label>
+                      <p className="text-xs text-dark-gray">#{idx + 1}</p>
+                    </div>
                   </div>
                 </div>
-
-                <div className="flex flex-col items-center gap-1 md:w-[60px]">
+                <div className="admin-card-body space-y-3">
+                  <div className="admin-card-row flex flex-col items-start gap-1">
+                    <span className="admin-card-label">Deskripsi</span>
+                    <textarea
+                      value={event.description}
+                      onChange={(e) => updateEvent(event.id, { description: e.target.value })}
+                      rows={2}
+                      className={`${INPUT_CLS} w-full resize-y`}
+                      placeholder="Deskripsi"
+                    />
+                  </div>
+                  <div className="admin-card-row flex flex-col items-start gap-1">
+                    <span className="admin-card-label">Lokasi</span>
+                    <input
+                      type="text"
+                      value={event.location}
+                      onChange={(e) => updateEvent(event.id, { location: e.target.value })}
+                      className={INPUT_CLS}
+                      placeholder="Lokasi"
+                    />
+                  </div>
+                  <div className="admin-card-row flex flex-col items-start gap-1">
+                    <span className="admin-card-label">Waktu</span>
+                    <input
+                      type="text"
+                      value={event.time}
+                      onChange={(e) => updateEvent(event.id, { time: e.target.value })}
+                      className={INPUT_CLS}
+                      placeholder="Waktu"
+                    />
+                  </div>
+                  <div className="admin-card-row flex flex-col items-start gap-1">
+                    <span className="admin-card-label">CTA Label</span>
+                    <input
+                      type="text"
+                      value={event.ctaLabel}
+                      onChange={(e) => updateEvent(event.id, { ctaLabel: e.target.value })}
+                      className={INPUT_CLS}
+                      placeholder="Label tombol"
+                    />
+                  </div>
+                  <div className="admin-card-row flex flex-col items-start gap-1">
+                    <span className="admin-card-label">CTA Link</span>
+                    <input
+                      type="text"
+                      value={event.ctaHref}
+                      onChange={(e) => updateEvent(event.id, { ctaHref: e.target.value })}
+                      className={INPUT_CLS}
+                      placeholder="/path"
+                    />
+                  </div>
+                </div>
+                <div className="admin-card-actions">
                   <button
                     type="button"
                     onClick={() => moveEvent(event.id, -1)}
                     disabled={idx === 0}
-                    aria-label="Move up"
-                    className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
+                    className="admin-card-action-primary admin-touch-target"
                   >
-                    <ChevronUp size={16} className="rotate-180" />
+                    ↑
                   </button>
                   <button
                     type="button"
                     onClick={() => moveEvent(event.id, 1)}
-                    disabled={idx === events.length - 1 || idx === total - 1}
-                    aria-label="Move down"
-                    className="rounded-md p-1.5 text-dark-gray transition-colors hover:bg-hunter-green/10 hover:text-hunter-green disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-dark-gray"
+                    disabled={idx === filteredEvents.length - 1}
+                    className="admin-card-action-primary admin-touch-target"
                   >
-                    <ChevronUp size={16} />
+                    ↓
                   </button>
-                </div>
-
-                <div className="flex flex-col items-end gap-1.5 md:w-[60px]">
                   <button
                     type="button"
                     onClick={() => removeEvent(event.id)}
-                    aria-label="Remove event"
-                    className="rounded-md p-1.5 text-paprika transition-colors hover:bg-paprika/10"
+                    className="admin-card-action-primary admin-card-action-destructive admin-touch-target"
                   >
-                    <XIcon size={18} />
+                    Hapus
                   </button>
                 </div>
-              </div>
-            </li>
+              </>
             );
-          })}
-        </ul>
+          }}
+        />
 
-        <div className="admin-pager border-t border-light-gray pt-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-dark-gray">
-              Menampilkan {pageStart + 1}–{Math.min(pageStart + pageSize, total)} dari {total} event · Halaman {safePage} dari {totalPages}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={safePage <= 1}
-                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-              >
-                <ChevronLeftIcon size={14} />
-                Sebelumnya
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPage(p)}
-                  aria-current={p === safePage ? 'page' : undefined}
-                  className={[
-                    'h-8 min-w-8 rounded-md px-2 text-xs font-semibold transition-colors',
-                    p === safePage
-                      ? 'bg-hunter-green text-white'
-                      : 'bg-off-white text-dark-gray hover:bg-light-gray',
-                  ].join(' ')}
-                >
-                  {p}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safePage >= totalPages}
-                className="inline-flex items-center gap-1 rounded-full border border-light-gray px-3 py-1.5 text-xs font-semibold text-dark-gray transition-colors hover:border-hunter-green hover:text-hunter-green disabled:opacity-40 disabled:hover:border-light-gray disabled:hover:text-dark-gray"
-              >
-                Berikutnya
-                <ChevronRightIcon size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
+        <ResponsivePagination
+          page={safePage}
+          totalPages={totalPagesFiltered}
+          onPageChange={setPage}
+          showPageNumbers={true}
+        />
 
         {total > HOME_EVENT_LIMIT && (
           <p className="mt-4 rounded-xl border border-light-gray bg-off-white p-3 text-xs text-dark-gray">
